@@ -31,3 +31,12 @@ class AuthError extends AuthState {
   @override
   List<Object> get props => [message];
 }
+
+class RoleSelectionNeeded extends AuthState {
+  final User user;
+
+  const RoleSelectionNeeded(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}

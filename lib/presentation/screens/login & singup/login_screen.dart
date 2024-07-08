@@ -1,6 +1,7 @@
 import 'package:eldcare/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/presentation/blocs/auth/auth_state.dart';
+import 'package:eldcare/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -73,6 +74,12 @@ class LoginScreen extends StatelessWidget {
       listener: (context, state) {
         if (state is Authenticated) {
           Navigator.of(context).pushReplacementNamed('/home');
+        } else if (state is RoleSelectionNeeded) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => RoleSelectionScreen(userId: state.user.uid),
+            ),
+          );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -102,14 +109,14 @@ class LoginScreen extends StatelessWidget {
                     child: Center(
                       child: Column(
                         children: [
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 40),
                           Image.asset(
                             "assets/images/icons/eldcare.png",
                             height: 200,
                             width: 200,
                           ),
                           const Text(
-                            "EldCare",
+                            "ELDCARE",
                             style: AppFonts.headline1,
                           )
                         ],

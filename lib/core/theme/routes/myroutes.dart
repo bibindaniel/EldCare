@@ -1,3 +1,4 @@
+import 'package:eldcare/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/presentation/screens/homescreen/home_screen.dart';
 import 'package:eldcare/presentation/screens/login%20&%20singup/login_screen.dart';
@@ -9,6 +10,7 @@ class Myroutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String home = '/home';
+  static const String roleselection = '/roleselection';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -20,6 +22,11 @@ class Myroutes {
         return MaterialPageRoute(builder: (context) => RegistrationScreen());
       case home:
         return MaterialPageRoute(builder: (context) => const HomeScreen());
+      case roleselection:
+        return MaterialPageRoute(
+            builder: (context) => RoleSelectionScreen(
+                  userId: '',
+                ));
       default:
         return MaterialPageRoute(
           builder: (context) => const Scaffold(

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -34,9 +35,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       );
-      emit(Authenticated(userCredential.user!));
+
+      // Check if user data exists in Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (userDoc.exists) {
+        // Check if additional details are needed (e.g., role is not selected)
+        final userData = userDoc.data()!;
+        if (userData['role'] == -1) {
+          // Role selection is needed, emit RoleSelectionNeeded
+          emit(RoleSelectionNeeded(userCredential.user!));
+        } else {
+          // User authenticated with all details present
+          emit(Authenticated(userCredential.user!));
+        }
+      } else {
+        // Handle scenario where user document doesn't exist (shouldn't happen on login)
+        emit(const AuthError('User data not found'));
+      }
     } on FirebaseAuthException catch (e) {
       emit(AuthError(e.message ?? 'An error occurred'));
+    } catch (e) {
+      emit(const AuthError('An unexpected error occurred'));
     }
   }
 
@@ -48,10 +71,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       );
+
       await userCredential.user?.updateDisplayName(event.name);
-      emit(Authenticated(userCredential.user!));
+
+      // Store basic user data in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'email': event.email,
+        'name': event.name,
+        'role': -1,
+      });
+
+      emit(RoleSelectionNeeded(userCredential.user!));
     } on FirebaseAuthException catch (e) {
-      emit(AuthError(e.message ?? 'An error occurred'));
+      emit(AuthError(e.message ?? 'An error occurred during registration'));
+    } catch (e) {
+      emit(const AuthError('An unexpected error occurred'));
     }
   }
 
@@ -64,15 +101,37 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(Unauthenticated());
         return;
       }
+
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
+
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
-      emit(Authenticated(userCredential.user!));
+
+      // Check if user data exists in Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (userDoc.exists) {
+        // User data exists, emit authenticated state
+        emit(Authenticated(userCredential.user!));
+      } else {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'email': userCredential.user!.email,
+          'name': userCredential.user!.displayName,
+          'role': -1,
+        });
+        emit(RoleSelectionNeeded(userCredential.user!));
+      }
     } catch (e) {
       emit(AuthError(e.toString()));
     }

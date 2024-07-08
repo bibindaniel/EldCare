@@ -16,6 +16,18 @@ class AppFonts {
     fontWeight: FontWeight.bold,
     color: Colors.white,
   );
+  static const TextStyle headline3 = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+  static const TextStyle headline2 = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
   static const TextStyle tagline = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 32,
@@ -23,18 +35,17 @@ class AppFonts {
     color: Colors.black,
   );
 
-  static const TextStyle headline2 = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 28,
-    fontWeight: FontWeight.bold,
-    color: kPrimaryColor,
-  );
-
   static const TextStyle bodyText1 = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 16,
-    fontWeight: FontWeight.normal,
-    color: Colors.black,
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+  static const TextStyle coloredbodyText1 = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: Color(0xFF004C4C),
   );
 
   static const TextStyle bodyText2 = TextStyle(
