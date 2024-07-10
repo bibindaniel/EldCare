@@ -1,6 +1,7 @@
 import 'package:eldcare/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/presentation/blocs/auth/auth_state.dart';
+import 'package:eldcare/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -39,6 +40,13 @@ class SplashscreenState extends State<Splashscreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => LoginScreen()),
+            );
+          } else if (state is RoleSelectionNeeded) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) =>
+                    RoleSelectionScreen(userId: state.user.uid),
+              ),
             );
           }
         },

@@ -1,6 +1,7 @@
 import 'package:eldcare/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/presentation/blocs/auth/auth_state.dart';
+import 'package:eldcare/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -14,6 +15,12 @@ class HomeScreen extends StatelessWidget {
       listener: (context, state) {
         if (state is Unauthenticated) {
           Navigator.pushReplacementNamed(context, '/login');
+        } else if (state is RoleSelectionNeeded) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => RoleSelectionScreen(userId: state.user.uid),
+            ),
+          );
         }
       },
       child: Scaffold(

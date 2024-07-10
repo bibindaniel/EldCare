@@ -1,16 +1,16 @@
+import 'package:eldcare/core/theme/routes/myroutes.dart';
+import 'package:eldcare/domain/entities/user_details.dart';
+import 'package:eldcare/presentation/blocs/user_details/user_details_dart_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/presentation/widgets/textboxwidget.dart';
 import 'package:eldcare/presentation/widgets/button_widget.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:lottie/lottie.dart';
 
-class ElderlyUserDetailsScreen extends StatefulWidget {
-  @override
-  _ElderlyUserDetailsScreenState createState() =>
-      _ElderlyUserDetailsScreenState();
-}
-
-class _ElderlyUserDetailsScreenState extends State<ElderlyUserDetailsScreen> {
+class ElderlyUserDetailsScreen extends StatelessWidget {
+  ElderlyUserDetailsScreen({super.key});
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _houseNameController = TextEditingController();
@@ -18,9 +18,98 @@ class _ElderlyUserDetailsScreenState extends State<ElderlyUserDetailsScreen> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _medicalConditionsController =
+  final TextEditingController _phoneNumnerCodeController =
       TextEditingController();
-  String? _selectedBloodType;
+  final String _selectedBloodType = 'A+';
+
+  String? validateCity(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'City is required';
+    }
+    // Add more specific validation if needed
+    // Example: Validate if city contains only alphabetic characters and spaces
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Invalid city';
+    }
+    return null;
+  }
+
+  String? validateStreet(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Street is required';
+    }
+    // Add more specific validation if needed
+    // Example: Validate if street contains only alphanumeric characters and spaces
+    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
+      return 'Invalid street';
+    }
+    return null;
+  }
+
+  String? validateHouseName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'House name is required';
+    }
+    // Add more specific validation if needed
+    // Example: Validate if house name contains only alphanumeric characters and spaces
+    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
+      return 'Invalid house name';
+    }
+    return null;
+  }
+
+  String? validateAge(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Age is required';
+    }
+
+    // Validate if age is a valid number
+    int? age = int.tryParse(value);
+    if (age == null) {
+      return 'Age must be a valid number';
+    }
+
+    // Validate if age is between 10 and 120
+    if (age < 10 || age > 120) {
+      return 'Age must be between 10 and 120';
+    }
+
+    return null;
+  }
+
+  String? validateState(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'State is required';
+    }
+    // Add more specific validation if needed
+    // Example: Validate if state contains only alphabetic characters and spaces
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Invalid state';
+    }
+    return null;
+  }
+
+  String? validatePostalCode(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Postal code is required';
+    }
+    // Example: Validate if postal code is exactly 6 digits (Indian postal code)
+    if (value.length != 6 || int.tryParse(value) == null) {
+      return 'Postal code must be a 6-digit number';
+    }
+    return null;
+  }
+
+  String? validatePhoneNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Phone number is required';
+    }
+    // Example: Validate Indian phone numbers starting with 7, 8, or 9 and exactly 10 digits
+    if (!RegExp(r'^[789]\d{9}$').hasMatch(value)) {
+      return 'Invalid Indian phone number';
+    }
+    return null;
+  }
 
   final List<String> _bloodTypes = [
     'A+',
@@ -35,145 +124,160 @@ class _ElderlyUserDetailsScreenState extends State<ElderlyUserDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('User Details',
-            style: AppFonts.headline2.copyWith(color: Colors.white)),
-        backgroundColor: kPrimaryColor,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('Please fill in your details:',
-                    style: AppFonts.coloredbodyText1),
-                const SizedBox(height: 24),
-                CustomTextFormField(
-                  controller: _ageController,
-                  label: 'Age',
-                  keyboardType: TextInputType.number,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your age' : null,
-                ),
-                const SizedBox(height: 16),
-                CustomTextFormField(
-                  controller: _houseNameController,
-                  label: 'House Name',
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your house name' : null,
-                ),
-                const SizedBox(height: 16),
-                CustomTextFormField(
-                  controller: _streetController,
-                  label: 'Street',
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your street' : null,
-                ),
-                const SizedBox(height: 16),
-                CustomTextFormField(
-                  controller: _cityController,
-                  label: 'City',
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your city' : null,
-                ),
-                const SizedBox(height: 16),
-                CustomTextFormField(
-                  controller: _stateController,
-                  label: 'State',
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your state' : null,
-                ),
-                const SizedBox(height: 16),
-                CustomTextFormField(
-                  controller: _postalCodeController,
-                  label: 'Postal Code',
-                  keyboardType: TextInputType.number,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your postal code' : null,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Blood Type',
-                    border: OutlineInputBorder(),
-                  ),
-                  value: _selectedBloodType,
-                  items: _bloodTypes.map((String bloodType) {
-                    return DropdownMenuItem<String>(
-                      value: bloodType,
-                      child: Text(bloodType),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedBloodType = newValue;
-                    });
-                  },
-                  validator: (value) =>
-                      value == null ? 'Please select your blood type' : null,
-                ),
-                const SizedBox(height: 24),
-                CustomTextFormField(
-                  controller: _medicalConditionsController,
-                  label: 'Medical Conditions (if any)',
-                ),
-                const SizedBox(height: 24),
-                CustomButton(
-                  text: 'Save Details',
-                  onPressed: _submitForm,
-                ),
-              ],
+    return BlocProvider(
+      create: (context) => UserDetailsDartBloc(),
+      child: BlocConsumer<UserDetailsDartBloc, UserDetailsDartState>(
+        listener: (context, state) {
+          if (state is UserDetailsDartSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Details saved successfully')),
+            );
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              Myroutes.home,
+              (Route<dynamic> route) => false,
+            ); // Or navigate to the next screen
+          } else if (state is UserDetailsDartFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${state.error}')),
+            );
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('User Details',
+                  style: AppFonts.headline2.copyWith(color: Colors.white)),
+              backgroundColor: kPrimaryColor,
             ),
-          ),
-        ),
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Lottie.asset('assets/animations/oldman.json',
+                      //     fit: BoxFit.contain),
+                      const Text('Please fill in your details:',
+                          style: AppFonts.coloredbodyText1),
+                      const SizedBox(height: 24),
+                      CustomTextFormField(
+                        controller: _ageController,
+                        label: 'Age',
+                        keyboardType: TextInputType.number,
+                        validator: validateAge,
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextFormField(
+                        controller: _phoneNumnerCodeController,
+                        label: 'Phone',
+                        keyboardType: TextInputType.number,
+                        validator: validatePhoneNumber,
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextFormField(
+                        controller: _houseNameController,
+                        label: 'House Name',
+                        validator: validateHouseName,
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextFormField(
+                        controller: _streetController,
+                        label: 'Street',
+                        validator: validateStreet,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomTextFormField(
+                              controller: _cityController,
+                              label: 'City',
+                              validator: validateCity,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: CustomTextFormField(
+                              controller: _stateController,
+                              label: 'State',
+                              validator: validateState,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomTextFormField(
+                              controller: _postalCodeController,
+                              label: 'Postal Code',
+                              keyboardType: TextInputType.number,
+                              validator: validatePostalCode,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(
+                                labelText: 'Blood Type',
+                                border: OutlineInputBorder(),
+                              ),
+                              value: _selectedBloodType,
+                              items: _bloodTypes.map((String bloodType) {
+                                return DropdownMenuItem<String>(
+                                  value: bloodType,
+                                  child: Text(bloodType),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {},
+                              validator: (value) => value == null
+                                  ? 'Please select your blood type'
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      CustomButton(
+                        text: 'Save Details',
+                        onPressed: state is UserDetailsDartLoading
+                            ? null
+                            : () {
+                                if (_formKey.currentState!.validate()) {
+                                  context.read<UserDetailsDartBloc>().add(
+                                        SubmitUserDetails(
+                                          UserDetails(
+                                            role: '1',
+                                            age: _ageController.text,
+                                            phone:
+                                                _phoneNumnerCodeController.text,
+                                            houseName:
+                                                _houseNameController.text,
+                                            street: _streetController.text,
+                                            city: _cityController.text,
+                                            state: _stateController.text,
+                                            postalCode:
+                                                _postalCodeController.text,
+                                            bloodType: _selectedBloodType,
+                                          ),
+                                        ),
+                                      );
+                                }
+                              },
+                      ),
+                      if (state is UserDetailsDartLoading)
+                        const Center(child: CircularProgressIndicator()),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
-
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Handle form submission
-    }
-  }
-
-  // void _submitForm() {
-  // if (_formKey.currentState!.validate()) {
-  //   // Process the form data
-  //   // You would typically save this data to your backend or local storage
-  //   Map<String, dynamic> elderlyUserData = {
-  //     'fullName': _fullNameController.text,
-  //     'age': _ageController.text,
-  //     'address': _addressController.text,
-  //     'bloodType': _selectedBloodType,
-  //     'emergencyContactName': _emergencyContactNameController.text,
-  //     'emergencyContactNumber': _emergencyContactNumberController.text,
-  //     'medicalConditions': _medicalConditionsController.text,
-  //   };
-
-  //   // TODO: Save elderlyUserData to your backend or local storage
-
-  //   // Show a success message
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text('Details saved successfully!')),
-  //   );
-
-  //   // Navigate to the next screen or dashboard
-  //   // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ElderlyUserDashboard()));
-  // }
-  // }
-
-  // @override
-  // void dispose() {
-  //   _fullNameController.dispose();
-  //   _ageController.dispose();
-  //   _addressController.dispose();
-  //   _emergencyContactNameController.dispose();
-  //   _emergencyContactNumberController.dispose();
-  //   _medicalConditionsController.dispose();
-  //   super.dispose();
-  // }
 }

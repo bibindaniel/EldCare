@@ -21,8 +21,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       CheckLoginStatus event, Emitter<AuthState> emit) async {
     await Future.delayed(const Duration(seconds: 3));
     final user = _auth.currentUser;
+    // print(user?.email);
     if (user != null) {
-      emit(Authenticated(user));
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+
+        if (userData['role'] == -1) {
+          emit(RoleSelectionNeeded(user));
+        } else {
+          emit(Authenticated(user));
+        }
+      } else {
+        emit(const AuthError('User data not found'));
+      }
     } else {
       emit(Unauthenticated());
     }
