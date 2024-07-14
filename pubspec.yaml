@@ -74,6 +74,9 @@ flutter:
     - assets/animations/oldman.gif
     - assets/animations/user.json
     - assets/animations/user1.json
+    - assets/animations/location.json
+    - assets/animations/oldman2.json
+    - assets/animations/test.json
    
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

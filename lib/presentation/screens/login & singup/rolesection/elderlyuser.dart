@@ -157,8 +157,6 @@ class ElderlyUserDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Lottie.asset('assets/animations/oldman.json',
-                      //     fit: BoxFit.contain),
                       const Text('Please fill in your details:',
                           style: AppFonts.coloredbodyText1),
                       const SizedBox(height: 24),

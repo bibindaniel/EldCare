@@ -5,6 +5,7 @@ import 'package:eldcare/presentation/screens/login%20&%20singup/rolesection/role
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/font.dart';
+import 'package:lottie/lottie.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -35,10 +36,27 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: const Center(
-          child: Text(
-            'Welcome to EldCare',
-            style: AppFonts.headline1,
+        body: Center(
+          child: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center, // Center the content vertically
+            children: [
+              SizedBox(
+                height: 200, // Set a fixed height
+                width: 200, // Set a fixed width
+                child: Lottie.asset(
+                  'assets/animations/test.json',
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(
+                  height:
+                      20), // Add some space between the animation and the text
+              const Text(
+                'Welcome to EldCare',
+                style: AppFonts.headline1,
+              ),
+            ],
           ),
         ),
       ),
