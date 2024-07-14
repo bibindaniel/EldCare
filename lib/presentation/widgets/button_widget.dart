@@ -1,3 +1,4 @@
+import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:flutter/material.dart';
 
@@ -11,8 +12,8 @@ class CustomButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.backgroundColor = const Color(0xFF008080), // Default Teal color
-    this.textColor = Colors.white,
+    this.backgroundColor = kPrimaryColor, // Default Teal color
+    this.textColor = kWhiteColor,
   });
 
   @override

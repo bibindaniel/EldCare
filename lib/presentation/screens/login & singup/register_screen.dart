@@ -105,6 +105,7 @@ class RegistrationScreen extends StatelessWidget {
                               "assets/images/icons/eldcare.png",
                               height: 200,
                               width: 200,
+                              color: kPrimaryColor,
                             ),
                             const Text(
                               "ELDCARE",

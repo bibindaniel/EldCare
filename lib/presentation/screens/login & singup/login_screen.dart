@@ -23,14 +23,14 @@ class LoginScreen extends StatelessWidget {
         return AlertDialog(
           title: const Text(
             "Forgot Password",
-            style: TextStyle(color: kDarkTeal),
+            style: TextStyle(color: kDarkColor),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 "Enter your email address to reset your password.",
-                style: TextStyle(color: kDarkTeal),
+                style: TextStyle(color: kDarkColor),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -91,7 +91,7 @@ class LoginScreen extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Password reset email sent"),
-              backgroundColor: kSucessColor,
+              backgroundColor: kSuccessColor,
             ),
           );
         }
@@ -114,6 +114,7 @@ class LoginScreen extends StatelessWidget {
                             "assets/images/icons/eldcare.png",
                             height: 200,
                             width: 200,
+                            color: kPrimaryColor,
                           ),
                           const Text(
                             "ELDCARE",
