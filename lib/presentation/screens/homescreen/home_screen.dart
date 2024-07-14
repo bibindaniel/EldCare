@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:eldcare/presentation/blocs/navigation/navigation_bloc.dart';
 import 'package:eldcare/presentation/blocs/navigation/navigation_event.dart';
 import 'package:eldcare/presentation/blocs/navigation/navigation_state.dart';
+import 'package:lottie/lottie.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -73,15 +74,15 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () {
                   // Add your button action here
                 },
-                child: Icon(Icons.add),
-                backgroundColor: kPrimaryColor,
+                backgroundColor: kSecondaryColor,
+                child: const Icon(Icons.add),
               ),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.centerDocked,
               bottomNavigationBar: BottomAppBar(
-                shape: CircularNotchedRectangle(),
+                shape: const CircularNotchedRectangle(),
                 notchMargin: 10,
-                child: Container(
+                child: SizedBox(
                   height: 60,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -211,27 +212,42 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          const Text(
-            'Create a New Schedule',
-            style: AppFonts.headline3,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: kPrimaryColor,
-              backgroundColor: kWhiteColor,
-              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Column(
+                children: [
+                  const Text(
+                    'Create a New Schedule',
+                    style: AppFonts.headline3,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: kPrimaryColor,
+                      backgroundColor: kWhiteColor,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    onPressed: () {
+                      // Add your button action here
+                    },
+                    child: const Text(
+                      'Add',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            onPressed: () {
-              // Add your button action here
-            },
-            child: const Text(
-              'Add',
-              style: TextStyle(fontSize: 18),
-            ),
+              Lottie.asset(
+                'assets/animations/medical.json',
+                width: 100,
+                height: 100,
+              )
+            ],
           ),
           const SizedBox(height: 30),
           Container(
