@@ -1,11 +1,11 @@
 import 'package:eldcare/core/theme/routes/myroutes.dart';
-import 'package:eldcare/domain/entities/user_details.dart';
-import 'package:eldcare/presentation/blocs/user_details/user_details_dart_bloc.dart';
+import 'package:eldcare/auth/domain/entities/user_details.dart';
+import 'package:eldcare/auth/presentation/blocs/user_details/user_details_dart_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
-import 'package:eldcare/presentation/widgets/textboxwidget.dart';
-import 'package:eldcare/presentation/widgets/button_widget.dart';
+import 'package:eldcare/auth/presentation/widgets/textboxwidget.dart';
+import 'package:eldcare/auth/presentation/widgets/button_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:lottie/lottie.dart';
 

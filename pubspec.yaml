@@ -72,14 +72,13 @@ flutter:
     - assets/images/icons/icon.png
     - assets/images/icons/img2.jpg
     - assets/images/icons/eldcare.png
-    - assets/animations/oldman.json
-    - assets/animations/oldman.gif
-    - assets/animations/user.json
-    - assets/animations/user1.json
-    - assets/animations/location.json
-    - assets/animations/oldman2.json
-    - assets/animations/test.json
     - assets/animations/medical.json
+    - assets/images/pills/eye-drops.png
+    - assets/images/pills/inhaler.png
+    - assets/images/pills/meds.png
+    - assets/images/pills/oval-pill.png
+    - assets/images/pills/pills-bottle.png
+    - assets/images/pills/round-pill.png
    
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

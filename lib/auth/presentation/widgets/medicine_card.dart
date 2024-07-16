@@ -1,6 +1,6 @@
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
-import 'package:eldcare/domain/entities/dosage.dart';
+import 'package:eldcare/elduser/blocs/presentation/models/medicine.dart';
 import 'package:flutter/material.dart';
 
 class MedicineCard extends StatelessWidget {
@@ -52,7 +52,7 @@ class MedicineCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Time: ${medicine.time}",
+                      "Time: ${medicine.name}",
                       style: AppFonts.cardSubtitle.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

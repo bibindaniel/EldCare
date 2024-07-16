@@ -1,17 +1,17 @@
 import 'package:eldcare/core/theme/colors.dart';
-import 'package:eldcare/domain/entities/dosage.dart';
-import 'package:eldcare/presentation/blocs/auth/auth_bloc.dart';
-import 'package:eldcare/presentation/blocs/auth/auth_event.dart';
-import 'package:eldcare/presentation/blocs/auth/auth_state.dart';
-import 'package:eldcare/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
-import 'package:eldcare/presentation/widgets/medicine_card.dart';
+import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
+import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
+import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
+import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
+import 'package:eldcare/auth/presentation/widgets/medicine_card.dart';
+import 'package:eldcare/elduser/blocs/presentation/medcine_schedule/add_schedule.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:intl/intl.dart';
-import 'package:eldcare/presentation/blocs/navigation/navigation_bloc.dart';
-import 'package:eldcare/presentation/blocs/navigation/navigation_event.dart';
-import 'package:eldcare/presentation/blocs/navigation/navigation_state.dart';
+import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
+import 'package:eldcare/elduser/blocs/navigation/navigation_event.dart';
+import 'package:eldcare/elduser/blocs/navigation/navigation_state.dart';
 import 'package:lottie/lottie.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -72,7 +72,8 @@ class HomeScreen extends StatelessWidget {
               ),
               floatingActionButton: FloatingActionButton(
                 onPressed: () {
-                  // Add your button action here
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => AddMedicinePage()));
                 },
                 backgroundColor: kSecondaryColor,
                 child: const Icon(Icons.add),
@@ -319,11 +320,11 @@ class HomeScreen extends StatelessWidget {
                   height: 150,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: medicines.length,
+                    itemCount: 3,
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: MedicineCard(medicine: medicines[index]),
+                        // child: MedicineCard(medicine: ),
                       );
                     },
                   ),
