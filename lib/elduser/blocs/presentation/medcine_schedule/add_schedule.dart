@@ -9,201 +9,256 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 
 class AddMedicinePage extends StatelessWidget {
-  const AddMedicinePage({super.key});
-
+  AddMedicinePage({super.key});
+  final List<Map<String, dynamic>> medicineColors = [
+    {'name': 'White', 'color': Colors.white},
+    {'name': 'Cream', 'color': const Color(0xFFFFFDD0)},
+    {'name': 'Yellow', 'color': Colors.yellow},
+    {'name': 'Orange', 'color': Colors.orange},
+    {'name': 'Pink', 'color': Colors.pink},
+    {'name': 'Red', 'color': Colors.red},
+    {'name': 'Light Blue', 'color': Colors.lightBlue},
+    {'name': 'Dark Blue', 'color': Colors.blue},
+    {'name': 'Green', 'color': Colors.green},
+    {'name': 'Brown', 'color': Colors.brown},
+    {'name': 'Gray', 'color': Colors.grey},
+    {'name': 'Black', 'color': Colors.black},
+    {'name': 'Purple', 'color': Colors.purple},
+  ];
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => MedicineAddBloc(),
-      child: Scaffold(
-        backgroundColor: kPrimaryColor,
-        appBar: AppBar(
+      child: BlocListener<MedicineAddBloc, MedicineAddState>(
+        listener: (context, state) {
+          if (state.status == MedicineAddStatus.success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Medicine added successfully')),
+            );
+            Navigator.of(context).pop(); // Go back to previous screen
+          } else if (state.status == MedicineAddStatus.failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to add medicine: ${state.error}')),
+            );
+          }
+        },
+        child: Scaffold(
           backgroundColor: kPrimaryColor,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kWhiteColor),
-            onPressed: () => Navigator.of(context).pop(),
+          appBar: AppBar(
+            backgroundColor: kPrimaryColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: kWhiteColor),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: const Text('Add New Medicine', style: AppFonts.headline3),
           ),
-          title: const Text('Add New Medicine', style: AppFonts.headline3),
-        ),
-        body: BlocBuilder<MedicineAddBloc, MedicineAddState>(
-          builder: (context, state) {
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Create a New Schedule',
-                          style: AppFonts.headline3),
-                      Lottie.asset(
-                        'assets/animations/medical.json',
-                        width: 80,
-                        height: 80,
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: kWhiteColor,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          spreadRadius: 5,
-                          blurRadius: 7,
-                          offset: const Offset(0, -3),
+          body: BlocBuilder<MedicineAddBloc, MedicineAddState>(
+            builder: (context, state) {
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Create a New Schedule',
+                            style: AppFonts.headline3),
+                        Lottie.asset(
+                          'assets/animations/medical.json',
+                          width: 80,
+                          height: 80,
                         ),
                       ],
                     ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTextField(
-                              'Medicine Name', state.name, 'name', context),
-                          const SizedBox(height: 20),
-                          _buildTextField(
-                              'Dosage', state.dosage, 'dosage', context),
-                          const SizedBox(height: 20),
-                          _buildTextField(
-                              'Quantity', state.quantity, 'quantity', context),
-                          const SizedBox(height: 20),
-                          _buildTextField(
+                  ),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: kWhiteColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: const Offset(0, -3),
+                          ),
+                        ],
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTextField(
+                                'Medicine Name', state.name, 'name', context,
+                                useDelayedUpdate: true),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                                'Dosage', state.dosage, 'dosage', context,
+                                keyboardType: TextInputType.number,
+                                useDelayedUpdate: true),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                                'Quantity', state.quantity, 'quantity', context,
+                                keyboardType: TextInputType.number,
+                                useDelayedUpdate: true),
+                            const SizedBox(height: 20),
+                            _buildTextField(
                               'Number of pills per day',
                               state.pillsPerDay.toString(),
                               'pillsPerDay',
                               context,
-                              keyboardType: TextInputType.number),
-                          const SizedBox(height: 20),
-                          Text('Pill Times', style: AppFonts.headline3Dark),
-                          ...List.generate(
-                            state.pillsPerDay,
-                            (index) => ListTile(
-                              title: Text('Pill ${index + 1}'),
-                              trailing:
-                                  Text(state.pillTimes[index].format(context)),
-                              onTap: () async {
-                                TimeOfDay? newTime = await showTimePicker(
-                                  context: context,
-                                  initialTime: state.pillTimes[index],
-                                );
-                                if (newTime != null) {
-                                  context.read<MedicineAddBloc>().add(
-                                      MedicineFieldChanged('pillTime',
-                                          {'index': index, 'time': newTime}));
-                                }
-                              },
+                              keyboardType: TextInputType.number,
+                              useDelayedUpdate: true,
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text('Duration', style: AppFonts.headline3Dark),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildDateField('Start Date',
-                                    state.startDate, 'startDate', context),
+                            const SizedBox(height: 20),
+                            const Text('Pill Times',
+                                style: AppFonts.headline3Dark),
+                            ...List.generate(
+                              state.pillsPerDay,
+                              (index) => ListTile(
+                                title: Text('Pill ${index + 1}'),
+                                trailing: Text(
+                                    state.pillTimes[index].format(context)),
+                                onTap: () async {
+                                  TimeOfDay? newTime = await showTimePicker(
+                                    context: context,
+                                    initialTime: state.pillTimes[index],
+                                  );
+                                  if (newTime != null) {
+                                    context.read<MedicineAddBloc>().add(
+                                          MedicineFieldChanged(
+                                            'pillTime',
+                                            {'index': index, 'time': newTime},
+                                          ),
+                                        );
+                                  }
+                                },
                               ),
-                              const SizedBox(width: 20),
-                              Expanded(
-                                child: _buildDateField('End Date',
-                                    state.endDate, 'endDate', context),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          const Text('Shape', style: AppFonts.headline3Dark),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildShapeButton(context,
-                                  'assets/images/pills/meds.png', 'circle'),
-                              _buildShapeButton(
-                                  context,
-                                  'assets/images/pills/round-pill.png',
-                                  'rectangle'),
-                              _buildShapeButton(
-                                  context,
-                                  'assets/images/pills/oval-pill.png',
-                                  'triangle'),
-                              _buildShapeButton(context,
-                                  'assets/images/pills/inhaler.png', 'square'),
-                              _buildShapeButton(context,
-                                  'assets/images/pills/eye-drops.png', 'oval'),
-                              _buildShapeButton(
-                                  context,
-                                  'assets/images/pills/pills-bottle.png',
-                                  'oval'),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          const Text('Color', style: AppFonts.headline3Dark),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              _buildColorButton(
-                                  context, Colors.green[100]!, 'green'),
-                              const SizedBox(width: 16),
-                              _buildColorButton(
-                                  context, Colors.pink[100]!, 'pink'),
-                              const SizedBox(width: 16),
-                              _buildColorButton(
-                                  context, Colors.blue[100]!, 'blue'),
-                              const SizedBox(width: 16),
-                              _buildColorButton(
-                                  context, Colors.orange[100]!, 'orange'),
-                              const SizedBox(width: 16),
-                              _buildColorButton(
-                                  context, Colors.yellow[100]!, 'yellow'),
-                            ],
-                          ),
-                          const SizedBox(height: 30),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: kWhiteColor,
-                                backgroundColor: kPrimaryColor,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 15),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text('Duration',
+                                style: AppFonts.headline3Dark),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildDateField('Start Date',
+                                      state.startDate, 'startDate', context),
                                 ),
-                              ),
-                              onPressed: () {
-                                context
-                                    .read<MedicineAddBloc>()
-                                    .add(MedicineSubmitted());
-                              },
-                              child: const Text('Add Schedule',
-                                  style: TextStyle(fontSize: 18)),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  child: _buildDateField('End Date',
+                                      state.endDate, 'endDate', context),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 20),
+                            const Text('Shape', style: AppFonts.headline3Dark),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildShapeButton(
+                                    context,
+                                    'assets/images/pills/meds.png',
+                                    'circle',
+                                    state.shape),
+                                _buildShapeButton(
+                                    context,
+                                    'assets/images/pills/round-pill.png',
+                                    'rectangle',
+                                    state.shape),
+                                _buildShapeButton(
+                                    context,
+                                    'assets/images/pills/oval-pill.png',
+                                    'triangle',
+                                    state.shape),
+                                _buildShapeButton(
+                                    context,
+                                    'assets/images/pills/inhaler.png',
+                                    'square',
+                                    state.shape),
+                                _buildShapeButton(
+                                    context,
+                                    'assets/images/pills/eye-drops.png',
+                                    'oval',
+                                    state.shape),
+                                _buildShapeButton(
+                                    context,
+                                    'assets/images/pills/pills-bottle.png',
+                                    'bottle',
+                                    state.shape),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            const Text('Color', style: AppFonts.headline3Dark),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: medicineColors.map((colorData) {
+                                return _buildColorButton(
+                                    context,
+                                    colorData['color'],
+                                    colorData['name'],
+                                    state.color);
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 30),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: kWhiteColor,
+                                  backgroundColor: kPrimaryColor,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 15),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                onPressed:
+                                    state.status == MedicineAddStatus.submitting
+                                        ? null
+                                        : () => context
+                                            .read<MedicineAddBloc>()
+                                            .add(MedicineSubmitted()),
+                                child:
+                                    state.status == MedicineAddStatus.submitting
+                                        ? const CircularProgressIndicator()
+                                        : const Text('Add Schedule',
+                                            style: TextStyle(fontSize: 18)),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
   Widget _buildTextField(
-      String label, String value, String field, BuildContext context,
-      {TextInputType? keyboardType}) {
+    String label,
+    String value,
+    String field,
+    BuildContext context, {
+    TextInputType? keyboardType,
+    bool useDelayedUpdate = false,
+  }) {
+    final controller = TextEditingController(text: value);
+
     return TextField(
       decoration: InputDecoration(
         labelText: label,
@@ -212,15 +267,29 @@ class AddMedicinePage extends StatelessWidget {
         ),
       ),
       keyboardType: keyboardType,
-      controller: TextEditingController(text: value),
-      onChanged: (value) => context
-          .read<MedicineAddBloc>()
-          .add(MedicineFieldChanged(field, value)),
+      controller: controller,
+      onChanged: useDelayedUpdate
+          ? null
+          : (value) => context
+              .read<MedicineAddBloc>()
+              .add(MedicineFieldChanged(field, value)),
+      onEditingComplete: useDelayedUpdate
+          ? () {
+              context
+                  .read<MedicineAddBloc>()
+                  .add(MedicineFieldCompleted(field, controller.text));
+              FocusScope.of(context).unfocus();
+            }
+          : null,
     );
   }
 
   Widget _buildDateField(
       String label, DateTime date, String field, BuildContext context) {
+    final TextEditingController controller = TextEditingController(
+      text: DateFormat('MMM dd, yyyy').format(date),
+    );
+
     return TextFormField(
       decoration: InputDecoration(
         labelText: label,
@@ -228,8 +297,8 @@ class AddMedicinePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
         ),
       ),
-      controller:
-          TextEditingController(text: DateFormat('MMM dd, yyyy').format(date)),
+      controller: controller,
+      readOnly: true, // Makes the text field read-only
       onTap: () async {
         DateTime? pickedDate = await showDatePicker(
           context: context,
@@ -238,49 +307,67 @@ class AddMedicinePage extends StatelessWidget {
           lastDate: DateTime.now().add(const Duration(days: 365)),
         );
         if (pickedDate != null && pickedDate != date) {
+          // Update the text field
+          controller.text = DateFormat('MMM dd, yyyy').format(pickedDate);
+
+          // Update the bloc state
           context
               .read<MedicineAddBloc>()
-              .add(MedicineFieldChanged(field, pickedDate));
+              .add(MedicineFieldCompleted(field, pickedDate));
         }
       },
     );
   }
 
-  Widget _buildShapeButton(
-      BuildContext context, String imagePath, String shape) {
+  Widget _buildShapeButton(BuildContext context, String imagePath, String shape,
+      String currentShape) {
     return GestureDetector(
-      onTap: () => context
-          .read<MedicineAddBloc>()
-          .add(MedicineFieldChanged('shape', shape)),
+      onTap: () {
+        context
+            .read<MedicineAddBloc>()
+            .add(MedicineFieldChanged('shape', shape));
+      },
       child: Container(
-        width: 50,
-        height: 50,
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          border: Border.all(color: kPrimaryColor),
-          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: currentShape == shape ? kPrimaryColor : Colors.grey,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Image.asset(
-          imagePath,
-          width: 10,
-          height: 10,
-          color: kPrimaryColor,
-        ),
+        child:
+            Image.asset(imagePath, width: 40, height: 40, color: kBlackColor),
       ),
     );
   }
 
   Widget _buildColorButton(
-      BuildContext context, Color color, String colorName) {
+      BuildContext context, Color color, String colorName, Color currentColor) {
+    final bool isDark =
+        ThemeData.estimateBrightnessForColor(color) == Brightness.dark;
     return GestureDetector(
-      onTap: () => context
-          .read<MedicineAddBloc>()
-          .add(MedicineFieldChanged('color', color)),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
+      onTap: () {
+        context
+            .read<MedicineAddBloc>()
+            .add(MedicineFieldChanged('color', color));
+      },
+      child: Tooltip(
+        message: colorName,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: currentColor == color ? kPrimaryColor : Colors.grey,
+              width: 2,
+            ),
+          ),
+          child: currentColor == color
+              ? Icon(Icons.check, color: isDark ? Colors.white : Colors.black)
+              : null,
         ),
       ),
     );

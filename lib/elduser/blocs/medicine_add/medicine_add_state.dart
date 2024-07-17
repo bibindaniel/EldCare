@@ -1,3 +1,4 @@
+import 'package:eldcare/elduser/blocs/medicine_add/medicine_add_event.dart';
 import 'package:eldcare/elduser/blocs/presentation/models/medicine.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ class MedicineAddState extends Equatable {
   final DateTime endDate;
   final String shape;
   final Color color;
+  final MedicineAddStatus status;
+  final String? error;
 
   MedicineAddState({
     this.name = '',
@@ -23,6 +26,8 @@ class MedicineAddState extends Equatable {
     DateTime? endDate,
     this.shape = '',
     this.color = Colors.white,
+    this.status = MedicineAddStatus.initial,
+    this.error,
   })  : startDate = startDate ?? DateTime.now(),
         endDate = endDate ?? DateTime.now().add(const Duration(days: 30));
 
@@ -50,6 +55,8 @@ class MedicineAddState extends Equatable {
     DateTime? endDate,
     String? shape,
     Color? color,
+    MedicineAddStatus? status,
+    String? error,
   }) {
     return MedicineAddState(
       name: name ?? this.name,
@@ -61,6 +68,8 @@ class MedicineAddState extends Equatable {
       endDate: endDate ?? this.endDate,
       shape: shape ?? this.shape,
       color: color ?? this.color,
+      status: status ?? this.status,
+      error: error ?? this.error,
     );
   }
 
@@ -75,5 +84,39 @@ class MedicineAddState extends Equatable {
         endDate,
         shape,
         color,
+        status,
+        error ?? ''
       ];
 }
+// class MedicineAddState extends Equatable {
+//   // ... existing fields ...
+//   final MedicineAddStatus status;
+//   final String? error;
+
+//   const MedicineAddState({
+//     // ... existing parameters ...
+//     this.status = MedicineAddStatus.initial,
+//     this.error,
+//   });
+
+//   // Update copyWith method to include new fields
+//   MedicineAddState copyWith({
+//     // ... existing parameters ...
+//     MedicineAddStatus? status,
+//     String? error,
+//   }) {
+//     return MedicineAddState(
+//       // ... existing fields ...
+//       status: status ?? this.status,
+//       error: error ?? this.error,
+//     );
+//   }
+
+//   // Update props to include new fields
+//   @override
+//   List<Object?> get props => [
+//         // ... existing fields ...
+//         status,
+//         error,
+//       ];
+// }
