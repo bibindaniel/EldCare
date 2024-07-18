@@ -1,6 +1,6 @@
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:eldcare/elduser/blocs/presentation/homescreen/home_screen.dart';
+import 'package:eldcare/elduser/presentation/homescreen/home_screen.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/login_screen.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/register_screen.dart';
 import 'package:eldcare/auth/presentation/screens/splashscreen.dart';
