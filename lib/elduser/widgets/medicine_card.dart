@@ -1,6 +1,5 @@
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
-
 import 'package:flutter/material.dart';
 
 class MedicineCard extends StatelessWidget {
