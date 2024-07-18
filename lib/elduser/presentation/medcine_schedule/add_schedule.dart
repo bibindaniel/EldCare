@@ -63,12 +63,20 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
           listener: (context, state) {
             if (state is MedicineSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Medicine added successfully')),
+                const SnackBar(
+                  content: Text(
+                    'Medicine added successfully',
+                  ),
+                  backgroundColor: kSuccessColor,
+                ),
               );
               Navigator.pop(context);
             } else if (state is MedicineError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error: ${state.error}')),
+                SnackBar(
+                  content: Text('Error: ${state.error}'),
+                  backgroundColor: kErrorColor,
+                ),
               );
             }
           },
@@ -112,32 +120,40 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                         ),
                       ],
                     ),
-                    child: Stepper(
-                      currentStep: _currentStep,
-                      onStepContinue: () {
-                        if (_currentStep < 1) {
-                          setState(() => _currentStep += 1);
-                        } else {
-                          _submitForm(context);
-                        }
-                      },
-                      onStepCancel: () {
-                        if (_currentStep > 0) {
-                          setState(() => _currentStep -= 1);
-                        }
-                      },
-                      steps: [
-                        Step(
-                          title: const Text('Medicine Details'),
-                          content: _buildMedicineDetailsForm(),
-                          isActive: _currentStep >= 0,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.light(
+                          primary:
+                              kPrimaryColor, // Color for the step icons and lines
                         ),
-                        Step(
-                          title: const Text('Schedule'),
-                          content: _buildScheduleForm(),
-                          isActive: _currentStep >= 1,
-                        ),
-                      ],
+                      ),
+                      child: Stepper(
+                        currentStep: _currentStep,
+                        onStepContinue: () {
+                          if (_currentStep < 1) {
+                            setState(() => _currentStep += 1);
+                          } else {
+                            _submitForm(context);
+                          }
+                        },
+                        onStepCancel: () {
+                          if (_currentStep > 0) {
+                            setState(() => _currentStep -= 1);
+                          }
+                        },
+                        steps: [
+                          Step(
+                            title: const Text('Medicine Details'),
+                            content: _buildMedicineDetailsForm(),
+                            isActive: _currentStep >= 0,
+                          ),
+                          Step(
+                            title: const Text('Schedule'),
+                            content: _buildScheduleForm(),
+                            isActive: _currentStep >= 1,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

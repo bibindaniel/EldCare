@@ -1,12 +1,10 @@
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
-import 'package:eldcare/elduser/models/medicine.dart';
+
 import 'package:flutter/material.dart';
 
 class MedicineCard extends StatelessWidget {
-  final Medicine medicine;
-
-  const MedicineCard({super.key, required this.medicine});
+  const MedicineCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +32,7 @@ class MedicineCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      medicine.name,
+                      "medine name",
                       style: AppFonts.cardTitle.copyWith(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -43,7 +41,7 @@ class MedicineCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Dosage: ${medicine.dosage}",
+                      "Dosage: 200 mg",
                       style: AppFonts.cardSubtitle.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -52,7 +50,7 @@ class MedicineCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Time: ${medicine.name}",
+                      "Time: 8:30",
                       style: AppFonts.cardSubtitle.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

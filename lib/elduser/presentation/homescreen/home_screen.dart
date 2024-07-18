@@ -1,3 +1,4 @@
+import 'package:eldcare/auth/presentation/widgets/medicine_card.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
@@ -323,7 +324,7 @@ class HomeScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        // child: MedicineCard(medicine: ),
+                        child: MedicineCard(),
                       );
                     },
                   ),
