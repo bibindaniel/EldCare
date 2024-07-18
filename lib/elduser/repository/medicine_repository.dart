@@ -6,14 +6,15 @@ class MedicineRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> addMedicine(Medicine medicine) async {
+  Future<Medicine> addMedicine(Medicine medicine) async {
     final user = _auth.currentUser;
     if (user != null) {
-      await _firestore
+      final docRef = await _firestore
           .collection('users')
           .doc(user.uid)
           .collection('medicines')
           .add(medicine.toMap());
+      return medicine.copyWith(id: docRef.id);
     } else {
       throw Exception('User not logged in');
     }

@@ -13,3 +13,15 @@ class UpdateMedicineSchedule extends MedicineEvent {
   final bool isBeforeFood;
   UpdateMedicineSchedule(this.medicine, this.scheduleTimes, this.isBeforeFood);
 }
+
+class AddAndScheduleMedicine extends MedicineEvent {
+  final Medicine medicine;
+  final List<DateTime> scheduleTimes;
+  final bool isBeforeFood;
+
+  AddAndScheduleMedicine({
+    required this.medicine,
+    required this.scheduleTimes,
+    required this.isBeforeFood,
+  });
+}

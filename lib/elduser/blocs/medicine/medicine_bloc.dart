@@ -9,26 +9,19 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
   final MedicineRepository _repository = MedicineRepository();
 
   MedicineBloc() : super(MedicineInitial()) {
-    on<AddMedicine>(_onAddMedicine);
-    on<UpdateMedicineSchedule>(_onUpdateMedicineSchedule);
+    on<AddAndScheduleMedicine>(_onAddAndScheduleMedicine);
   }
 
-  void _onAddMedicine(AddMedicine event, Emitter<MedicineState> emit) async {
+  void _onAddAndScheduleMedicine(
+      AddAndScheduleMedicine event, Emitter<MedicineState> emit) async {
     emit(MedicineLoading());
     try {
-      await _repository.addMedicine(event.medicine);
-      emit(MedicineSuccess());
-    } catch (e) {
-      emit(MedicineError(e.toString()));
-    }
-  }
-
-  void _onUpdateMedicineSchedule(
-      UpdateMedicineSchedule event, Emitter<MedicineState> emit) async {
-    emit(MedicineLoading());
-    try {
+      final addedMedicine = await _repository.addMedicine(event.medicine);
       await _repository.updateMedicineSchedule(
-          event.medicine, event.scheduleTimes, event.isBeforeFood);
+        addedMedicine,
+        event.scheduleTimes,
+        event.isBeforeFood,
+      );
       emit(MedicineSuccess());
     } catch (e) {
       emit(MedicineError(e.toString()));
