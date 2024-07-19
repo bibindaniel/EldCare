@@ -1,4 +1,4 @@
-import 'package:eldcare/auth/presentation/widgets/medicine_card.dart';
+import 'package:eldcare/elduser/widgets/medicine_card.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
               floatingActionButton: FloatingActionButton(
                 onPressed: () {
                   Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => AddMedicinePage()));
+                      builder: (context) => const AddMedicinePage()));
                 },
                 backgroundColor: kSecondaryColor,
                 child: const Icon(Icons.add),
@@ -108,7 +108,7 @@ class HomeScreen extends StatelessWidget {
                                       ? kPrimaryColor
                                       : Colors.grey,
                                 ),
-                                Text('Home'),
+                                const Text('Home'),
                               ],
                             ),
                           ),
@@ -129,7 +129,7 @@ class HomeScreen extends StatelessWidget {
                                       ? kPrimaryColor
                                       : Colors.grey,
                                 ),
-                                Text('Schedule'),
+                                const Text('Schedule'),
                               ],
                             ),
                           ),
@@ -155,7 +155,7 @@ class HomeScreen extends StatelessWidget {
                                       ? kPrimaryColor
                                       : Colors.grey,
                                 ),
-                                Text('Appointment'),
+                                const Text('Appointment'),
                               ],
                             ),
                           ),
@@ -176,7 +176,7 @@ class HomeScreen extends StatelessWidget {
                                       ? kPrimaryColor
                                       : Colors.grey,
                                 ),
-                                Text('Profile'),
+                                const Text('Profile'),
                               ],
                             ),
                           ),
@@ -198,12 +198,12 @@ class HomeScreen extends StatelessWidget {
       case NavigationItem.home:
         return _buildHomeContent();
       case NavigationItem.schedule:
-        return Center(child: Text('Schedule Screen'));
+        return const Center(child: Text('Schedule Screen'));
       case NavigationItem.appointment:
-        return Center(child: Text('Appointment Screen'));
+        return const Center(child: Text('Appointment Screen'));
 
       case NavigationItem.profile:
-        return Center(child: Text('Profile Screen'));
+        return const Center(child: Text('Profile Screen'));
     }
   }
 
@@ -322,8 +322,8 @@ class HomeScreen extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     itemCount: 3,
                     itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
                         child: MedicineCard(),
                       );
                     },
