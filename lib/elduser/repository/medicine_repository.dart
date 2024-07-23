@@ -18,42 +18,4 @@ class MedicineRepository {
       throw Exception('User not logged in');
     }
   }
-
-  Future<void> updateMedicineSchedule(Medicine medicine,
-      List<DateTime> scheduleTimes, bool isBeforeFood) async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('medicines')
-          .doc(medicine.id)
-          .update({
-        'scheduleTimes':
-            scheduleTimes.map((time) => Timestamp.fromDate(time)).toList(),
-        'isBeforeFood': isBeforeFood,
-      });
-    } else {
-      throw Exception('User not logged in');
-    }
-  }
-
-  Future<List<Medicine>> getMedicinesForDate(DateTime date) async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      final querySnapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('medicines')
-          .where('startDate', isLessThanOrEqualTo: Timestamp.fromDate(date))
-          .where('endDate', isGreaterThanOrEqualTo: Timestamp.fromDate(date))
-          .get();
-
-      return querySnapshot.docs
-          .map((doc) => Medicine.fromMap(doc.data(), doc.id))
-          .toList();
-    } else {
-      throw Exception('User not logged in');
-    }
-  }
 }
