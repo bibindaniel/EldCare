@@ -16,12 +16,12 @@ class UpdateMedicineSchedule extends MedicineEvent {
 
 class AddAndScheduleMedicine extends MedicineEvent {
   final Medicine medicine;
-  final List<DateTime> scheduleTimes;
-  final bool isBeforeFood;
 
-  AddAndScheduleMedicine({
-    required this.medicine,
-    required this.scheduleTimes,
-    required this.isBeforeFood,
-  });
+  AddAndScheduleMedicine({required this.medicine});
+}
+
+class FetchMedicinesForDate extends MedicineEvent {
+  final DateTime date;
+
+  FetchMedicinesForDate(this.date);
 }

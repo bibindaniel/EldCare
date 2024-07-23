@@ -6,15 +6,14 @@ class MedicineRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<Medicine> addMedicine(Medicine medicine) async {
+  Future<void> addMedicine(Medicine medicine) async {
     final user = _auth.currentUser;
     if (user != null) {
-      final docRef = await _firestore
+      await _firestore
           .collection('users')
           .doc(user.uid)
           .collection('medicines')
           .add(medicine.toMap());
-      return medicine.copyWith(id: docRef.id);
     } else {
       throw Exception('User not logged in');
     }
@@ -34,6 +33,25 @@ class MedicineRepository {
             scheduleTimes.map((time) => Timestamp.fromDate(time)).toList(),
         'isBeforeFood': isBeforeFood,
       });
+    } else {
+      throw Exception('User not logged in');
+    }
+  }
+
+  Future<List<Medicine>> getMedicinesForDate(DateTime date) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('medicines')
+          .where('startDate', isLessThanOrEqualTo: Timestamp.fromDate(date))
+          .where('endDate', isGreaterThanOrEqualTo: Timestamp.fromDate(date))
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => Medicine.fromMap(doc.data(), doc.id))
+          .toList();
     } else {
       throw Exception('User not logged in');
     }

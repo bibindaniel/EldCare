@@ -16,12 +16,7 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
       AddAndScheduleMedicine event, Emitter<MedicineState> emit) async {
     emit(MedicineLoading());
     try {
-      final addedMedicine = await _repository.addMedicine(event.medicine);
-      await _repository.updateMedicineSchedule(
-        addedMedicine,
-        event.scheduleTimes,
-        event.isBeforeFood,
-      );
+      await _repository.addMedicine(event.medicine);
       emit(MedicineSuccess());
     } catch (e) {
       emit(MedicineError(e.toString()));

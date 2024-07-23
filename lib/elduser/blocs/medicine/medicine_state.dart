@@ -14,3 +14,9 @@ class MedicineError extends MedicineState {
   final String error;
   MedicineError(this.error);
 }
+
+class MedicinesLoaded extends MedicineState {
+  final List<Medicine> medicines;
+
+  MedicinesLoaded(this.medicines);
+}

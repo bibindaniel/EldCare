@@ -232,15 +232,15 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
             });
           },
         ),
-        SizedBox(height: 20),
-        Text('Set times:'),
+        const SizedBox(height: 20),
+        const Text('Set times:'),
         ..._scheduleTimes.asMap().entries.map((entry) {
           int idx = entry.key;
           TimeOfDay time = entry.value;
           return ListTile(
             title: Text('Dose ${idx + 1}: ${time.format(context)}'),
             trailing: IconButton(
-              icon: Icon(Icons.access_time),
+              icon: const Icon(Icons.access_time),
               onPressed: () async {
                 TimeOfDay? picked = await showTimePicker(
                   context: context,
@@ -255,10 +255,10 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
             ),
           );
         }),
-        SizedBox(height: 20),
-        Text('Take medicine:'),
+        const SizedBox(height: 20),
+        const Text('Take medicine:'),
         RadioListTile(
-          title: Text('Before food'),
+          title: const Text('Before food'),
           value: true,
           groupValue: _isBeforeFood,
           onChanged: (bool? value) {
@@ -268,7 +268,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
           },
         ),
         RadioListTile(
-          title: Text('After food'),
+          title: const Text('After food'),
           value: false,
           groupValue: _isBeforeFood,
           onChanged: (bool? value) {
@@ -282,7 +282,14 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   }
 
   void _submitForm(BuildContext context) {
+    print("Submit form called");
     if (_formKey.currentState!.validate()) {
+      print("Form validated");
+      List<DateTime> scheduleTimes = _scheduleTimes.map((time) {
+        final now = DateTime.now();
+        return DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      }).toList();
+
       final medicine = Medicine(
         name: _nameController.text,
         dosage: _dosageController.text,
@@ -291,18 +298,15 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
         endDate: _endDate,
         shape: _selectedShape,
         color: _selectedColorName,
+        scheduleTimes: scheduleTimes,
+        isBeforeFood: _isBeforeFood,
       );
-
-      List<DateTime> scheduleTimes = _scheduleTimes.map((time) {
-        final now = DateTime.now();
-        return DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      }).toList();
 
       context.read<MedicineBloc>().add(AddAndScheduleMedicine(
             medicine: medicine,
-            scheduleTimes: scheduleTimes,
-            isBeforeFood: _isBeforeFood,
           ));
+    } else {
+      print("Form validation failed");
     }
   }
 
@@ -341,7 +345,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
           context: context,
           initialDate: date,
           firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(Duration(days: 365)),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
         );
         if (picked != null && picked != date) {
           onChanged(picked);

@@ -9,6 +9,8 @@ class Medicine {
   final DateTime endDate;
   final String shape;
   final String color;
+  final List<DateTime> scheduleTimes;
+  final bool isBeforeFood;
 
   Medicine({
     this.id = '',
@@ -19,6 +21,8 @@ class Medicine {
     required this.endDate,
     required this.shape,
     required this.color,
+    required this.scheduleTimes,
+    required this.isBeforeFood,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +34,8 @@ class Medicine {
       'endDate': Timestamp.fromDate(endDate),
       'shape': shape,
       'color': color,
+      'scheduleTimes': scheduleTimes.map((t) => Timestamp.fromDate(t)).toList(),
+      'isBeforeFood': isBeforeFood,
     };
   }
 
@@ -43,10 +49,13 @@ class Medicine {
       endDate: (map['endDate'] as Timestamp).toDate(),
       shape: map['shape'],
       color: map['color'],
+      scheduleTimes: (map['scheduleTimes'] as List)
+          .map((t) => (t as Timestamp).toDate())
+          .toList(),
+      isBeforeFood: map['isBeforeFood'],
     );
   }
 
-  // Add this method
   Medicine copyWith({
     String? id,
     String? name,
@@ -56,6 +65,8 @@ class Medicine {
     DateTime? endDate,
     String? shape,
     String? color,
+    List<DateTime>? scheduleTimes,
+    bool? isBeforeFood,
   }) {
     return Medicine(
       id: id ?? this.id,
@@ -66,6 +77,8 @@ class Medicine {
       endDate: endDate ?? this.endDate,
       shape: shape ?? this.shape,
       color: color ?? this.color,
+      scheduleTimes: scheduleTimes ?? this.scheduleTimes,
+      isBeforeFood: isBeforeFood ?? this.isBeforeFood,
     );
   }
 }
