@@ -29,7 +29,14 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
       FetchMedicinesForDate event, Emitter<MedicineState> emit) async {
     emit(MedicineLoading());
     try {
-      final medicines = await _repository.getMedicinesForDate(event.date);
+      // Create a date range for the entire day
+      final startOfDay =
+          DateTime(event.date.year, event.date.month, event.date.day);
+      final endOfDay =
+          startOfDay.add(Duration(days: 1)).subtract(Duration(microseconds: 1));
+
+      final medicines =
+          await _repository.getMedicinesForDateRange(startOfDay, endOfDay);
       print('Fetched medicines: $medicines');
       emit(MedicinesLoaded(medicines));
     } catch (e) {

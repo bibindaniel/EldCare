@@ -46,9 +46,71 @@ class MedicineRepository {
         final data = doc.data();
         print('Document data: $data');
         return Medicine.fromMap(data, doc.id);
+      }).where((medicine) {
+        // Check if the selected date falls within the medicine's date range
+        bool isWithinDateRange =
+            date.isAfter(medicine.startDate.subtract(Duration(days: 1))) &&
+                date.isBefore(medicine.endDate.add(Duration(days: 1)));
+
+        // Check if any scheduleTimes for this medicine match the time of day on the selected date
+        bool hasMatchingScheduleTime =
+            medicine.scheduleTimes.any((scheduleTime) {
+          return scheduleTime.hour == date.hour &&
+              scheduleTime.minute == date.minute;
+        });
+
+        return isWithinDateRange && hasMatchingScheduleTime;
       }).toList();
 
-      print('Parsed ${medicines.length} medicines');
+      print('Filtered ${medicines.length} medicines for the selected date');
+      return medicines;
+    } catch (e) {
+      print('Error fetching medicines: $e');
+      return [];
+    }
+  }
+
+  Future<List<Medicine>> getMedicinesForDateRange(
+      DateTime start, DateTime end) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not logged in');
+      }
+
+      print('Fetching medicines for date range: $start to $end');
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('medicines')
+          .get();
+
+      print('Fetched ${snapshot.docs.length} documents');
+
+      final medicines = snapshot.docs.map((doc) {
+        final data = doc.data();
+        print('Document data: $data');
+        return Medicine.fromMap(data, doc.id);
+      }).where((medicine) {
+        // Check if the medicine's date range overlaps with the selected date range
+        bool isWithinDateRange =
+            medicine.startDate.isBefore(end) && medicine.endDate.isAfter(start);
+
+        // Check if any scheduleTimes for this medicine fall within the selected date range
+        bool hasMatchingScheduleTime =
+            medicine.scheduleTimes.any((scheduleTime) {
+          DateTime scheduleDateTime = DateTime(start.year, start.month,
+              start.day, scheduleTime.hour, scheduleTime.minute);
+          return scheduleDateTime.isAfter(start) &&
+              scheduleDateTime.isBefore(end);
+        });
+
+        return isWithinDateRange && hasMatchingScheduleTime;
+      }).toList();
+
+      print(
+          'Filtered ${medicines.length} medicines for the selected date range');
       return medicines;
     } catch (e) {
       print('Error fetching medicines: $e');

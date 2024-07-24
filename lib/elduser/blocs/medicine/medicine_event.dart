@@ -22,5 +22,6 @@ class AddAndScheduleMedicine extends MedicineEvent {
 
 class FetchMedicinesForDate extends MedicineEvent {
   final DateTime date;
+
   FetchMedicinesForDate(this.date);
 }
