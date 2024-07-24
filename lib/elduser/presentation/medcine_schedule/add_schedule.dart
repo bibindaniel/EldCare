@@ -10,10 +10,10 @@ class AddMedicinePage extends StatefulWidget {
   const AddMedicinePage({super.key});
 
   @override
-  _AddMedicinePageState createState() => _AddMedicinePageState();
+  AddMedicinePageState createState() => AddMedicinePageState();
 }
 
-class _AddMedicinePageState extends State<AddMedicinePage> {
+class AddMedicinePageState extends State<AddMedicinePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _dosageController = TextEditingController();

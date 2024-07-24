@@ -27,182 +27,217 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => NavigationBloc()),
-        BlocProvider(
-            create: (context) =>
-                MedicineBloc()..add(FetchMedicinesForDate(DateTime.now()))),
-      ],
-      child: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is Unauthenticated) {
-            Navigator.pushReplacementNamed(context, '/login');
-          } else if (state is RoleSelectionNeeded) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) =>
-                    RoleSelectionScreen(userId: state.user.uid),
-              ),
-            );
-          }
-        },
-        child: BlocBuilder<NavigationBloc, NavigationState>(
-          builder: (context, navigationState) {
-            return Scaffold(
-              appBar: AppBar(
-                backgroundColor: kPrimaryColor,
-                leading: const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircleAvatar(
-                    radius: 15,
+        providers: [
+          BlocProvider(create: (context) => NavigationBloc()),
+          BlocProvider(
+              create: (context) =>
+                  MedicineBloc()..add(FetchMedicinesForDate(DateTime.now()))),
+        ],
+        child: BlocListener<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is Unauthenticated) {
+                Navigator.pushReplacementNamed(context, '/login');
+              } else if (state is RoleSelectionNeeded) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RoleSelectionScreen(userId: state.user.uid),
                   ),
-                ),
-                title: const Text(
-                  'Hey, John',
-                  style: AppFonts.headline3,
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.notifications_active,
-                      color: kWhiteColor,
-                    ),
-                    onPressed: () {
-                      // Add notification action here
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.logout),
-                    onPressed: () {
-                      context.read<AuthBloc>().add(LogoutEvent());
-                    },
-                  ),
-                ],
-              ),
-              body: SingleChildScrollView(
-                child: _getSelectedScreen(navigationState.currentItem),
-              ),
-              floatingActionButton: FloatingActionButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const AddMedicinePage()));
+                );
+              }
+            },
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (context) => NavigationBloc()),
+                BlocProvider(
+                    create: (context) => MedicineBloc()
+                      ..add(FetchMedicinesForDate(DateTime.now()))),
+              ],
+              child: BlocListener<AuthBloc, AuthState>(
+                listener: (context, state) {
+                  if (state is Unauthenticated) {
+                    Navigator.pushReplacementNamed(context, '/login');
+                  } else if (state is RoleSelectionNeeded) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RoleSelectionScreen(userId: state.user.uid),
+                      ),
+                    );
+                  }
                 },
-                backgroundColor: kSecondaryColor,
-                child: const Icon(Icons.add),
-              ),
-              floatingActionButtonLocation:
-                  FloatingActionButtonLocation.centerDocked,
-              bottomNavigationBar: BottomAppBar(
-                shape: const CircularNotchedRectangle(),
-                notchMargin: 10,
-                child: SizedBox(
-                  height: 60,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          MaterialButton(
-                            minWidth: 40,
-                            onPressed: () {
-                              context
-                                  .read<NavigationBloc>()
-                                  .add(NavigateToHome());
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.home,
-                                  color: navigationState.currentItem ==
-                                          NavigationItem.home
-                                      ? kPrimaryColor
-                                      : Colors.grey,
-                                ),
-                                const Text('Home'),
-                              ],
-                            ),
+                child: BlocBuilder<NavigationBloc, NavigationState>(
+                  builder: (context, navigationState) {
+                    return Scaffold(
+                      appBar: AppBar(
+                        backgroundColor: kPrimaryColor,
+                        leading: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: CircleAvatar(
+                            radius: 15,
                           ),
-                          MaterialButton(
-                            minWidth: 40,
-                            onPressed: () {
-                              context
-                                  .read<NavigationBloc>()
-                                  .add(NavigateToSchedule());
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today,
-                                  color: navigationState.currentItem ==
-                                          NavigationItem.schedule
-                                      ? kPrimaryColor
-                                      : Colors.grey,
-                                ),
-                                const Text('Schedule'),
-                              ],
+                        ),
+                        title: BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) {
+                            if (state is Authenticated) {
+                              return Text(
+                                'Hey, ${state.user.displayName ?? 'User'}',
+                                style: AppFonts.headline3,
+                              );
+                            } else {
+                              return const Text(
+                                'Hey, User',
+                                style: AppFonts.headline3,
+                              );
+                            }
+                          },
+                        ),
+                        actions: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.notifications_active,
+                              color: kWhiteColor,
                             ),
+                            onPressed: () {
+                              // Add notification action here
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.logout),
+                            onPressed: () {
+                              context.read<AuthBloc>().add(LogoutEvent());
+                            },
                           ),
                         ],
                       ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          MaterialButton(
-                            minWidth: 40,
-                            onPressed: () {
-                              context
-                                  .read<NavigationBloc>()
-                                  .add(NavigateToAppointment());
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.medical_services,
-                                  color: navigationState.currentItem ==
-                                          NavigationItem.appointment
-                                      ? kPrimaryColor
-                                      : Colors.grey,
-                                ),
-                                const Text('Appointment'),
-                              ],
-                            ),
-                          ),
-                          MaterialButton(
-                            minWidth: 40,
-                            onPressed: () {
-                              context
-                                  .read<NavigationBloc>()
-                                  .add(NavigateToProfile());
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.person,
-                                  color: navigationState.currentItem ==
-                                          NavigationItem.profile
-                                      ? kPrimaryColor
-                                      : Colors.grey,
-                                ),
-                                const Text('Profile'),
-                              ],
-                            ),
-                          ),
-                        ],
+                      body: SingleChildScrollView(
+                        child: _getSelectedScreen(navigationState.currentItem),
                       ),
-                    ],
-                  ),
+                      floatingActionButton: FloatingActionButton(
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => const AddMedicinePage()));
+                        },
+                        backgroundColor: kSecondaryColor,
+                        child: const Icon(Icons.add),
+                      ),
+                      floatingActionButtonLocation:
+                          FloatingActionButtonLocation.centerDocked,
+                      bottomNavigationBar: BottomAppBar(
+                        shape: const CircularNotchedRectangle(),
+                        notchMargin: 10,
+                        child: SizedBox(
+                          height: 60,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  MaterialButton(
+                                    minWidth: 40,
+                                    onPressed: () {
+                                      context
+                                          .read<NavigationBloc>()
+                                          .add(NavigateToHome());
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.home,
+                                          color: navigationState.currentItem ==
+                                                  NavigationItem.home
+                                              ? kPrimaryColor
+                                              : Colors.grey,
+                                        ),
+                                        const Text('Home'),
+                                      ],
+                                    ),
+                                  ),
+                                  MaterialButton(
+                                    minWidth: 40,
+                                    onPressed: () {
+                                      context
+                                          .read<NavigationBloc>()
+                                          .add(NavigateToSchedule());
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          color: navigationState.currentItem ==
+                                                  NavigationItem.schedule
+                                              ? kPrimaryColor
+                                              : Colors.grey,
+                                        ),
+                                        const Text('Schedule'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  MaterialButton(
+                                    minWidth: 40,
+                                    onPressed: () {
+                                      context
+                                          .read<NavigationBloc>()
+                                          .add(NavigateToAppointment());
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.medical_services,
+                                          color: navigationState.currentItem ==
+                                                  NavigationItem.appointment
+                                              ? kPrimaryColor
+                                              : Colors.grey,
+                                        ),
+                                        const Text('Appointment'),
+                                      ],
+                                    ),
+                                  ),
+                                  MaterialButton(
+                                    minWidth: 40,
+                                    onPressed: () {
+                                      context
+                                          .read<NavigationBloc>()
+                                          .add(NavigateToProfile());
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.person,
+                                          color: navigationState.currentItem ==
+                                                  NavigationItem.profile
+                                              ? kPrimaryColor
+                                              : Colors.grey,
+                                        ),
+                                        const Text('Profile'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            );
-          },
-        ),
-      ),
-    );
+            )));
   }
 
   Widget _getSelectedScreen(NavigationItem item) {
