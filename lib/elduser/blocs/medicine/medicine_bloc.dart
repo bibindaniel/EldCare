@@ -10,6 +10,7 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
 
   MedicineBloc() : super(MedicineInitial()) {
     on<AddAndScheduleMedicine>(_onAddAndScheduleMedicine);
+    on<FetchMedicinesForDate>(_onFetchMedicinesForDate);
   }
 
   void _onAddAndScheduleMedicine(
@@ -19,6 +20,20 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
       await _repository.addMedicine(event.medicine);
       emit(MedicineSuccess());
     } catch (e) {
+      print('Error adding medicine: $e');
+      emit(MedicineError('Failed to add medicine: ${e.toString()}'));
+    }
+  }
+
+  void _onFetchMedicinesForDate(
+      FetchMedicinesForDate event, Emitter<MedicineState> emit) async {
+    emit(MedicineLoading());
+    try {
+      final medicines = await _repository.getMedicinesForDate(event.date);
+      print('Fetched medicines: $medicines');
+      emit(MedicinesLoaded(medicines));
+    } catch (e) {
+      print('Error fetching medicines: $e');
       emit(MedicineError(e.toString()));
     }
   }

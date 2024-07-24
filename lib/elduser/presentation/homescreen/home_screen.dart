@@ -1,3 +1,4 @@
+import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/widgets/medicine_card.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
@@ -14,13 +15,24 @@ import 'package:eldcare/elduser/blocs/navigation/navigation_event.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_state.dart';
 import 'package:lottie/lottie.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  DateTime selectedDate = DateTime.now();
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => NavigationBloc(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => NavigationBloc()),
+        BlocProvider(
+            create: (context) =>
+                MedicineBloc()..add(FetchMedicinesForDate(DateTime.now()))),
+      ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Unauthenticated) {
@@ -277,34 +289,56 @@ class HomeScreen extends StatelessWidget {
                     itemCount: 30,
                     itemBuilder: (context, index) {
                       final date = DateTime.now().add(Duration(days: index));
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 15, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: index == 0 ? kPrimaryColor : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              DateFormat('EEE').format(date),
-                              style: TextStyle(
-                                color: index == 0 ? kWhiteColor : kBlackColor,
-                                fontWeight: FontWeight.bold,
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedDate = date;
+                          });
+                          context
+                              .read<MedicineBloc>()
+                              .add(FetchMedicinesForDate(date));
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: date.day == selectedDate.day &&
+                                    date.month == selectedDate.month &&
+                                    date.year == selectedDate.year
+                                ? kPrimaryColor
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                DateFormat('EEE').format(date),
+                                style: TextStyle(
+                                  color: date.day == selectedDate.day &&
+                                          date.month == selectedDate.month &&
+                                          date.year == selectedDate.year
+                                      ? kWhiteColor
+                                      : kBlackColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              DateFormat('d').format(date),
-                              style: TextStyle(
-                                color: index == 0 ? kWhiteColor : kBlackColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat('d').format(date),
+                                style: TextStyle(
+                                  color: date.day == selectedDate.day &&
+                                          date.month == selectedDate.month &&
+                                          date.year == selectedDate.year
+                                      ? kWhiteColor
+                                      : kBlackColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -316,18 +350,36 @@ class HomeScreen extends StatelessWidget {
                   style: AppFonts.headline3Dark,
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  height: 150,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 3,
-                    itemBuilder: (context, index) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: MedicineCard(),
+                BlocBuilder<MedicineBloc, MedicineState>(
+                  builder: (context, state) {
+                    if (state is MedicineLoading) {
+                      return const CircularProgressIndicator();
+                    } else if (state is MedicinesLoaded) {
+                      if (state.medicines.isEmpty) {
+                        return const Text(
+                            'No medicines scheduled for this date');
+                      }
+                      return SizedBox(
+                        height: 150,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: state.medicines.length,
+                          itemBuilder: (context, index) {
+                            final medicine = state.medicines[index];
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: MedicineCard(medicine: medicine),
+                            );
+                          },
+                        ),
                       );
-                    },
-                  ),
+                    } else if (state is MedicineError) {
+                      return Text('Error: ${state.message}');
+                    } else {
+                      return const Text('Unknown state');
+                    }
+                  },
                 ),
                 const SizedBox(height: 12),
                 const Text(

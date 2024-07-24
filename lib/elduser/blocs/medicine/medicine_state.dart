@@ -13,6 +13,8 @@ class MedicineSuccess extends MedicineState {
 class MedicineError extends MedicineState {
   final String error;
   MedicineError(this.error);
+
+  get message => null;
 }
 
 class MedicinesLoaded extends MedicineState {
