@@ -25,3 +25,13 @@ class FetchMedicinesForDate extends MedicineEvent {
 
   FetchMedicinesForDate(this.date);
 }
+
+class UpdateMedicine extends MedicineEvent {
+  final Medicine medicine;
+  UpdateMedicine({required this.medicine});
+}
+
+class RemoveMedicine extends MedicineEvent {
+  final String medicineId;
+  RemoveMedicine({required this.medicineId});
+}

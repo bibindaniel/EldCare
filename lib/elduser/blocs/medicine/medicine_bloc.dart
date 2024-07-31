@@ -11,6 +11,8 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
   MedicineBloc() : super(MedicineInitial()) {
     on<AddAndScheduleMedicine>(_onAddAndScheduleMedicine);
     on<FetchMedicinesForDate>(_onFetchMedicinesForDate);
+    on<UpdateMedicine>(_onUpdateMedicine);
+    on<RemoveMedicine>(_onRemoveMedicine);
   }
 
   void _onAddAndScheduleMedicine(
@@ -32,16 +34,39 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
       // Create a date range for the entire day
       final startOfDay =
           DateTime(event.date.year, event.date.month, event.date.day);
-      final endOfDay =
-          startOfDay.add(Duration(days: 1)).subtract(Duration(microseconds: 1));
+      final endOfDay = startOfDay
+          .add(const Duration(days: 1))
+          .subtract(const Duration(microseconds: 1));
 
       final medicines =
           await _repository.getMedicinesForDateRange(startOfDay, endOfDay);
-      print('Fetched medicines: $medicines');
       emit(MedicinesLoaded(medicines));
     } catch (e) {
-      print('Error fetching medicines: $e');
       emit(MedicineError(e.toString()));
+    }
+  }
+
+  void _onUpdateMedicine(
+      UpdateMedicine event, Emitter<MedicineState> emit) async {
+    emit(MedicineLoading());
+    try {
+      await _repository.updateMedicine(event.medicine);
+      emit(MedicineSuccess());
+    } catch (e) {
+      print('Error updating medicine: $e');
+      emit(MedicineError('Failed to update medicine: ${e.toString()}'));
+    }
+  }
+
+  void _onRemoveMedicine(
+      RemoveMedicine event, Emitter<MedicineState> emit) async {
+    emit(MedicineLoading());
+    try {
+      await _repository.removeMedicine(event.medicineId);
+      emit(MedicineSuccess());
+    } catch (e) {
+      print('Error removing medicine: $e');
+      emit(MedicineError('Failed to remove medicine: ${e.toString()}'));
     }
   }
 }

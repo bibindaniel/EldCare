@@ -117,4 +117,44 @@ class MedicineRepository {
       return [];
     }
   }
+
+  Future<void> updateMedicine(Medicine medicine) async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('medicines')
+            .doc(medicine.id)
+            .update(medicine.toMap());
+        print('Medicine updated successfully');
+      } else {
+        throw Exception('User not logged in');
+      }
+    } catch (e) {
+      print('Error updating medicine in repository: $e');
+      throw Exception('Failed to update medicine: ${e.toString()}');
+    }
+  }
+
+  Future<void> removeMedicine(String medicineId) async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('medicines')
+            .doc(medicineId)
+            .delete();
+        print('Medicine removed successfully');
+      } else {
+        throw Exception('User not logged in');
+      }
+    } catch (e) {
+      print('Error removing medicine in repository: $e');
+      throw Exception('Failed to remove medicine: ${e.toString()}');
+    }
+  }
 }

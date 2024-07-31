@@ -18,6 +18,7 @@ class AddMedicinePageState extends State<AddMedicinePage> {
   final _nameController = TextEditingController();
   final _dosageController = TextEditingController();
   final _quantityController = TextEditingController();
+  late TextEditingController frequencyController;
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
   String _selectedShape = '';
@@ -44,6 +45,21 @@ class AddMedicinePageState extends State<AddMedicinePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    frequencyController = TextEditingController(text: '$_frequency');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dosageController.dispose();
+    _quantityController.dispose();
+    frequencyController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => MedicineBloc(),
@@ -64,9 +80,7 @@ class AddMedicinePageState extends State<AddMedicinePage> {
             if (state is MedicineSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text(
-                    'Medicine added successfully',
-                  ),
+                  content: Text('Medicine added successfully'),
                   backgroundColor: kSuccessColor,
                 ),
               );
@@ -169,14 +183,15 @@ class AddMedicinePageState extends State<AddMedicinePage> {
     return SingleChildScrollView(
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField('Medicine Name', _nameController),
+            _buildTextField('Medicine Name', _nameController, _validateName),
             const SizedBox(height: 20),
-            _buildTextField('Dosage', _dosageController),
+            _buildTextField('Dosage', _dosageController, _validateDosage),
             const SizedBox(height: 20),
-            _buildTextField('Quantity', _quantityController),
+            _buildTextField('Quantity', _quantityController, _validateQuantity),
             const SizedBox(height: 20),
             const Text('Duration',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -216,19 +231,39 @@ class AddMedicinePageState extends State<AddMedicinePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('How many times a day?'),
-        DropdownButton<int>(
-          value: _frequency,
-          items: [1, 2, 3, 4].map((int value) {
-            return DropdownMenuItem<int>(
-              value: value,
-              child: Text('$value time(s)'),
-            );
-          }).toList(),
-          onChanged: (newValue) {
+        TextFormField(
+          controller: frequencyController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: 'Frequency',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          validator: (value) {
+            int? frequency = int.tryParse(value ?? '');
+            if (frequency == null || frequency <= 0 || frequency > 5) {
+              return 'Please enter a valid number between 1 and 5';
+            }
+            return null;
+          },
+          onChanged: (value) {
             setState(() {
-              _frequency = newValue!;
-              _scheduleTimes =
-                  List.generate(_frequency, (index) => TimeOfDay.now());
+              int frequency = int.tryParse(value) ?? 1;
+              if (frequency > 0 && frequency <= 5) {
+                _frequency = frequency;
+                _scheduleTimes =
+                    List.generate(_frequency, (index) => TimeOfDay.now());
+                frequencyController.text = value;
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content:
+                        Text('Please enter a valid number between 1 and 5'),
+                    backgroundColor: kErrorColor,
+                  ),
+                );
+              }
             });
           },
         ),
@@ -237,11 +272,32 @@ class AddMedicinePageState extends State<AddMedicinePage> {
         ..._scheduleTimes.asMap().entries.map((entry) {
           int idx = entry.key;
           TimeOfDay time = entry.value;
+          TextEditingController timeController = TextEditingController(
+            text: time.format(context),
+          );
           return ListTile(
-            title: Text('Dose ${idx + 1}: ${time.format(context)}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.access_time),
-              onPressed: () async {
+            title: TextFormField(
+              controller: timeController,
+              decoration: InputDecoration(
+                labelText: 'Dose ${idx + 1}',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.access_time),
+                  onPressed: () async {
+                    TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: time,
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _scheduleTimes[idx] = picked;
+                        timeController.text = picked.format(context);
+                      });
+                    }
+                  },
+                ),
+              ),
+              readOnly: true,
+              onTap: () async {
                 TimeOfDay? picked = await showTimePicker(
                   context: context,
                   initialTime: time,
@@ -249,6 +305,7 @@ class AddMedicinePageState extends State<AddMedicinePage> {
                 if (picked != null) {
                   setState(() {
                     _scheduleTimes[idx] = picked;
+                    timeController.text = picked.format(context);
                   });
                 }
               },
@@ -282,9 +339,25 @@ class AddMedicinePageState extends State<AddMedicinePage> {
   }
 
   void _submitForm(BuildContext context) {
-    print("Submit form called");
     if (_formKey.currentState!.validate()) {
-      print("Form validated");
+      if (_selectedShape.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a medicine shape'),
+            backgroundColor: kErrorColor,
+          ),
+        );
+        return;
+      }
+      if (_selectedColorName.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a medicine color'),
+            backgroundColor: kErrorColor,
+          ),
+        );
+        return;
+      }
       List<DateTime> scheduleTimes = _scheduleTimes.map((time) {
         final now = DateTime.now();
         return DateTime(now.year, now.month, now.day, time.hour, time.minute);
@@ -310,7 +383,8 @@ class AddMedicinePageState extends State<AddMedicinePage> {
     }
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      String? Function(String?)? validator) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -318,14 +392,62 @@ class AddMedicinePageState extends State<AddMedicinePage> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
+            color: kErrorColor,
+            width: 1.0,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
+            color: kSuccessColor,
+            width: 2.0,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
+            color: Colors.grey,
+            width: 1.0,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
+            color: kErrorColor,
+            width: 2.0,
+          ),
+        ),
       ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
+      validator: validator,
     );
+  }
+
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter the medicine name';
+    }
+    return null;
+  }
+
+  String? _validateDosage(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter the dosage';
+    }
+    return null;
+  }
+
+  String? _validateQuantity(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter the quantity';
+    }
+    final quantity = int.tryParse(value);
+    if (quantity == null || quantity <= 0) {
+      return 'Please enter a valid quantity';
+    }
+    return null;
   }
 
   Widget _buildDateField(
@@ -387,8 +509,9 @@ class AddMedicinePageState extends State<AddMedicinePage> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(
-              color: _selectedShape == shape ? kPrimaryColor : Colors.grey,
-              width: 2),
+            color: _selectedShape == shape ? kPrimaryColor : Colors.grey,
+            width: 2,
+          ),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Image.asset(
@@ -430,10 +553,10 @@ class AddMedicinePageState extends State<AddMedicinePage> {
             color: color,
             shape: BoxShape.circle,
             border: Border.all(
-                color: _selectedColorName == colorName
-                    ? kPrimaryColor
-                    : Colors.grey,
-                width: 2),
+              color:
+                  _selectedColorName == colorName ? kPrimaryColor : Colors.grey,
+              width: 2,
+            ),
           ),
         ),
       ),
