@@ -56,4 +56,30 @@ class Medicine {
       isBeforeFood: map['isBeforeFood'] ?? false,
     );
   }
+
+  Medicine copyWith({
+    String? id,
+    String? name,
+    String? dosage,
+    int? quantity,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? shape,
+    String? color,
+    List<DateTime>? scheduleTimes,
+    bool? isBeforeFood,
+  }) {
+    return Medicine(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      dosage: dosage ?? this.dosage,
+      quantity: quantity ?? this.quantity,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      shape: shape ?? this.shape,
+      color: color ?? this.color,
+      scheduleTimes: scheduleTimes ?? this.scheduleTimes,
+      isBeforeFood: isBeforeFood ?? this.isBeforeFood,
+    );
+  }
 }

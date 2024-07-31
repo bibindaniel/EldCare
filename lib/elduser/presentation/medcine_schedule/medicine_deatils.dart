@@ -1,4 +1,5 @@
 import 'package:eldcare/core/theme/font.dart';
+import 'package:eldcare/elduser/presentation/medcine_schedule/edit_medicine_scheulde.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -190,103 +191,6 @@ class MedicineDetailPage extends StatelessWidget {
     );
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return BlocProvider(
-  //     create: (context) => MedicineBloc(),
-  //     child: BlocConsumer<MedicineBloc, MedicineState>(
-  //       listener: (context, state) {
-  //         if (state is MedicineSuccess) {
-  //           ScaffoldMessenger.of(context).showSnackBar(
-  //             const SnackBar(
-  //                 content: Text('Operation completed successfully'),
-  //                 backgroundColor: kSuccessColor),
-  //           );
-  //           Navigator.pop(context);
-  //         } else if (state is MedicineError) {
-  //           ScaffoldMessenger.of(context).showSnackBar(
-  //             SnackBar(
-  //                 content: Text('Error: ${state.error}'),
-  //                 backgroundColor: kErrorColor),
-  //           );
-  //         }
-  //       },
-  //       builder: (context, state) {
-  //         return Scaffold(
-  //           appBar: AppBar(
-  //             backgroundColor: kPrimaryColor,
-  //             elevation: 0,
-  //             leading: IconButton(
-  //               icon: const Icon(Icons.arrow_back, color: Colors.white),
-  //               onPressed: () => Navigator.of(context).pop(),
-  //             ),
-  //             title: Text(medicine.name,
-  //                 style: const TextStyle(color: Colors.white)),
-  //             actions: [
-  //               IconButton(
-  //                 icon: const Icon(Icons.edit),
-  //                 onPressed: () => _showEditDialog(context),
-  //               ),
-  //               IconButton(
-  //                 icon: const Icon(Icons.delete),
-  //                 onPressed: () => _showRemoveDialog(context),
-  //               ),
-  //             ],
-  //           ),
-  //           body: CustomScrollView(
-  //             slivers: [
-  //               SliverToBoxAdapter(
-  //                 child: _buildHeader(),
-  //               ),
-  //               SliverPadding(
-  //                 padding: const EdgeInsets.all(16.0),
-  //                 sliver: SliverGrid(
-  //                   gridDelegate:
-  //                       const SliverGridDelegateWithFixedCrossAxisCount(
-  //                     crossAxisCount: 2,
-  //                     childAspectRatio: 1.5,
-  //                     crossAxisSpacing: 16,
-  //                     mainAxisSpacing: 16,
-  //                   ),
-  //                   delegate: SliverChildListDelegate([
-  //                     _buildInfoCard(
-  //                         'Pill Name', medicine.name, Icons.medication),
-  //                     _buildInfoCard(
-  //                         'Pill Dosage', medicine.dosage, Icons.straighten),
-  //                     _buildInfoCard(
-  //                         'Next Dose', _getNextDoseTime(), Icons.access_time),
-  //                     _buildInfoCard('Quantity', '${medicine.quantity} left',
-  //                         Icons.inventory),
-  //                   ]),
-  //                 ),
-  //               ),
-  //               SliverToBoxAdapter(
-  //                 child: Padding(
-  //                   padding: const EdgeInsets.all(16.0),
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-  //                       _buildDoseInfo(),
-  //                       const SizedBox(height: 24),
-  //                       _buildProgramInfo(),
-  //                       const SizedBox(height: 24),
-  //                       _buildQuantityInfo(),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           floatingActionButton: FloatingActionButton.extended(
-  //             onPressed: () => _showEditDialog(context),
-  //             icon: const Icon(Icons.edit),
-  //             label: const Text('Change Schedule'),
-  //           ),
-  //         );
-  //       },
-  //     ),
-  //   );
-  // }
   Widget _buildActionButton({
     required String title,
     required IconData icon,
@@ -317,35 +221,6 @@ class MedicineDetailPage extends StatelessWidget {
     );
   }
 
-  // Widget _buildHeader() {
-  //   return Container(
-  //     color: kPrimaryColor,
-  //     padding: const EdgeInsets.all(24.0),
-  //     child: Row(
-  //       children: [
-  //         _buildMedicineImage(),
-  //         const SizedBox(width: 24),
-  //         Expanded(
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Text(medicine.name,
-  //                   style: const TextStyle(
-  //                       fontSize: 24,
-  //                       fontWeight: FontWeight.bold,
-  //                       color: Colors.white)),
-  //               const SizedBox(height: 8),
-  //               Text(medicine.dosage,
-  //                   style:
-  //                       const TextStyle(fontSize: 18, color: Colors.white70)),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _buildInfoCard(String title, String value) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -361,61 +236,6 @@ class MedicineDetailPage extends StatelessWidget {
       ),
     );
   }
-  // Widget _buildInfoCard(String title, String value, IconData icon) {
-  //   return Card(
-  //     elevation: 2,
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(16.0),
-  //       child: Column(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         children: [
-  //           Text(title,
-  //               style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-  //           Icon(icon, size: 32, color: kPrimaryColor),
-  //           const SizedBox(height: 3),
-  //           Text(
-  //             value,
-  //             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-  //             textAlign: TextAlign.center,
-  //             overflow: TextOverflow.ellipsis,
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildMedicineImage() {
-  //   return Center(
-  //     child: Container(
-  //       width: 100,
-  //       height: 100,
-  //       decoration: BoxDecoration(
-  //         color: _getColor(medicine.color),
-  //         shape: BoxShape.circle,
-  //       ),
-  //       child: Image.asset(
-  //         _getShapeImagePath(medicine.shape),
-  //         color: Colors.white,
-  //         width: 60,
-  //         height: 60,
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildInfoCard(String title, String value) {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(vertical: 8.0),
-  //     child: Row(
-  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //       children: [
-  //         Text(title, style: AppFonts.cardSubtitle),
-  //         Text(value, style: AppFonts.cardTitle),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildDoseInfo() {
     return Column(
@@ -462,21 +282,6 @@ class MedicineDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildChangeScheduleButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () => _showEditDialog(context),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: kPrimaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-        child: const Text('Change Schedule'),
-      ),
-    );
-  }
-
   String _getNextDoseTime() {
     DateTime now = DateTime.now();
     for (DateTime time in medicine.scheduleTimes) {
@@ -488,66 +293,10 @@ class MedicineDetailPage extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    TextEditingController nameController =
-        TextEditingController(text: medicine.name);
-    TextEditingController dosageController =
-        TextEditingController(text: medicine.dosage);
-    TextEditingController quantityController =
-        TextEditingController(text: medicine.quantity.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Medicine'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Medicine Name'),
-              ),
-              TextField(
-                controller: dosageController,
-                decoration: const InputDecoration(labelText: 'Dosage'),
-              ),
-              TextField(
-                controller: quantityController,
-                decoration: const InputDecoration(labelText: 'Quantity'),
-                keyboardType: TextInputType.number,
-              ),
-              // Add more fields as needed
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Medicine updatedMedicine = Medicine(
-                id: medicine.id,
-                name: nameController.text,
-                dosage: dosageController.text,
-                quantity:
-                    int.tryParse(quantityController.text) ?? medicine.quantity,
-                startDate: medicine.startDate,
-                endDate: medicine.endDate,
-                shape: medicine.shape,
-                color: medicine.color,
-                scheduleTimes: medicine.scheduleTimes,
-                isBeforeFood: medicine.isBeforeFood,
-              );
-              context
-                  .read<MedicineBloc>()
-                  .add(UpdateMedicine(medicine: updatedMedicine));
-              Navigator.pop(context);
-            },
-            child: const Text('Update'),
-          ),
-        ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditMedicinePage(medicine: medicine),
       ),
     );
   }
@@ -555,12 +304,12 @@ class MedicineDetailPage extends StatelessWidget {
   void _showRemoveDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Remove Medicine'),
         content: const Text('Are you sure you want to remove this medicine?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -568,6 +317,7 @@ class MedicineDetailPage extends StatelessWidget {
               context
                   .read<MedicineBloc>()
                   .add(RemoveMedicine(medicineId: medicine.id));
+              Navigator.pop(dialogContext);
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(foregroundColor: kErrorColor),
