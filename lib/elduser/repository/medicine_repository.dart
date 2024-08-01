@@ -70,6 +70,33 @@ class MedicineRepository {
     }
   }
 
+  Future<List<Medicine>> getCompletedMedicines() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not logged in');
+      }
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('medicines')
+          .get();
+
+      final now = DateTime.now();
+
+      final completedMedicines = snapshot.docs
+          .map((doc) => Medicine.fromMap(doc.data(), doc.id))
+          .where((medicine) => medicine.endDate.isBefore(now))
+          .toList();
+
+      return completedMedicines;
+    } catch (e) {
+      print('Error fetching completed medicines: $e');
+      return [];
+    }
+  }
+
   Future<List<Medicine>> getMedicinesForDateRange(
       DateTime start, DateTime end) async {
     try {
@@ -114,6 +141,33 @@ class MedicineRepository {
       return medicines;
     } catch (e) {
       print('Error fetching medicines: $e');
+      return [];
+    }
+  }
+
+  Future<List<Medicine>> getUpcomingMedicines() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not logged in');
+      }
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('medicines')
+          .get();
+
+      final now = DateTime.now();
+
+      final upcomingMedicines = snapshot.docs
+          .map((doc) => Medicine.fromMap(doc.data(), doc.id))
+          .where((medicine) => medicine.endDate.isAfter(now))
+          .toList();
+
+      return upcomingMedicines;
+    } catch (e) {
+      print('Error fetching upcoming medicines: $e');
       return [];
     }
   }

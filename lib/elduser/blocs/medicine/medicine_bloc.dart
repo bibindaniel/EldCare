@@ -13,6 +13,8 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
     on<FetchMedicinesForDate>(_onFetchMedicinesForDate);
     on<UpdateMedicine>(_onUpdateMedicine);
     on<RemoveMedicine>(_onRemoveMedicine);
+    on<FetchUpcomingMedicines>(_onFetchUpcomingMedicines);
+    on<FetchCompletedMedicines>(_onFetchCompletedMedicines);
   }
 
   void _onAddAndScheduleMedicine(
@@ -46,6 +48,19 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
     }
   }
 
+  void _onFetchUpcomingMedicines(
+      FetchUpcomingMedicines event, Emitter<MedicineState> emit) async {
+    emit(MedicineLoading());
+    try {
+      final upcomingMedicines = await _repository.getUpcomingMedicines();
+      emit(UpcomingMedicinesLoaded(upcomingMedicines));
+    } catch (e) {
+      print('Error fetching upcoming medicines: $e');
+      emit(
+          MedicineError('Failed to fetch upcoming medicines: ${e.toString()}'));
+    }
+  }
+
   void _onUpdateMedicine(
       UpdateMedicine event, Emitter<MedicineState> emit) async {
     emit(MedicineLoading());
@@ -67,6 +82,19 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
     } catch (e) {
       print('Error removing medicine: $e');
       emit(MedicineError('Failed to remove medicine: ${e.toString()}'));
+    }
+  }
+
+  void _onFetchCompletedMedicines(
+      FetchCompletedMedicines event, Emitter<MedicineState> emit) async {
+    emit(MedicineLoading());
+    try {
+      final completedMedicines = await _repository.getCompletedMedicines();
+      emit(CompletedMedicinesLoaded(completedMedicines));
+    } catch (e) {
+      print('Error fetching completed medicines: $e');
+      emit(MedicineError(
+          'Failed to fetch completed medicines: ${e.toString()}'));
     }
   }
 }

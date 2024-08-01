@@ -22,3 +22,13 @@ class MedicinesLoaded extends MedicineState {
 
   MedicinesLoaded(this.medicines);
 }
+
+class UpcomingMedicinesLoaded extends MedicineState {
+  final List<Medicine> medicines;
+  UpcomingMedicinesLoaded(this.medicines);
+}
+
+class CompletedMedicinesLoaded extends MedicineState {
+  final List<Medicine> medicines;
+  CompletedMedicinesLoaded(this.medicines);
+}
