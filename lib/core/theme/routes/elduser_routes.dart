@@ -1,6 +1,5 @@
-import 'package:eldcare/elduser/models/medicine.dart';
 import 'package:eldcare/elduser/presentation/medcine_schedule/add_schedule.dart';
-import 'package:eldcare/elduser/presentation/medcine_schedule/schedule_medicine.dart';
+import 'package:eldcare/elduser/presentation/medcine_schedule/medicine_schedule.dart';
 import 'package:flutter/material.dart';
 
 class EldUserRoutes {
@@ -12,10 +11,8 @@ class EldUserRoutes {
       case addSchedule:
         return MaterialPageRoute(builder: (context) => const AddMedicinePage());
       case scheduleMedicine:
-        final medicine = settings.arguments as Medicine;
-        print("entered in medicine");
         return MaterialPageRoute(
-          builder: (context) => ScheduleMedicinePage(medicine: medicine),
+          builder: (context) => const ScheduleScreen(),
         );
       default:
         return MaterialPageRoute(

@@ -76,7 +76,7 @@ class AppFonts {
   static const TextStyle cardTitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.bold,
-    color: Colors.black,
+    color: kThridColor,
   );
   static const TextStyle cardSubtitle = TextStyle(
     fontSize: 16,

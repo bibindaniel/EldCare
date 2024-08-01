@@ -138,7 +138,7 @@ class MedicineDetailPage extends StatelessWidget {
                                   child: _buildActionButton(
                                     title: 'Edit',
                                     icon: Icons.edit,
-                                    color: Colors.blue,
+                                    color: kThridColor,
                                     onPressed: () {
                                       _showEditDialog(context);
                                     },
@@ -149,7 +149,7 @@ class MedicineDetailPage extends StatelessWidget {
                                   child: _buildActionButton(
                                     title: 'Remove',
                                     icon: Icons.delete,
-                                    color: Colors.red,
+                                    color: kSecondaryColor,
                                     onPressed: () {
                                       _showRemoveDialog(context);
                                     },
@@ -176,7 +176,7 @@ class MedicineDetailPage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kSurfaceColor,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -230,8 +230,10 @@ class MedicineDetailPage extends StatelessWidget {
           Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const SizedBox(height: 2),
           Text(value,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: kThridColor)),
         ],
       ),
     );
@@ -243,8 +245,9 @@ class MedicineDetailPage extends StatelessWidget {
       children: [
         const Text('Dose', style: AppFonts.cardTitle),
         Text(
-            '${medicine.scheduleTimes.length} times | ${medicine.scheduleTimes.map((t) => DateFormat('h:mm a').format(t)).join(', ')}',
-            style: AppFonts.cardSubtitle),
+          '${medicine.scheduleTimes.length} times | ${medicine.scheduleTimes.map((t) => DateFormat('h:mm a').format(t)).join(', ')}',
+          style: AppFonts.cardSubtitle,
+        ),
       ],
     );
   }
