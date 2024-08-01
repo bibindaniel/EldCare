@@ -80,6 +80,7 @@ flutter:
     - assets/images/pills/oval-pill.png
     - assets/images/pills/pills-bottle.png
     - assets/images/pills/round-pill.png
+    - assets/images/user/user1.jpg
    
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
