@@ -1,12 +1,15 @@
 import 'package:eldcare/elduser/models/medicine.dart';
+import 'package:eldcare/elduser/presentation/homescreen/notification_service.dart';
 import 'package:eldcare/elduser/repository/medicine_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:workmanager/workmanager.dart';
 
 part 'medicine_event.dart';
 part 'medicine_state.dart';
 
 class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
   final MedicineRepository _repository = MedicineRepository();
+  final NotificationService _notificationService = NotificationService();
 
   MedicineBloc() : super(MedicineInitial()) {
     on<AddAndScheduleMedicine>(_onAddAndScheduleMedicine);
@@ -22,6 +25,7 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
     emit(MedicineLoading());
     try {
       await _repository.addMedicine(event.medicine);
+      await _scheduleNotifications(event.medicine);
       emit(MedicineSuccess());
     } catch (e) {
       print('Error adding medicine: $e');
@@ -66,6 +70,7 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
     emit(MedicineLoading());
     try {
       await _repository.updateMedicine(event.medicine);
+      await _scheduleNotifications(event.medicine);
       emit(MedicineSuccess());
     } catch (e) {
       print('Error updating medicine: $e');
@@ -95,6 +100,48 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
       print('Error fetching completed medicines: $e');
       emit(MedicineError(
           'Failed to fetch completed medicines: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _scheduleNotifications(Medicine medicine) async {
+    for (var scheduleTime in medicine.scheduleTimes) {
+      int notificationId = medicine.id.hashCode + scheduleTime.hashCode;
+      String notificationTitle = 'Time to take ${medicine.name}';
+      String notificationBody = 'Dosage: ${medicine.dosage}';
+
+      DateTime now = DateTime.now();
+      DateTime scheduledDate = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        scheduleTime.hour,
+        scheduleTime.minute,
+      );
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(Duration(days: 1));
+      }
+
+      await _notificationService.showNotification(
+        notificationId,
+        notificationTitle,
+        notificationBody,
+        scheduledDate,
+      );
+
+      // Schedule a background task for recurring notifications
+      await Workmanager().registerPeriodicTask(
+        'medicine_notification_$notificationId',
+        'scheduleMedicineNotification',
+        frequency: Duration(days: 1),
+        inputData: {
+          'id': notificationId,
+          'title': notificationTitle,
+          'body': notificationBody,
+          'hour': scheduleTime.hour,
+          'minute': scheduleTime.minute,
+        },
+      );
     }
   }
 }

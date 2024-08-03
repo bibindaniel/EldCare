@@ -7,6 +7,7 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:eldcare/elduser/presentation/medcine_schedule/add_schedule.dart';
+import 'package:eldcare/elduser/presentation/userprofile/profilecheck.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -242,7 +243,16 @@ class HomeScreen extends StatelessWidget {
             title: const Text('Profile'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to profile screen
+              final authState = context.read<AuthBloc>().state;
+              if (authState is Authenticated) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ProfileCheckPage(userId: authState.user.uid),
+                  ),
+                );
+              }
             },
           ),
           ListTile(

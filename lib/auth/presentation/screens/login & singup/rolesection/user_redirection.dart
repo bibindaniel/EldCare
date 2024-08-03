@@ -28,6 +28,7 @@ class UserRedirection extends StatelessWidget {
           }
 
           final userData = snapshot.data!.data() as Map<String, dynamic>;
+          // final userRoleString = userData['role'] as int;
           final userRole = userData['role'] as int;
           print(userRole);
           return _buildHomeContent(context, userRole);
@@ -39,7 +40,7 @@ class UserRedirection extends StatelessWidget {
   Widget _buildHomeContent(BuildContext context, int role) {
     switch (role) {
       case 1:
-        return const HomeScreen();
+        return HomeScreen();
       case 2:
         print("care taker");
         return _CaretakerHome();
