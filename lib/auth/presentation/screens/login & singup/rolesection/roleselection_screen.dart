@@ -1,17 +1,21 @@
-import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/elderlyuser.dart';
+import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/user_redirection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
+import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
+import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   final List<Map<String, dynamic>> roles = [
-    {'name': 'Elderly User', 'icon': Icons.elderly},
-    {'name': 'Caretaker', 'icon': Icons.health_and_safety},
-    {'name': 'Doctor', 'icon': Icons.medical_services},
-    {'name': 'Pharmacist', 'icon': Icons.local_pharmacy},
-    {'name': 'Delivery Personnel', 'icon': Icons.delivery_dining},
+    {'name': 'Elderly User', 'icon': Icons.elderly, 'role': 1},
+    {'name': 'Caretaker', 'icon': Icons.health_and_safety, 'role': 2},
+    {'name': 'Doctor', 'icon': Icons.medical_services, 'role': 3},
+    {'name': 'Pharmacist', 'icon': Icons.local_pharmacy, 'role': 4},
+    {'name': 'Delivery Personnel', 'icon': Icons.delivery_dining, 'role': 5},
   ];
   final String userId;
+
   RoleSelectionScreen({super.key, required this.userId});
 
   @override
@@ -88,7 +92,7 @@ class RoleSelectionScreen extends StatelessWidget {
                         size: 18,
                       ),
                       onTap: () =>
-                          _onRoleSelected(context, roles[index]['name']),
+                          _onRoleSelected(context, roles[index]['role']),
                     ),
                   );
                 },
@@ -100,57 +104,12 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  void _onRoleSelected(BuildContext context, String role) {
-    Widget screenWidget;
-    switch (role) {
-      case 'Elderly User':
-        screenWidget = ElderlyUserDetailsScreen();
-        break;
-      case 'Caretaker':
-        screenWidget = RoleDetailsScreen(
-          role: role,
-        );
-        break;
-      case 'Doctor':
-        screenWidget = RoleDetailsScreen(
-          role: role,
-        );
-        break;
-      case 'Pharmacist':
-        screenWidget = RoleDetailsScreen(
-          role: role,
-        );
-        break;
-      case 'Delivery Personnel':
-        screenWidget = RoleDetailsScreen(
-          role: role,
-        );
-        break;
-      default:
-        screenWidget = Scaffold(body: Center(child: Text('Unknown role')));
-    }
-
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => screenWidget),
-    );
-  }
-}
-
-// Placeholder for the next screen
-class RoleDetailsScreen extends StatelessWidget {
-  final String role;
-
-  const RoleDetailsScreen({Key? key, required this.role}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$role Details'),
-      ),
-      body: Center(
-        child: Text('Enter $role specific details here'),
-      ),
+  void _onRoleSelected(BuildContext context, int role) {
+    // Add the SetUserRole event to the AuthBloc
+    BlocProvider.of<AuthBloc>(context).add(SetUserRole(userId, role));
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const UserRedirection()),
+      (Route<dynamic> route) => false,
     );
   }
 }

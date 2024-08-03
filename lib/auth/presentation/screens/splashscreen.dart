@@ -2,11 +2,11 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
+import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/user_redirection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
-import 'package:eldcare/elduser/presentation/homescreen/home_screen.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/login_screen.dart';
 
 class Splashscreen extends StatefulWidget {
@@ -33,7 +33,7 @@ class SplashscreenState extends State<Splashscreen> {
             // Navigate to HomeScreen if the user is authenticated
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              MaterialPageRoute(builder: (context) => const UserRedirection()),
             );
           } else if (state is Unauthenticated) {
             // Navigate to LoginScreen if the user is not authenticated

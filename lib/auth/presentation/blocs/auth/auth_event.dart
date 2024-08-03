@@ -42,4 +42,14 @@ class ForgotPasswordEvent extends AuthEvent {
   List<Object> get props => [email];
 }
 
+class SetUserRole extends AuthEvent {
+  final String userId;
+  final int role;
+
+  const SetUserRole(this.userId, this.role);
+
+  @override
+  List<Object> get props => [userId, role];
+}
+
 class LogoutEvent extends AuthEvent {}

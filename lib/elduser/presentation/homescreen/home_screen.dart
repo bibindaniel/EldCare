@@ -8,7 +8,7 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:eldcare/elduser/presentation/medcine_schedule/add_schedule.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
@@ -66,7 +66,7 @@ class HomeScreen extends StatelessWidget {
       leading: Builder(
         builder: (context) {
           return Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
               onTap: () => Scaffold.of(context).openDrawer(),
               child: BlocBuilder<AuthBloc, AuthState>(

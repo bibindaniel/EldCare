@@ -15,6 +15,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterEvent>(_onRegister);
     on<GoogleSignInEvent>(_onGoogleSignIn);
     on<ForgotPasswordEvent>(_onForgotPassword);
+    on<SetUserRole>(_onSetUserRole);
     on<LogoutEvent>(_onLogout);
   }
   Future<void> _onCheckLoginStatus(
@@ -97,14 +98,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           .set({
         'email': event.email,
         'name': event.name,
-        'role': -1,
+        'role': -1, // Keep role as -1 to indicate role selection is needed
       });
 
       emit(RoleSelectionNeeded(userCredential.user!));
-    } on FirebaseAuthException catch (e) {
-      emit(AuthError(e.message ?? 'An error occurred during registration'));
     } catch (e) {
-      emit(const AuthError('An unexpected error occurred'));
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -134,19 +133,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           .doc(userCredential.user!.uid)
           .get();
 
-      if (userDoc.exists) {
-        // User data exists, emit authenticated state
-        emit(Authenticated(userCredential.user!));
-      } else {
+      if (!userDoc.exists) {
+        // If user doesn't exist, create a new document
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
             .set({
           'email': userCredential.user!.email,
           'name': userCredential.user!.displayName,
-          'role': -1,
+          'role': -1, // Set role to -1 to indicate role selection is needed
         });
         emit(RoleSelectionNeeded(userCredential.user!));
+      } else {
+        // If user exists, check if role is set
+        final userData = userDoc.data()!;
+        if (userData['role'] == -1) {
+          emit(RoleSelectionNeeded(userCredential.user!));
+        } else {
+          emit(Authenticated(userCredential.user!));
+        }
       }
     } catch (e) {
       emit(AuthError(e.toString()));
@@ -161,6 +166,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(Unauthenticated());
     } on FirebaseAuthException catch (e) {
       emit(AuthError(e.message ?? 'An error occurred'));
+    }
+  }
+
+  Future<void> _onSetUserRole(
+      SetUserRole event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(event.userId)
+          .update({'role': event.role});
+
+      final user = _auth.currentUser;
+      if (user != null) {
+        emit(Authenticated(user));
+      } else {
+        emit(Unauthenticated());
+      }
+    } catch (e) {
+      emit(AuthError(e.toString()));
     }
   }
 
