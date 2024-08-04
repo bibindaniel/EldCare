@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart'; // Import material for Navigator
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   static final NotificationService _notificationService =
@@ -19,83 +20,105 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings initializationSettingsDarwin =
+    final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestSoundPermission: false,
-      requestBadgePermission: false,
-      requestAlertPermission: false,
+      requestSoundPermission: true,
+      requestBadgePermission: true,
+      requestAlertPermission: true,
+      onDidReceiveLocalNotification:
+          (int id, String? title, String? body, String? payload) async {
+        // Handle iOS foreground notification
+      },
     );
 
-    const InitializationSettings initializationSettings =
+    final InitializationSettings initializationSettings =
         InitializationSettings(
-            android: initializationSettingsAndroid,
-            iOS: initializationSettingsDarwin,
-            macOS: initializationSettingsDarwin);
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+      macOS: initializationSettingsDarwin,
+    );
 
     tz.initializeTimeZones();
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse);
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
+    );
+
+    // Request permissions for Android 13 and above
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+
+    // Request permissions for iOS
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
   }
 
   Future<void> _onDidReceiveNotificationResponse(
       NotificationResponse notificationResponse) async {
-    // Extract the notification details
-    final payload = notificationResponse.payload;
-
-    // Check if the notification response is for a medicine schedule
-    if (payload != null) {
-      // Parse the payload data (if needed)
-      final Map<String, dynamic> data =
-          Map<String, dynamic>.from(payload as Map);
-
-      // Extract details from the payload
-      final notificationId = data['id'];
-      final title = data['title'];
-      final body = data['body'];
-
-      // Navigate to the relevant screen based on the notification
-      // You may need to get the context from somewhere like a global key or a service
-      // This example assumes you have some method to handle navigation, adapt as needed
+    final String? payload = notificationResponse.payload;
+    if (notificationResponse.payload != null) {
+      print('notification payload: $payload');
+      // Handle navigation here
       Navigator.of(navigationKey.currentContext!).pushNamed(
         '/medicineDetail',
-        arguments: {
-          'notificationId': notificationId,
-          'title': title,
-          'body': body,
-        },
+        arguments: payload,
       );
     } else {
-      // Handle cases where there is no payload (if needed)
       print('Notification tapped with no payload');
     }
   }
 
   Future<void> showNotification(
       int id, String title, String body, DateTime scheduledDate) async {
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'medicine_notification_channel',
-          'Medicine Notifications',
-          channelDescription: 'Notifications for medicine schedules',
-          importance: Importance.max,
-          priority: Priority.high,
-          ticker: 'ticker',
-          playSound: true,
+    print(
+        'Scheduling notification: id=$id, title=$title, body=$body, scheduledDate=$scheduledDate');
+    try {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'medicine_notification_channel',
+            'Medicine Notifications',
+            channelDescription: 'Notifications for medicine schedules',
+            importance: Importance.max,
+            priority: Priority.high,
+            ticker: 'ticker',
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-    );
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+      print('Notification scheduled successfully');
+    } catch (e) {
+      print('Error scheduling notification: $e');
+    }
+  }
+
+  Future<void> scheduleNotificationFromBackground(
+      int id, String title, String body, int hour, int minute) async {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    await showNotification(id, title, body, scheduledDate);
   }
 }
 
-// Define a global key for navigation (if not already defined)
 final GlobalKey<NavigatorState> navigationKey = GlobalKey<NavigatorState>();

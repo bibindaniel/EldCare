@@ -12,19 +12,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService().init();
-  await Workmanager().initialize(callbackDispatcher);
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
-}
-
+@pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    tz.initializeTimeZones();
+
     switch (task) {
       case 'scheduleMedicineNotification':
         final id = inputData!['id'];
@@ -33,24 +27,23 @@ void callbackDispatcher() {
         final hour = inputData['hour'];
         final minute = inputData['minute'];
 
-        final scheduledDate = DateTime(
-          DateTime.now().year,
-          DateTime.now().month,
-          DateTime.now().day,
-          hour,
-          minute,
-        );
-
-        await NotificationService().showNotification(
-          id,
-          title,
-          body,
-          scheduledDate,
-        );
+        await NotificationService()
+            .scheduleNotificationFromBackground(id, title, body, hour, minute);
         break;
     }
     return Future.value(true);
   });
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+  await NotificationService().init();
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

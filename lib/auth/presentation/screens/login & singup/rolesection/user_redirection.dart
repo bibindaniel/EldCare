@@ -28,8 +28,8 @@ class UserRedirection extends StatelessWidget {
           }
 
           final userData = snapshot.data!.data() as Map<String, dynamic>;
-          // final userRoleString = userData['role'] as int;
-          final userRole = userData['role'] as int;
+          final userRoleString = userData['role'] as String;
+          final userRole = int.parse(userRoleString);
           print(userRole);
           return _buildHomeContent(context, userRole);
         },
