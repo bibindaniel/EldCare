@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:eldcare/elduser/presentation/homescreen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,10 +16,10 @@ class ProfileUpdatePage extends StatefulWidget {
   const ProfileUpdatePage({super.key, required this.userId});
 
   @override
-  _ProfileUpdatePageState createState() => _ProfileUpdatePageState();
+  ProfileUpdatePageState createState() => ProfileUpdatePageState();
 }
 
-class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
+class ProfileUpdatePageState extends State<ProfileUpdatePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -29,11 +30,12 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  String _selectedBloodType = 'A+';
+  late String _selectedBloodType;
 
   @override
   void initState() {
     super.initState();
+    _selectedBloodType = 'A+';
     context.read<UserProfileBloc>().add(LoadUserProfile(widget.userId));
   }
 
@@ -53,7 +55,13 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
             );
           } else if (state is UserProfileUpdated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully')),
+              const SnackBar(
+                content: Text('Profile updated successfully'),
+                backgroundColor: kSuccessColor,
+              ),
+            );
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
           }
         },
@@ -66,144 +74,7 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
                 ? state.userProfile
                 : (state as UserProfileUpdated).userProfile;
             _populateFields(userProfile);
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // _buildProfileImage(context, userProfile.profileImageUrl),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _nameController,
-                      label: 'Name',
-                      validator: (value) =>
-                          value!.isEmpty ? 'Name is required' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _emailController,
-                      label: 'Email',
-                      validator: (value) =>
-                          value!.isEmpty ? 'Email is required' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _ageController,
-                      label: 'Age',
-                      keyboardType: TextInputType.number,
-                      validator: validateAge,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _phoneController,
-                      label: 'Phone',
-                      keyboardType: TextInputType.phone,
-                      validator: validatePhoneNumber,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _houseNameController,
-                      label: 'House Name',
-                      validator: validateHouseName,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _streetController,
-                      label: 'Street',
-                      validator: validateStreet,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomTextFormField(
-                            controller: _cityController,
-                            label: 'City',
-                            validator: validateCity,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: CustomTextFormField(
-                            controller: _stateController,
-                            label: 'State',
-                            validator: validateState,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomTextFormField(
-                            controller: _postalCodeController,
-                            label: 'Postal Code',
-                            keyboardType: TextInputType.number,
-                            validator: validatePostalCode,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              labelText: 'Blood Type',
-                              border: OutlineInputBorder(),
-                            ),
-                            value: _selectedBloodType,
-                            items: [
-                              'A+',
-                              'A-',
-                              'B+',
-                              'B-',
-                              'AB+',
-                              'AB-',
-                              'O+',
-                              'O-'
-                            ].map((String bloodType) {
-                              return DropdownMenuItem<String>(
-                                value: bloodType,
-                                child: Text(bloodType),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedBloodType = newValue!;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    CustomButton(
-                      text: 'Update Profile',
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          final updatedProfile = userProfile.copyWith(
-                            name: _nameController.text,
-                            email: _emailController.text,
-                            age: _ageController.text,
-                            phone: _phoneController.text,
-                            houseName: _houseNameController.text,
-                            street: _streetController.text,
-                            city: _cityController.text,
-                            state: _stateController.text,
-                            postalCode: _postalCodeController.text,
-                            bloodType: _selectedBloodType,
-                          );
-                          context
-                              .read<UserProfileBloc>()
-                              .add(UpdateUserProfile(updatedProfile));
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _buildForm(userProfile);
           } else {
             return const Center(child: Text('Failed to load profile'));
           }
@@ -243,6 +114,168 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
     _stateController.text = userProfile.state ?? '';
     _postalCodeController.text = userProfile.postalCode ?? '';
     _selectedBloodType = userProfile.bloodType ?? 'A+';
+  }
+
+  Widget _buildForm(UserProfile userProfile) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildProfileImage(context, userProfile.profileImageUrl),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _nameController,
+              label: 'Name',
+              validator: validateName,
+            ),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _emailController,
+              label: 'Email',
+              validator: validateEmail,
+            ),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _ageController,
+              label: 'Age',
+              keyboardType: TextInputType.number,
+              validator: validateAge,
+            ),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _phoneController,
+              label: 'Phone',
+              keyboardType: TextInputType.phone,
+              validator: validatePhoneNumber,
+            ),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _houseNameController,
+              label: 'House Name',
+              validator: validateHouseName,
+            ),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _streetController,
+              label: 'Street',
+              validator: validateStreet,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextFormField(
+                    controller: _cityController,
+                    label: 'City',
+                    validator: validateCity,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: CustomTextFormField(
+                    controller: _stateController,
+                    label: 'State',
+                    validator: validateState,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextFormField(
+                    controller: _postalCodeController,
+                    label: 'Postal Code',
+                    keyboardType: TextInputType.number,
+                    validator: validatePostalCode,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildBloodTypeDropdown(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            CustomButton(
+              text: 'Update Profile',
+              onPressed: () => _updateProfile(userProfile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBloodTypeDropdown() {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return DropdownButtonFormField<String>(
+          decoration: const InputDecoration(
+            labelText: 'Blood Type',
+            border: OutlineInputBorder(),
+          ),
+          value: _selectedBloodType,
+          items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+              .map((String bloodType) {
+            return DropdownMenuItem<String>(
+              value: bloodType,
+              child: Text(bloodType),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              setState(() {
+                _selectedBloodType = newValue;
+              });
+            }
+          },
+        );
+      },
+    );
+  }
+
+  void _updateProfile(UserProfile userProfile) {
+    if (_formKey.currentState!.validate()) {
+      final updatedProfile = userProfile.copyWith(
+        name: _nameController.text,
+        email: _emailController.text,
+        age: _ageController.text,
+        phone: _phoneController.text,
+        houseName: _houseNameController.text,
+        street: _streetController.text,
+        city: _cityController.text,
+        state: _stateController.text,
+        postalCode: _postalCodeController.text,
+        bloodType: _selectedBloodType,
+        isProfileComplete: true,
+      );
+      context.read<UserProfileBloc>().add(UpdateUserProfile(updatedProfile));
+    }
+  }
+
+  String? validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Name is required';
+    }
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Invalid name';
+    }
+    return null;
+  }
+
+  String? validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Invalid email address';
+    }
+    return null;
   }
 
   String? validateCity(String? value) {

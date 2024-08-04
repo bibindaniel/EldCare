@@ -1,4 +1,4 @@
-import 'package:eldcare/elduser/presentation/homescreen/home_screen.dart';
+import 'package:eldcare/elduser/presentation/userprofile/profileupdate.dart';
 import 'package:eldcare/elduser/presentation/userprofile/userprofilecompletion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,7 +32,12 @@ class ProfileCheckPage extends StatelessWidget {
             if (state.userProfile.isProfileComplete) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: context.read<UserProfileBloc>(),
+                      child: ProfileUpdatePage(userId: userId),
+                    ),
+                  ),
                 );
               });
             } else {

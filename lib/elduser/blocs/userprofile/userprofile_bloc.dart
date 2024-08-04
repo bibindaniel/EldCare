@@ -14,7 +14,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   UserProfileBloc(this._repository) : super(UserProfileInitial()) {
     on<LoadUserProfile>(_onLoadUserProfile);
     on<UpdateUserProfile>(_onUpdateUserProfile);
-    // on<UploadProfileImage>(_onUploadProfileImage);
+    on<UploadProfileImage>(_onUploadProfileImage);
     on<VerifyUser>(_onVerifyUser);
     on<CompleteProfile>(_onCompleteProfile);
   }
@@ -40,33 +40,35 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     emit(UserProfileLoading());
     try {
       await _repository.updateUserProfile(event.userProfile);
-      emit(UserProfileUpdated(event.userProfile));
+      final updatedProfile =
+          await _repository.getUserProfile(event.userProfile.id);
+      emit(UserProfileUpdated(updatedProfile));
     } catch (e) {
       emit(UserProfileError(e.toString()));
     }
   }
 
-  // Future<void> _onUploadProfileImage(
-  //   UploadProfileImage event,
-  //   Emitter<UserProfileState> emit,
-  // ) async {
-  //   emit(UserProfileLoading());
-  //   try {
-  //     final imageUrl = await _repository.uploadProfileImage(event.image);
-  //     final currentState = state;
-  //     if (currentState is UserProfileLoaded) {
-  //       final updatedProfile = currentState.userProfile.copyWith(
-  //         // profileImageUrl: imageUrl,
-  //       );
-  //       await _repository.updateUserProfile(updatedProfile);
-  //       emit(UserProfileUpdated(updatedProfile));
-  //     } else {
-  //       throw Exception('User profile not loaded');
-  //     }
-  //   } catch (e) {
-  //     emit(UserProfileError(e.toString()));
-  //   }
-  // }
+  Future<void> _onUploadProfileImage(
+    UploadProfileImage event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    emit(UserProfileLoading());
+    try {
+      final imageUrl = await _repository.uploadProfileImage(event.image);
+      final currentState = state;
+      if (currentState is UserProfileLoaded) {
+        final updatedProfile = currentState.userProfile.copyWith(
+          profileImageUrl: imageUrl,
+        );
+        await _repository.updateUserProfile(updatedProfile);
+        emit(UserProfileUpdated(updatedProfile));
+      } else {
+        throw Exception('User profile not loaded');
+      }
+    } catch (e) {
+      emit(UserProfileError(e.toString()));
+    }
+  }
 
   Future<void> _onVerifyUser(
     VerifyUser event,

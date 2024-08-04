@@ -98,7 +98,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           .set({
         'email': event.email,
         'name': event.name,
-        'role': -1, // Keep role as -1 to indicate role selection is needed
+        'role': -1,
+        'isProfileComplete': false,
       });
 
       emit(RoleSelectionNeeded(userCredential.user!));
@@ -141,7 +142,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             .set({
           'email': userCredential.user!.email,
           'name': userCredential.user!.displayName,
-          'role': -1, // Set role to -1 to indicate role selection is needed
+          'role': -1,
+          'isProfileComplete': false,
         });
         emit(RoleSelectionNeeded(userCredential.user!));
       } else {

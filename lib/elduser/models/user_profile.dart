@@ -10,7 +10,7 @@ class UserProfile {
   final String? state;
   final String? postalCode;
   final String? bloodType;
-  // final String? profileImageUrl;
+  final String? profileImageUrl;
   final bool isVerified;
   final bool isProfileComplete;
 
@@ -26,7 +26,7 @@ class UserProfile {
     this.state,
     this.postalCode,
     this.bloodType,
-    // this.profileImageUrl,
+    this.profileImageUrl,
     this.isVerified = false,
     this.isProfileComplete = false,
   });
@@ -43,7 +43,7 @@ class UserProfile {
     String? state,
     String? postalCode,
     String? bloodType,
-    // String? profileImageUrl,
+    String? profileImageUrl,
     bool? isVerified,
     bool? isProfileComplete,
   }) {
@@ -59,7 +59,7 @@ class UserProfile {
       state: state ?? this.state,
       postalCode: postalCode ?? this.postalCode,
       bloodType: bloodType ?? this.bloodType,
-      // profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isVerified: isVerified ?? this.isVerified,
       isProfileComplete: isProfileComplete ?? this.isProfileComplete,
     );
@@ -78,7 +78,7 @@ class UserProfile {
       state: map['state'],
       postalCode: map['postalCode'],
       bloodType: map['bloodType'],
-      // profileImageUrl: map['profileImageUrl'],
+      profileImageUrl: map['profileImageUrl'],
       isVerified: map['isVerified'] ?? false,
       isProfileComplete: map['isProfileComplete'] ?? false,
     );
@@ -97,7 +97,7 @@ class UserProfile {
       'state': state,
       'postalCode': postalCode,
       'bloodType': bloodType,
-      // 'profileImageUrl': profileImageUrl,
+      'profileImageUrl': profileImageUrl,
       'isVerified': isVerified,
       'isProfileComplete': isProfileComplete,
     };
