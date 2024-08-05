@@ -81,6 +81,7 @@ flutter:
     - assets/images/icons/img2.jpg
     - assets/images/icons/eldcare.png
     - assets/animations/medical.json
+    - assets/animations/
     - assets/images/pills/eye-drops.png
     - assets/images/pills/inhaler.png
     - assets/images/pills/meds.png

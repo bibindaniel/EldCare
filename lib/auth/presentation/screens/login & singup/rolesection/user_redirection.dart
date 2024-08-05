@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eldcare/admin/presentation/admin_panelscreen.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/elduser/presentation/homescreen/home_screen.dart';
+import 'package:eldcare/pharmacy/presentation/homescreen/pharmhomescreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -48,7 +49,7 @@ class UserRedirection extends StatelessWidget {
       case 3:
         return _DoctorHome();
       case 4:
-        return _PharmacistHome();
+        return const PharmacistHomeScreen();
       case 5:
         return _DeliveryPersonnelHome();
       case 6:
@@ -87,14 +88,14 @@ class _DoctorHome extends StatelessWidget {
   }
 }
 
-class _PharmacistHome extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Welcome, Pharmacist!', style: AppFonts.headline2),
-    );
-  }
-}
+// class _PharmacistHome extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Center(
+//       child: Text('Welcome, Pharmacist!', style: AppFonts.headline2),
+//     );
+//   }
+// }
 
 class _DeliveryPersonnelHome extends StatelessWidget {
   @override
