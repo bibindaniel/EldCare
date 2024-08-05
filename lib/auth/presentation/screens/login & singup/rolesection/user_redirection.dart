@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eldcare/admin/presentation/admin_panelscreen.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/elduser/presentation/homescreen/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,8 +29,8 @@ class UserRedirection extends StatelessWidget {
           }
 
           final userData = snapshot.data!.data() as Map<String, dynamic>;
-          final userRoleString = userData['role'] as String;
-          final userRole = int.parse(userRoleString);
+          final userRoleString = userData['role'] as int;
+          final userRole = userRoleString;
           print(userRole);
           return _buildHomeContent(context, userRole);
         },
@@ -40,7 +41,7 @@ class UserRedirection extends StatelessWidget {
   Widget _buildHomeContent(BuildContext context, int role) {
     switch (role) {
       case 1:
-        return HomeScreen();
+        return const HomeScreen();
       case 2:
         print("care taker");
         return _CaretakerHome();
@@ -50,6 +51,9 @@ class UserRedirection extends StatelessWidget {
         return _PharmacistHome();
       case 5:
         return _DeliveryPersonnelHome();
+      case 6:
+        return AdminPanel();
+
       default:
         return const Center(child: Text('Unknown role'));
     }

@@ -2,6 +2,7 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
+import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/user_redirection.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -73,7 +74,10 @@ class LoginScreen extends StatelessWidget {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          Navigator.of(context).pushReplacementNamed('/home');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const UserRedirection()),
+          );
         } else if (state is RoleSelectionNeeded) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
