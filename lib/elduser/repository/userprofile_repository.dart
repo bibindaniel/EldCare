@@ -11,9 +11,11 @@ class UserProfileRepository {
 
   Future<UserProfile> getUserProfile(String userId) async {
     try {
+      print('Fetching user profile for userId: $userId'); // Debugging
       final docSnapshot =
           await _firestore.collection('users').doc(userId).get();
       if (docSnapshot.exists) {
+        print('User profile data: ${docSnapshot.data()}'); // Debugging
         return UserProfile.fromMap(docSnapshot.data()!);
       } else {
         throw Exception('User profile not found');

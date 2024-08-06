@@ -8,6 +8,8 @@ import 'package:eldcare/firebase_options.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/screens/splashscreen.dart';
+import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_bloc.dart';
+import 'package:eldcare/pharmacy/repository/pharmacist_profile_repository.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,6 +60,9 @@ class MyApp extends StatelessWidget {
           BlocProvider(create: (context) => AuthBloc()),
           BlocProvider(
               create: (context) => UserProfileBloc(UserProfileRepository())),
+          BlocProvider(
+              create: (context) =>
+                  PharmacistProfileBloc(PharmacistProfileRepository())),
           BlocProvider(create: (context) => NavigationBloc()),
           BlocProvider(
               create: (context) => MedicineBloc()

@@ -60,6 +60,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
         final updatedProfile = currentState.userProfile.copyWith(
           profileImageUrl: imageUrl,
         );
+
         await _repository.updateUserProfile(updatedProfile);
         emit(UserProfileUpdated(updatedProfile));
       } else {

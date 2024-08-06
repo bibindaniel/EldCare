@@ -1,4 +1,5 @@
 import 'package:eldcare/pharmacy/presentation/homescreen/homescreencontent.dart';
+import 'package:eldcare/pharmacy/presentation/profile/profilecheck.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -178,7 +179,16 @@ class PharmacistHomeScreen extends StatelessWidget {
             title: const Text('Profile'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to profile screen
+              final authState = context.read<AuthBloc>().state;
+              if (authState is Authenticated) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PharmacistProfileCheckPage(
+                        pharmacistId: authState.user.uid),
+                  ),
+                );
+              }
             },
           ),
           ListTile(
