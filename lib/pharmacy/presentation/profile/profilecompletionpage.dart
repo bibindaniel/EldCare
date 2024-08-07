@@ -322,8 +322,8 @@ class PharmacistProfileCompletionPageState
     if (value == null || value.isEmpty) {
       return 'Phone number is required';
     }
-    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-      return 'Invalid phone number';
+    if (!RegExp(r'^[6789]\d{9}$').hasMatch(value)) {
+      return 'Invalid Indian phone number';
     }
     return null;
   }

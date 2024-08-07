@@ -1,5 +1,8 @@
+import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
 import 'package:eldcare/pharmacy/presentation/homescreen/homescreencontent.dart';
 import 'package:eldcare/pharmacy/presentation/profile/profilecheck.dart';
+import 'package:eldcare/pharmacy/presentation/shop/add_shop.dart';
+import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -13,19 +16,36 @@ class PharmacistHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is Unauthenticated) {
-          Navigator.pushReplacementNamed(context, '/login');
+    return BlocProvider(
+      create: (context) {
+        final authState = context.read<AuthBloc>().state;
+        String? ownerId;
+        if (authState is Authenticated) {
+          ownerId = authState.user.uid;
+          print('Creating ShopBloc with ownerId: $ownerId');
+          final bloc = ShopBloc(shopRepository: ShopRepository());
+          bloc.add(LoadShopsEvent(ownerId: ownerId));
+          return bloc;
+        } else {
+          print('User not authenticated');
+          return ShopBloc(shopRepository: ShopRepository());
         }
       },
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        body: const PharmacistHomeContent(),
-        floatingActionButton: _buildFloatingActionButton(),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: _buildBottomNavigationBar(),
-        drawer: _buildDrawer(context),
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is Unauthenticated) {
+            Navigator.pushReplacementNamed(context, '/login');
+          }
+        },
+        child: Scaffold(
+          appBar: _buildAppBar(context),
+          body: const PharmacistHomeContent(),
+          floatingActionButton: _buildFloatingActionButton(context),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          bottomNavigationBar: _buildBottomNavigationBar(),
+          drawer: _buildDrawer(context),
+        ),
       ),
     );
   }
@@ -78,10 +98,13 @@ class PharmacistHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFloatingActionButton() {
+  Widget _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        // Add your button action here
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => AddShopPage(
+                  shopRepository: ShopRepository(),
+                )));
       },
       backgroundColor: kThridColor,
       child: const Icon(Icons.add),
@@ -97,10 +120,11 @@ class PharmacistHomeScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _buildNavItem(Icons.home, 'Home'),
+            _buildNavItem(Icons.store, 'Shops'),
             _buildNavItem(Icons.inventory, 'Inventory'),
-            _buildNavItem(Icons.notifications, 'Notifications'),
-            _buildNavItem(Icons.person, 'Profile'),
+            const SizedBox(width: 40), // Space for the FloatingActionButton
+            _buildNavItem(Icons.shopping_cart, 'Orders'),
+            _buildNavItem(Icons.analytics, 'Analytics'),
           ],
         ),
       ),

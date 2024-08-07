@@ -82,5 +82,10 @@ class AppFonts {
     fontSize: 16,
     color: Colors.black87,
   );
-  // Add more styles as needed...
+  static const TextStyle subtitle1Bold = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: kBlackColor,
+  );
 }
