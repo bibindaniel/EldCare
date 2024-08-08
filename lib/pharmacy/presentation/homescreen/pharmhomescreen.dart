@@ -1,50 +1,60 @@
-import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
-import 'package:eldcare/pharmacy/presentation/homescreen/homescreencontent.dart';
-import 'package:eldcare/pharmacy/presentation/profile/profilecheck.dart';
-import 'package:eldcare/pharmacy/presentation/shop/add_shop.dart';
-import 'package:eldcare/pharmacy/repository/shop.dart';
-import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
+import 'package:eldcare/pharmacy/blocs/pharmacist_navigation/pharmacist_navigation_bloc.dart';
+import 'package:eldcare/pharmacy/repository/shop.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
+import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
+import 'package:eldcare/pharmacy/presentation/homescreen/homescreencontent.dart';
+import 'package:eldcare/pharmacy/presentation/inventory/inventorypage.dart';
+import 'package:eldcare/pharmacy/presentation/profile/profilecheck.dart';
+import 'package:eldcare/pharmacy/presentation/shop/add_shop.dart';
 
 class PharmacistHomeScreen extends StatelessWidget {
   const PharmacistHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final authState = context.read<AuthBloc>().state;
-        String? ownerId;
-        if (authState is Authenticated) {
-          ownerId = authState.user.uid;
-          print('Creating ShopBloc with ownerId: $ownerId');
-          final bloc = ShopBloc(shopRepository: ShopRepository());
-          bloc.add(LoadShopsEvent(ownerId: ownerId));
-          return bloc;
-        } else {
-          print('User not authenticated');
-          return ShopBloc(shopRepository: ShopRepository());
-        }
-      },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => PharmacistNavigationBloc()),
+        BlocProvider(
+          create: (context) {
+            final authState = context.read<AuthBloc>().state;
+            String? ownerId;
+            if (authState is Authenticated) {
+              ownerId = authState.user.uid;
+              final bloc = ShopBloc(shopRepository: ShopRepository());
+              bloc.add(LoadShopsEvent(ownerId: ownerId));
+              return bloc;
+            } else {
+              return ShopBloc(shopRepository: ShopRepository());
+            }
+          },
+        ),
+      ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Unauthenticated) {
             Navigator.pushReplacementNamed(context, '/login');
           }
         },
-        child: Scaffold(
-          appBar: _buildAppBar(context),
-          body: const PharmacistHomeContent(),
-          floatingActionButton: _buildFloatingActionButton(context),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
-          bottomNavigationBar: _buildBottomNavigationBar(),
-          drawer: _buildDrawer(context),
+        child: BlocBuilder<PharmacistNavigationBloc, PharmacistNavigationState>(
+          builder: (context, navigationState) {
+            return Scaffold(
+              appBar: _buildAppBar(context),
+              body: _getSelectedScreen(navigationState.currentItem),
+              floatingActionButton: _buildFloatingActionButton(context),
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerDocked,
+              bottomNavigationBar:
+                  _buildBottomNavigationBar(context, navigationState),
+              drawer: _buildDrawer(context),
+            );
+          },
         ),
       ),
     );
@@ -98,6 +108,21 @@ class PharmacistHomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _getSelectedScreen(NavigationItem item) {
+    switch (item) {
+      case NavigationItem.shops:
+        return const PharmacistHomeContent();
+      case NavigationItem.inventory:
+        return const InventoryPage();
+      case NavigationItem.orders:
+        return const Center(child: Text('Orders Screen'));
+      case NavigationItem.analytics:
+        return const Center(child: Text('Analytics Screen'));
+      case NavigationItem.profile:
+        return const Center(child: Text('Profile Screen'));
+    }
+  }
+
   Widget _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
@@ -111,7 +136,8 @@ class PharmacistHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNavigationBar() {
+  Widget _buildBottomNavigationBar(
+      BuildContext context, PharmacistNavigationState navigationState) {
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
       notchMargin: 10,
@@ -120,34 +146,54 @@ class PharmacistHomeScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _buildNavItem(Icons.store, 'Shops'),
-            _buildNavItem(Icons.inventory, 'Inventory'),
+            _buildNavItem(context, Icons.store, 'Shops', NavigationItem.shops,
+                navigationState),
+            _buildNavItem(context, Icons.inventory, 'Inventory',
+                NavigationItem.inventory, navigationState),
             const SizedBox(width: 40), // Space for the FloatingActionButton
-            _buildNavItem(Icons.shopping_cart, 'Orders'),
-            _buildNavItem(Icons.analytics, 'Analytics'),
+            _buildNavItem(context, Icons.shopping_cart, 'Orders',
+                NavigationItem.orders, navigationState),
+            _buildNavItem(context, Icons.analytics, 'Analytics',
+                NavigationItem.analytics, navigationState),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label) {
+  Widget _buildNavItem(BuildContext context, IconData icon, String label,
+      NavigationItem item, PharmacistNavigationState state) {
     return MaterialButton(
       minWidth: 40,
       onPressed: () {
-        // Handle navigation
+        context.read<PharmacistNavigationBloc>().add(_getNavigationEvent(item));
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             icon,
-            color: kThridColor,
+            color: state.currentItem == item ? kPrimaryColor : Colors.grey,
           ),
           Text(label),
         ],
       ),
     );
+  }
+
+  PharmacistNavigationEvent _getNavigationEvent(NavigationItem item) {
+    switch (item) {
+      case NavigationItem.shops:
+        return NavigateToShops();
+      case NavigationItem.inventory:
+        return NavigateToInventory();
+      case NavigationItem.orders:
+        return NavigateToOrders();
+      case NavigationItem.analytics:
+        return NavigateToAnalytics();
+      case NavigationItem.profile:
+        return NavigateToProfile();
+    }
   }
 
   Drawer _buildDrawer(BuildContext context) {

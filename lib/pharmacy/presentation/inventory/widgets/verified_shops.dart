@@ -1,14 +1,13 @@
-import 'package:eldcare/pharmacy/model/shop.dart';
-import 'package:eldcare/pharmacy/presentation/shop/updateshop.dart';
-import 'package:eldcare/pharmacy/repository/shop.dart';
+import 'package:eldcare/pharmacy/presentation/inventory/inventory_management.dart';
 import 'package:flutter/material.dart';
+import 'package:eldcare/pharmacy/model/shop.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 
-class ShopCard extends StatelessWidget {
+class VerifiedShopCard extends StatelessWidget {
   final Shop shop;
 
-  const ShopCard({super.key, required this.shop});
+  const VerifiedShopCard({super.key, required this.shop});
 
   @override
   Widget build(BuildContext context) {
@@ -17,11 +16,7 @@ class ShopCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UpdateShopPage(
-              shop: shop,
-              shopRepository: ShopRepository(),
-            ),
-          ),
+              builder: (context) => InventoryManagementPage(shop: shop)),
         );
       },
       child: Card(
@@ -29,10 +24,9 @@ class ShopCard extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: kSecondaryColor,
         child: Container(
-          width: 160,
           padding: const EdgeInsets.all(12),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center, // Center the content
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -42,25 +36,24 @@ class ShopCard extends StatelessWidget {
                     size: 40,
                     color: kWhiteColor,
                   ),
-                  const SizedBox(width: 8)
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      shop.name,
+                      style: AppFonts.subtitle1Bold.copyWith(
+                        color: kWhiteColor,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                shop.name,
-                style: AppFonts.subtitle1Bold.copyWith(
-                  color: kWhiteColor,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              _buildVerificationBadge(),
-              const SizedBox(
-                height: 10,
-              ),
-              _buildStatusChip(),
+              _buildContactInfo(),
+              const SizedBox(height: 10),
+              // _buildStatusChip(),
             ],
           ),
         ),
@@ -68,18 +61,23 @@ class ShopCard extends StatelessWidget {
     );
   }
 
-  Widget _buildVerificationBadge() {
-    return shop.isVerified
-        ? const Icon(
-            Icons.verified,
-            color: kPrimaryColor,
-            size: 24,
-          )
-        : const Icon(
-            Icons.pending,
-            color: Colors.orange,
-            size: 24,
-          );
+  Widget _buildContactInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          shop.email,
+          style: AppFonts.bodyText1.copyWith(color: kWhiteColor),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          shop.phoneNumber,
+          style: AppFonts.bodyText1.copyWith(color: kWhiteColor),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
   }
 
   Widget _buildStatusChip() {
