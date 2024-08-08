@@ -1,4 +1,4 @@
-class PharmacistProfile {
+class DynamicUserProfile {
   final String id;
   final String? name;
   final String? email;
@@ -9,12 +9,13 @@ class PharmacistProfile {
   final String? city;
   final String? state;
   final String? postalCode;
-  final String? licenseNumber;
+  final String? bloodType; // Specific to UserProfile
+  final String? licenseNumber; // Specific to PharmacistProfile
   final String? profileImageUrl;
   final bool isVerified;
   final bool isProfileComplete;
 
-  PharmacistProfile({
+  DynamicUserProfile({
     required this.id,
     this.name,
     this.email,
@@ -25,48 +26,15 @@ class PharmacistProfile {
     this.city,
     this.state,
     this.postalCode,
+    this.bloodType,
     this.licenseNumber,
     this.profileImageUrl,
     this.isVerified = false,
     this.isProfileComplete = false,
   });
 
-  PharmacistProfile copyWith({
-    String? id,
-    String? name,
-    String? email,
-    String? age,
-    String? phone,
-    String? houseName,
-    String? street,
-    String? city,
-    String? state,
-    String? postalCode,
-    String? licenseNumber,
-    String? profileImageUrl,
-    bool? isVerified,
-    bool? isProfileComplete,
-  }) {
-    return PharmacistProfile(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      email: email ?? this.email,
-      age: age ?? this.age,
-      phone: phone ?? this.phone,
-      houseName: houseName ?? this.houseName,
-      street: street ?? this.street,
-      city: city ?? this.city,
-      state: state ?? this.state,
-      postalCode: postalCode ?? this.postalCode,
-      licenseNumber: licenseNumber ?? this.licenseNumber,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-      isVerified: isVerified ?? this.isVerified,
-      isProfileComplete: isProfileComplete ?? this.isProfileComplete,
-    );
-  }
-
-  factory PharmacistProfile.fromMap(Map<String, dynamic> map) {
-    return PharmacistProfile(
+  factory DynamicUserProfile.fromMap(Map<String, dynamic> map) {
+    return DynamicUserProfile(
       id: map['id'] ?? '',
       name: map['name'],
       email: map['email'],
@@ -77,6 +45,7 @@ class PharmacistProfile {
       city: map['city'],
       state: map['state'],
       postalCode: map['postalCode'],
+      bloodType: map['bloodType'],
       licenseNumber: map['licenseNumber'],
       profileImageUrl: map['profileImageUrl'],
       isVerified: map['isVerified'] ?? false,
@@ -96,12 +65,11 @@ class PharmacistProfile {
       'city': city,
       'state': state,
       'postalCode': postalCode,
+      'bloodType': bloodType,
       'licenseNumber': licenseNumber,
       'profileImageUrl': profileImageUrl,
       'isVerified': isVerified,
       'isProfileComplete': isProfileComplete,
     };
   }
-
-  toJson() {}
 }

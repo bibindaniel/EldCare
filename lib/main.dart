@@ -1,3 +1,6 @@
+import 'package:eldcare/admin/blocs/users/users_bloc.dart';
+import 'package:eldcare/admin/presentation/users/userspage.dart';
+import 'package:eldcare/admin/repository/users.dart';
 import 'package:eldcare/core/theme/routes/myroutes.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
@@ -60,6 +63,10 @@ class MyApp extends StatelessWidget {
           BlocProvider(
               create: (context) => AuthBloc()..add(CheckLoginStatus())),
           BlocProvider(create: (context) => AuthBloc()),
+          BlocProvider(
+            create: (context) => UserBloc(UserRepository())..add(FetchUsers()),
+            child: const UsersPage(),
+          ),
           BlocProvider(
               create: (context) => UserProfileBloc(UserProfileRepository())),
           BlocProvider(

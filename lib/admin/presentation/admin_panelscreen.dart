@@ -1,8 +1,13 @@
-import 'package:eldcare/admin/presentation/dashboard/dashboard.dart';
+import 'package:eldcare/admin/blocs/users/users_bloc.dart';
 import 'package:eldcare/admin/presentation/sidebar.dart';
-import 'package:eldcare/admin/presentation/users/userspage.dart';
+import 'package:eldcare/admin/repository/users.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:eldcare/admin/presentation/users/userspage.dart';
+import 'package:eldcare/admin/presentation/dashboard/dashboard.dart';
+import 'package:eldcare/admin/presentation/shops/shoppage.dart';
+import 'package:eldcare/admin/blocs/shop/shop_bloc.dart';
+import 'package:eldcare/admin/repository/shop_repositry.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 
@@ -42,7 +47,7 @@ class AdminPanelState extends State<AdminPanel> {
             setState(() {
               _selectedIndex = index;
             });
-            Navigator.pop(context); // Close the drawer after selection
+            Navigator.pop(context);
           },
         ),
         body: _buildPageContent(),
@@ -55,7 +60,24 @@ class AdminPanelState extends State<AdminPanel> {
       case 0:
         return const Dashboard();
       case 1:
-        return const UsersPage();
+        return BlocProvider<UserBloc>(
+          create: (context) => UserBloc(UserRepository())..add(FetchUsers()),
+          child: const UsersPage(),
+        );
+      case 2:
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<AdminShopBloc>(
+              create: (context) =>
+                  AdminShopBloc(shopRepository: ShopRepository())
+                    ..add(AdminLoadShops()),
+            ),
+            BlocProvider<UserBloc>(
+              create: (context) => UserBloc(UserRepository()),
+            ),
+          ],
+          child: const ShopsPage(),
+        );
       default:
         return const Center(child: Text('Page not implemented'));
     }

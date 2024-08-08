@@ -37,7 +37,7 @@ class Sidebar extends StatelessWidget {
             _buildNavItem(context, Icons.dashboard, 'Dashboard', 0),
             _buildNavItem(context, Icons.people, 'Users Management', 1),
             _buildNavItem(
-                context, Icons.medical_services, 'Medicine Management', 2),
+                context, Icons.medical_services, 'Shop Management', 2),
             _buildNavItem(context, Icons.schedule, 'Schedules & Reminders', 3),
             _buildNavItem(context, Icons.bar_chart, 'Reports & Analytics', 4),
             _buildNavItem(context, Icons.settings, 'Settings', 5),

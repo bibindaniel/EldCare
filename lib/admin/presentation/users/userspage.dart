@@ -1,100 +1,102 @@
+import 'package:eldcare/admin/blocs/users/users_bloc.dart';
+import 'package:eldcare/admin/presentation/users/datatables.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/admin/presentation/adminstyles/adminstyles.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class UsersPage extends StatelessWidget {
   const UsersPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Users Management', style: AdminStyles.headerStyle),
-          const SizedBox(height: 20),
-          _buildSearchAndFilter(),
-          const SizedBox(height: 20),
-          _buildUsersTable(),
-          const SizedBox(height: 20),
-          _buildPendingApprovals(),
-          const SizedBox(height: 20),
-          _buildUserStatistics(),
-          const SizedBox(height: 20),
-          _buildRecentUserActivity(),
-        ],
-      ),
+    return BlocBuilder<UserBloc, UserState>(
+      builder: (context, state) {
+        if (state is UserLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is UserError) {
+          return Center(child: Text('Error: ${state.message}'));
+        } else if (state is UserLoaded) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Users Management', style: AdminStyles.headerStyle),
+                const SizedBox(height: 20),
+                // _buildSearchAndFilter(),
+                const SizedBox(height: 20),
+                UsersTableWidget(
+                  elderlyUsers: state.elderlyUsers,
+                  pharmacists: state.pharmacists,
+                ),
+                const SizedBox(height: 20),
+                _buildPendingApprovals(),
+                const SizedBox(height: 20),
+                _buildUserStatistics(),
+                const SizedBox(height: 20),
+                _buildRecentUserActivity(),
+              ],
+            ),
+          );
+        } else {
+          return const Center(child: Text('No data available'));
+        }
+      },
     );
   }
 
-  Widget _buildSearchAndFilter() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search users...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              filled: true,
-              fillColor: Colors.grey[200],
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.filter_list),
-          label: const Text('Filter'),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: AdminStyles.primaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUsersTable() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columnSpacing: 20,
-          headingRowColor: WidgetStateProperty.all(Colors.grey[200]),
-          dataRowMaxHeight: 60,
-          columns: const [
-            DataColumn(label: Text('Name', style: AdminStyles.subHeaderStyle)),
-            DataColumn(
-                label: Text('Contact', style: AdminStyles.subHeaderStyle)),
-            DataColumn(
-                label: Text('Address', style: AdminStyles.subHeaderStyle)),
-            DataColumn(
-                label: Text('Assigned Caregiver',
-                    style: AdminStyles.subHeaderStyle)),
-            DataColumn(
-                label: Text('Actions', style: AdminStyles.subHeaderStyle)),
-          ],
-          rows: [
-            _buildDataRow(
-                'John Doe', '123-456-7890', '123 Main St', 'Jane Smith'),
-            _buildDataRow(
-                'Alice Johnson', '098-765-4321', '456 Elm St', 'Bob Brown'),
-            _buildDataRow(
-                'David Lee', '555-123-4567', '789 Oak St', 'Sarah Davis'),
-          ],
-        ),
-      ),
-    );
-  }
+//   Widget _buildUsersTable(
+//     List<UserProfile> elderlyUsers, List<PharmacistProfile> pharmacists) {
+//   return Column(
+//     children: [
+//       const Text('Elderly Users', style: AdminStyles.subHeaderStyle),
+//       Card(
+//         elevation: 4,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+//         child: PaginatedDataTable(
+//           header: const Text('Elderly Users', style: AdminStyles.subHeaderStyle),
+//           columns: const [
+//             DataColumn(label: Text('Name', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('Email', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('Phone', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('Address', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('Verified', style: AdminStyles.subHeaderStyle)),
+//           ],
+//           source: UserDataTableSource(elderlyUsers),
+//           rowsPerPage: PaginatedDataTable.defaultRowsPerPage,
+//           onRowsPerPageChanged: (rowsPerPage) {
+//             setState(() {
+//               _rowsPerPage = rowsPerPage!;
+//             });
+//           },
+//         ),
+//       ),
+//       const SizedBox(height: 20),
+//       const Text('Pharmacists', style: AdminStyles.subHeaderStyle),
+//       Card(
+//         elevation: 4,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+//         child: PaginatedDataTable(
+//           header: const Text('Pharmacists', style: AdminStyles.subHeaderStyle),
+//           columns: const [
+//             DataColumn(label: Text('Name', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('Email', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('Phone', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('License Number', style: AdminStyles.subHeaderStyle)),
+//             DataColumn(label: Text('Verified', style: AdminStyles.subHeaderStyle)),
+//           ],
+//           source: PharmacistDataTableSource(pharmacists),
+//           rowsPerPage: PaginatedDataTable.defaultRowsPerPage,
+//           onRowsPerPageChanged: (rowsPerPage) {
+//             setState(() {
+//               _rowsPerPagePharmacist = rowsPerPage!;
+//             });
+//           },
+//         ),
+//       ),
+//     ],
+//   );
+// }
 
   DataRow _buildDataRow(
       String name, String contact, String address, String caregiver) {

@@ -53,7 +53,7 @@ class UserRedirection extends StatelessWidget {
       case 5:
         return _DeliveryPersonnelHome();
       case 6:
-        return AdminPanel();
+        return const AdminPanel();
 
       default:
         return const Center(child: Text('Unknown role'));
