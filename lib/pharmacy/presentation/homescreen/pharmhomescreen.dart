@@ -1,6 +1,10 @@
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacist_navigation/pharmacist_navigation_bloc.dart';
+import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_bloc.dart';
+import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_event.dart';
+import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_state.dart';
+import 'package:eldcare/pharmacy/presentation/profile/profilecompletionpage.dart';
 import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -125,11 +129,65 @@ class PharmacistHomeScreen extends StatelessWidget {
 
   Widget _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
-      onPressed: () {
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => AddShopPage(
-                  shopRepository: ShopRepository(),
-                )));
+      onPressed: () async {
+        // Fetch the current pharmacist's profile status
+        final authState = context.read<AuthBloc>().state;
+        if (authState is Authenticated) {
+          final profileBloc = context.read<PharmacistProfileBloc>();
+          profileBloc.add(LoadPharmacistProfile(authState.user.uid));
+
+          await for (final profileState in profileBloc.stream) {
+            if (profileState is PharmacistProfileLoaded) {
+              if (profileState.pharmacistProfile.isProfileComplete) {
+                // Profile is complete, proceed to AddShopPage
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => AddShopPage(
+                    shopRepository: ShopRepository(),
+                  ),
+                ));
+              } else {
+                // Profile is incomplete, show a dialog
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Complete Your Profile"),
+                      content: const Text(
+                          "Please complete your profile before adding a new shop."),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text("Complete Profile"),
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => BlocProvider.value(
+                                value: profileBloc,
+                                child: PharmacistProfileCompletionPage(
+                                    pharmacistId: authState.user.uid),
+                              ),
+                            ));
+                          },
+                        ),
+                        TextButton(
+                          child: const Text("Cancel"),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+              break; // Exit the loop after handling the loaded state
+            } else if (profileState is PharmacistProfileError) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                    'Error checking profile status: ${profileState.error}'),
+              ));
+              break; // Exit the loop after handling the error state
+            }
+          }
+        }
       },
       backgroundColor: kThridColor,
       child: const Icon(Icons.add),

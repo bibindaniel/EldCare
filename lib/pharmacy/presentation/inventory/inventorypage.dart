@@ -20,7 +20,7 @@ class InventoryPage extends StatelessWidget {
               const SizedBox(height: 20),
               _buildTopSection(),
               const SizedBox(height: 30),
-              _buildBottomSection(),
+              _buildBottomSection(context),
             ],
           ),
         ),
@@ -58,7 +58,7 @@ class InventoryPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomSection() {
+  Widget _buildBottomSection(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: kWhiteColor,
@@ -77,6 +77,8 @@ class InventoryPage extends StatelessWidget {
       ),
       child: Column(
         children: [
+          const SizedBox(height: 20),
+          _buildCategoryAndMedicineSection(context),
           const SizedBox(height: 20),
           _buildShopsSection(),
           const SizedBox(height: 20),
@@ -121,6 +123,61 @@ class InventoryPage extends StatelessWidget {
           return const Center(child: Text('No shops available.'));
         }
       },
+    );
+  }
+
+  Widget _buildCategoryAndMedicineSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Manage Categories & Medicines',
+            style: AppFonts.headline3Dark,
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildActionButton(
+                context,
+                label: 'Add Category',
+                icon: Icons.category,
+                onPressed: () {
+                  // Action for Add Category
+                },
+              ),
+              _buildActionButton(
+                context,
+                label: 'Add Medicine Name',
+                icon: Icons.medical_services,
+                onPressed: () {
+                  // Action for Add Medicine Name
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context,
+      {required String label,
+      required IconData icon,
+      required VoidCallback onPressed}) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: kPrimaryColor),
+      label: Text(label, style: const TextStyle(color: kPrimaryColor)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: kWhiteColor,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
     );
   }
 }
