@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/pharmacy/model/shop.dart';
+import 'package:eldcare/pharmacy/presentation/shop/mappicker.dart';
 import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,11 @@ class UpdateShopPageState extends State<UpdateShopPage> {
   late final TextEditingController _locationController;
   LatLng? _selectedLocation;
   String? _formattedAddress;
+  late GoogleMapController _mapController;
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+  }
 
   @override
   void initState() {
@@ -91,6 +97,14 @@ class UpdateShopPageState extends State<UpdateShopPage> {
         desiredAccuracy: LocationAccuracy.high,
       );
       _updateLocation(LatLng(position.latitude, position.longitude));
+      _mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 15.0,
+          ),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Error getting location: $e'),
@@ -321,11 +335,52 @@ class UpdateShopPageState extends State<UpdateShopPage> {
   Widget _buildLocationField() {
     return TextFormField(
       controller: _locationController,
+      readOnly: true,
       decoration: InputDecoration(
         labelText: 'Location',
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.my_location),
-          onPressed: _getCurrentLocation,
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.my_location),
+              onPressed: () async {
+                // Get current location
+                await _getCurrentLocation();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.location_on),
+              onPressed: () async {
+                // Check if location permissions are granted
+                var status = await Permission.location.status;
+                if (!status.isGranted) {
+                  // Request location permission
+                  status = await Permission.location.request();
+                  if (!status.isGranted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Location permission is required to get your current location.'),
+                      ),
+                    );
+                    return;
+                  }
+                }
+                final selectedLocation = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MapPickerScreen(
+                      initialLocation:
+                          _selectedLocation ?? const LatLng(0.0, 0.0),
+                    ),
+                  ),
+                );
+                if (selectedLocation != null) {
+                  _updateLocation(selectedLocation);
+                }
+              },
+            ),
+          ],
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
@@ -338,7 +393,7 @@ class UpdateShopPageState extends State<UpdateShopPage> {
       },
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Please enter a location';
+          return 'Please select a location';
         }
         return null;
       },

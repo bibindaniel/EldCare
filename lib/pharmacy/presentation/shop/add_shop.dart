@@ -4,6 +4,7 @@ import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
 import 'package:eldcare/pharmacy/model/shop.dart';
+import 'package:eldcare/pharmacy/presentation/shop/mappicker.dart';
 import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,6 +34,11 @@ class AddShopPageState extends State<AddShopPage> {
   final _locationController = TextEditingController();
   LatLng? _selectedLocation;
   String? _formattedAddress;
+  late GoogleMapController _mapController;
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+  }
 
   @override
   void dispose() {
@@ -76,6 +82,14 @@ class AddShopPageState extends State<AddShopPage> {
         desiredAccuracy: LocationAccuracy.high,
       );
       _updateLocation(LatLng(position.latitude, position.longitude));
+      _mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 15.0,
+          ),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Error getting location: $e'),
@@ -247,24 +261,49 @@ class AddShopPageState extends State<AddShopPage> {
   Widget _buildLocationField() {
     return TextFormField(
       controller: _locationController,
+      readOnly: true,
       decoration: InputDecoration(
         labelText: 'Location',
         suffixIcon: IconButton(
-          icon: const Icon(Icons.my_location),
-          onPressed: _getCurrentLocation,
+          icon: const Icon(Icons.location_on),
+          onPressed: () async {
+            // Check if location permissions are granted
+            var status = await Permission.location.status;
+            if (!status.isGranted) {
+              // Request location permission
+              status = await Permission.location.request();
+              if (!status.isGranted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text(
+                      'Location permission is required to get your current location.'),
+                ));
+                return;
+              }
+            }
+            final selectedLocation = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MapPickerScreen(
+                  initialLocation: _selectedLocation ?? const LatLng(0.0, 0.0),
+                ),
+              ),
+            );
+            if (selectedLocation != null) {
+              _updateLocation(selectedLocation);
+            }
+          },
         ),
+        suffixIconColor: kPrimaryColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
         ),
       ),
-      onChanged: (value) {
-        if (value.isNotEmpty) {
-          _getCoordinatesFromAddress(value);
-        }
+      onTap: () async {
+        await _getCurrentLocation();
       },
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Please enter a location';
+          return 'Please select a location';
         }
         return null;
       },

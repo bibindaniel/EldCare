@@ -20,7 +20,7 @@ class ShopDetailPage extends StatelessWidget {
           children: [
             Text('Name: ${shop.name}', style: AdminStyles.bodyStyle),
             Text('Email: ${shop.email}', style: AdminStyles.bodyStyle),
-            // Text('Phone: ${shop.phone}', style: AdminStyles.bodyStyle),
+            Text('Phone: ${shop.phoneNumber}', style: AdminStyles.bodyStyle),
             Text('Address: ${shop.address}', style: AdminStyles.bodyStyle),
             Text('License: ${shop.licenseNumber}',
                 style: AdminStyles.bodyStyle),
