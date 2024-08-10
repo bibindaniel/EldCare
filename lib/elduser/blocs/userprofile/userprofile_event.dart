@@ -26,25 +26,11 @@ class UpdateUserProfile extends UserProfileEvent {
 }
 
 class UploadProfileImage extends UserProfileEvent {
+  final String userId;
   final File image;
 
-  const UploadProfileImage(this.image);
+  const UploadProfileImage(this.userId, this.image);
 
   @override
-  List<Object> get props => [image];
-}
-
-class VerifyUser extends UserProfileEvent {
-  final String userId;
-
-  const VerifyUser(this.userId);
-
-  @override
-  List<Object> get props => [userId];
-}
-
-class CompleteProfile extends UserProfileEvent {
-  final UserProfile userProfile;
-
-  const CompleteProfile(this.userProfile);
+  List<Object> get props => [userId, image];
 }

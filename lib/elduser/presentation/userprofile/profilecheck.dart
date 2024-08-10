@@ -29,8 +29,8 @@ class ProfileCheckPage extends StatelessWidget {
               body: Center(child: CircularProgressIndicator()),
             );
           } else if (state is UserProfileLoaded) {
-            if (state.userProfile.isProfileComplete) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (state.userProfile.isProfileComplete) {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) => BlocProvider.value(
@@ -39,9 +39,7 @@ class ProfileCheckPage extends StatelessWidget {
                     ),
                   ),
                 );
-              });
-            } else {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
+              } else {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) => BlocProvider.value(
@@ -50,8 +48,8 @@ class ProfileCheckPage extends StatelessWidget {
                     ),
                   ),
                 );
-              });
-            }
+              }
+            });
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );

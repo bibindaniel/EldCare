@@ -57,6 +57,7 @@ dependencies:
   google_maps_flutter: ^2.9.0
   expandable_datatable: ^0.0.7
   flutter_email_sender: ^6.0.3
+  cached_network_image: ^3.4.0
 
 
 dev_dependencies:

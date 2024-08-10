@@ -13,60 +13,37 @@ import 'package:eldcare/core/theme/font.dart';
 class ProfileCompletionPage extends StatefulWidget {
   final String userId;
 
-  const ProfileCompletionPage({super.key, required this.userId});
+  const ProfileCompletionPage({Key? key, required this.userId})
+      : super(key: key);
 
   @override
-  ProfileCompletionPageState createState() => ProfileCompletionPageState();
+  _ProfileCompletionPageState createState() => _ProfileCompletionPageState();
 }
 
-class ProfileCompletionPageState extends State<ProfileCompletionPage> {
+class _ProfileCompletionPageState extends State<ProfileCompletionPage> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _ageController;
-  late TextEditingController _phoneController;
-  late TextEditingController _houseNameController;
-  late TextEditingController _streetController;
-  late TextEditingController _cityController;
-  late TextEditingController _stateController;
-  late TextEditingController _postalCodeController;
-  late String _selectedBloodType;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _houseNameController = TextEditingController();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  String _selectedBloodType = 'A+';
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
-    _emailController = TextEditingController();
-    _ageController = TextEditingController();
-    _phoneController = TextEditingController();
-    _houseNameController = TextEditingController();
-    _streetController = TextEditingController();
-    _cityController = TextEditingController();
-    _stateController = TextEditingController();
-    _postalCodeController = TextEditingController();
-    _selectedBloodType = 'A+';
     context.read<UserProfileBloc>().add(LoadUserProfile(widget.userId));
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _ageController.dispose();
-    _phoneController.dispose();
-    _houseNameController.dispose();
-    _streetController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _postalCodeController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Complete Profile',
+        title: Text('Complete Your Profile',
             style: AppFonts.headline2.copyWith(color: Colors.white)),
         backgroundColor: kPrimaryColor,
       ),
@@ -74,30 +51,38 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
         listener: (context, state) {
           if (state is UserProfileError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error)),
+              SnackBar(
+                content: Text('Error: ${state.error}'),
+                backgroundColor: Colors.red,
+              ),
             );
-          } else if (state is UserProfileUpdated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully')),
-            );
-            // Navigate to the home screen or next page
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
+          } else if (state is UserProfileLoaded) {
+            if (state.userProfile.isProfileComplete) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Profile completed successfully'),
+                  backgroundColor: kSuccessColor,
+                ),
+              );
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                (Route<dynamic> route) => false,
+              );
+            }
           }
         },
         builder: (context, state) {
-          if (state is UserProfileLoading) {
+          print('Current state: $state'); // Debug print
+          if (state is UserProfileLoading || state is UserProfileUpdating) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is UserProfileLoaded ||
-              state is UserProfileUpdated) {
-            final userProfile = (state is UserProfileLoaded)
-                ? state.userProfile
-                : (state as UserProfileUpdated).userProfile;
-            _populateFields(userProfile);
-            return _buildForm(userProfile);
+          } else if (state is UserProfileLoaded) {
+            return _buildForm(state.userProfile);
+          } else if (state is UserProfileError) {
+            return Center(child: Text('Error: ${state.error}'));
           } else {
-            return const Center(child: Text('Failed to load profile'));
+            return Center(
+                child: Text(
+                    'Unexpected state: ${state.runtimeType}. Please try again.'));
           }
         },
       ),
@@ -105,6 +90,7 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
   }
 
   Widget _buildForm(UserProfile userProfile) {
+    _populateFields(userProfile);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -113,6 +99,18 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildProfileImage(context, userProfile.profileImageUrl),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _nameController,
+              label: 'Name',
+              validator: validateName,
+            ),
+            const SizedBox(height: 16),
+            CustomTextFormField(
+              controller: _emailController,
+              label: 'Email',
+              validator: validateEmail,
+            ),
             const SizedBox(height: 16),
             CustomTextFormField(
               controller: _ageController,
@@ -171,13 +169,15 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Expanded(child: _buildDropdown(userProfile.bloodType)),
+                Expanded(
+                  child: _buildBloodTypeDropdown(userProfile.bloodType),
+                ),
               ],
             ),
             const SizedBox(height: 24),
             CustomButton(
               text: 'Complete Profile',
-              onPressed: _updateProfile,
+              onPressed: () => _completeProfile(userProfile),
             ),
           ],
         ),
@@ -185,44 +185,48 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
     );
   }
 
-  void _updateProfile() {
-    if (_formKey.currentState!.validate()) {
-      final updatedProfile = UserProfile(
-        id: widget.userId,
-        name: _nameController.text,
-        email: _emailController.text,
-        age: _ageController.text,
-        phone: _phoneController.text,
-        houseName: _houseNameController.text,
-        street: _streetController.text,
-        city: _cityController.text,
-        state: _stateController.text,
-        postalCode: _postalCodeController.text,
-        bloodType: _selectedBloodType,
-        isProfileComplete: true,
-      );
-      context.read<UserProfileBloc>().add(UpdateUserProfile(updatedProfile));
-    }
-  }
-
   Widget _buildProfileImage(BuildContext context, String? imageUrl) {
     return GestureDetector(
       onTap: _pickImage,
-      child: CircleAvatar(
-        radius: 50,
-        backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-        child:
-            imageUrl == null ? const Icon(Icons.add_a_photo, size: 40) : null,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+            child: imageUrl == null
+                ? const Icon(Icons.add_a_photo, size: 40)
+                : null,
+          ),
+          if (context.watch<UserProfileBloc>().state is UserProfileUpdating)
+            const CircularProgressIndicator(),
+        ],
       ),
     );
   }
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null && mounted) {
-      context.read<UserProfileBloc>().add(UploadProfileImage(File(image.path)));
-    }
+  Widget _buildBloodTypeDropdown(String? currentBloodType) {
+    return DropdownButtonFormField<String>(
+      decoration: const InputDecoration(
+        labelText: 'Blood Type',
+        border: OutlineInputBorder(),
+      ),
+      value: _selectedBloodType,
+      items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+          .map((String bloodType) {
+        return DropdownMenuItem<String>(
+          value: bloodType,
+          child: Text(bloodType),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedBloodType = newValue;
+          });
+        }
+      },
+    );
   }
 
   void _populateFields(UserProfile userProfile) {
@@ -238,60 +242,57 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
     _selectedBloodType = userProfile.bloodType ?? 'A+';
   }
 
-  Widget _buildDropdown(String? initialValue) {
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            labelText: 'Blood Type',
-            border: OutlineInputBorder(),
-          ),
-          value: _selectedBloodType,
-          items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              setState(() {
-                _selectedBloodType = newValue;
-              });
-            }
-          },
-        );
-      },
-    );
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null && mounted) {
+        context
+            .read<UserProfileBloc>()
+            .add(UploadProfileImage(widget.userId, File(image.path)));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
   }
 
-  String? validateCity(String? value) {
+  void _completeProfile(UserProfile userProfile) {
+    if (_formKey.currentState!.validate()) {
+      final completedProfile = userProfile.copyWith(
+        name: _nameController.text,
+        email: _emailController.text,
+        age: _ageController.text,
+        phone: _phoneController.text,
+        houseName: _houseNameController.text,
+        street: _streetController.text,
+        city: _cityController.text,
+        state: _stateController.text,
+        postalCode: _postalCodeController.text,
+        bloodType: _selectedBloodType,
+        isProfileComplete: true,
+      );
+      context.read<UserProfileBloc>().add(UpdateUserProfile(completedProfile));
+    }
+  }
+
+  String? validateName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'City is required';
+      return 'Name is required';
     }
     if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-      return 'Invalid city';
+      return 'Invalid name';
     }
     return null;
   }
 
-  String? validateStreet(String? value) {
+  String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Street is required';
+      return 'Email is required';
     }
-    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
-      return 'Invalid street';
-    }
-    return null;
-  }
-
-  String? validateHouseName(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'House name is required';
-    }
-    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
-      return 'Invalid house name';
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Invalid email address';
     }
     return null;
   }
@@ -306,6 +307,46 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
     }
     if (age < 10 || age > 120) {
       return 'Age must be between 10 and 120';
+    }
+    return null;
+  }
+
+  String? validatePhoneNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Phone number is required';
+    }
+    if (!RegExp(r'^[789]\d{9}$').hasMatch(value)) {
+      return 'Invalid Indian phone number';
+    }
+    return null;
+  }
+
+  String? validateHouseName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'House name is required';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
+      return 'Invalid house name';
+    }
+    return null;
+  }
+
+  String? validateStreet(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Street is required';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
+      return 'Invalid street';
+    }
+    return null;
+  }
+
+  String? validateCity(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'City is required';
+    }
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Invalid city';
     }
     return null;
   }
@@ -326,16 +367,6 @@ class ProfileCompletionPageState extends State<ProfileCompletionPage> {
     }
     if (value.length != 6 || int.tryParse(value) == null) {
       return 'Postal code must be a 6-digit number';
-    }
-    return null;
-  }
-
-  String? validatePhoneNumber(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Phone number is required';
-    }
-    if (!RegExp(r'^[789]\d{9}$').hasMatch(value)) {
-      return 'Invalid Indian phone number';
     }
     return null;
   }

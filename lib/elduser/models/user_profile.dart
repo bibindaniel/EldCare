@@ -31,43 +31,9 @@ class UserProfile {
     this.isProfileComplete = false,
   });
 
-  UserProfile copyWith({
-    String? id,
-    String? name,
-    String? email,
-    String? age,
-    String? phone,
-    String? houseName,
-    String? street,
-    String? city,
-    String? state,
-    String? postalCode,
-    String? bloodType,
-    String? profileImageUrl,
-    bool? isVerified,
-    bool? isProfileComplete,
-  }) {
+  factory UserProfile.fromMap(Map<String, dynamic> map, String documentId) {
     return UserProfile(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      email: email ?? this.email,
-      age: age ?? this.age,
-      phone: phone ?? this.phone,
-      houseName: houseName ?? this.houseName,
-      street: street ?? this.street,
-      city: city ?? this.city,
-      state: state ?? this.state,
-      postalCode: postalCode ?? this.postalCode,
-      bloodType: bloodType ?? this.bloodType,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-      isVerified: isVerified ?? this.isVerified,
-      isProfileComplete: isProfileComplete ?? this.isProfileComplete,
-    );
-  }
-
-  factory UserProfile.fromMap(Map<String, dynamic> map) {
-    return UserProfile(
-      id: map['id'] ?? '',
+      id: documentId,
       name: map['name'],
       email: map['email'],
       age: map['age']?.toString(),
@@ -86,7 +52,6 @@ class UserProfile {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'name': name,
       'email': email,
       'age': age,
@@ -101,5 +66,38 @@ class UserProfile {
       'isVerified': isVerified,
       'isProfileComplete': isProfileComplete,
     };
+  }
+
+  UserProfile copyWith({
+    String? name,
+    String? email,
+    String? age,
+    String? phone,
+    String? houseName,
+    String? street,
+    String? city,
+    String? state,
+    String? postalCode,
+    String? bloodType,
+    String? profileImageUrl,
+    bool? isVerified,
+    bool? isProfileComplete,
+  }) {
+    return UserProfile(
+      id: this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      age: age ?? this.age,
+      phone: phone ?? this.phone,
+      houseName: houseName ?? this.houseName,
+      street: street ?? this.street,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      postalCode: postalCode ?? this.postalCode,
+      bloodType: bloodType ?? this.bloodType,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      isVerified: isVerified ?? this.isVerified,
+      isProfileComplete: isProfileComplete ?? this.isProfileComplete,
+    );
   }
 }

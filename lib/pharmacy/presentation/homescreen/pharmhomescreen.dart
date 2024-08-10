@@ -129,68 +129,100 @@ class PharmacistHomeScreen extends StatelessWidget {
 
   Widget _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
-      onPressed: () async {
-        // Fetch the current pharmacist's profile status
+      onPressed: () {
         final authState = context.read<AuthBloc>().state;
         if (authState is Authenticated) {
-          final profileBloc = context.read<PharmacistProfileBloc>();
-          profileBloc.add(LoadPharmacistProfile(authState.user.uid));
-
-          await for (final profileState in profileBloc.stream) {
-            if (profileState is PharmacistProfileLoaded) {
-              if (profileState.pharmacistProfile.isProfileComplete) {
-                // Profile is complete, proceed to AddShopPage
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => AddShopPage(
-                    shopRepository: ShopRepository(),
-                  ),
-                ));
-              } else {
-                // Profile is incomplete, show a dialog
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text("Complete Your Profile"),
-                      content: const Text(
-                          "Please complete your profile before adding a new shop."),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text("Complete Profile"),
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => BlocProvider.value(
-                                value: profileBloc,
-                                child: PharmacistProfileCompletionPage(
-                                    pharmacistId: authState.user.uid),
-                              ),
-                            ));
-                          },
-                        ),
-                        TextButton(
-                          child: const Text("Cancel"),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
-              break; // Exit the loop after handling the loaded state
-            } else if (profileState is PharmacistProfileError) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(
-                    'Error checking profile status: ${profileState.error}'),
-              ));
-              break; // Exit the loop after handling the error state
-            }
-          }
+          _checkProfileAndNavigate(context, authState.user.uid);
         }
       },
       backgroundColor: kThridColor,
       child: const Icon(Icons.add),
+    );
+  }
+
+  void _checkProfileAndNavigate(BuildContext context, String pharmacistId) {
+    final profileBloc = context.read<PharmacistProfileBloc>();
+    profileBloc.add(LoadPharmacistProfile(pharmacistId));
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return BlocConsumer<PharmacistProfileBloc, PharmacistProfileState>(
+          listener: (context, state) {
+            if (state is PharmacistProfileLoaded) {
+              Navigator.of(context).pop(); // Close the loading dialog
+              if (state.pharmacistProfile.isProfileComplete) {
+                _navigateToAddShop(context);
+              } else {
+                _showCompleteProfileDialog(context, pharmacistId);
+              }
+            } else if (state is PharmacistProfileError) {
+              Navigator.of(context).pop(); // Close the loading dialog
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Error checking profile status: ${state.error}'),
+              ));
+            }
+          },
+          builder: (context, state) {
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (state is PharmacistProfileLoading)
+                    const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(state is PharmacistProfileLoading
+                      ? "Checking profile status..."
+                      : "Please wait..."),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _navigateToAddShop(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => AddShopPage(
+        shopRepository: ShopRepository(),
+      ),
+    ));
+  }
+
+  void _showCompleteProfileDialog(BuildContext context, String pharmacistId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Complete Your Profile"),
+          content: const Text(
+              "Please complete your profile before adding a new shop."),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Complete Profile"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => BlocProvider.value(
+                    value: context.read<PharmacistProfileBloc>(),
+                    child: PharmacistProfileCompletionPage(
+                        pharmacistId: pharmacistId),
+                  ),
+                ));
+              },
+            ),
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

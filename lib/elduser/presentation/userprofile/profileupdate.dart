@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:eldcare/elduser/presentation/homescreen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,13 +12,13 @@ import 'package:eldcare/core/theme/font.dart';
 class ProfileUpdatePage extends StatefulWidget {
   final String userId;
 
-  const ProfileUpdatePage({super.key, required this.userId});
+  const ProfileUpdatePage({Key? key, required this.userId}) : super(key: key);
 
   @override
-  ProfileUpdatePageState createState() => ProfileUpdatePageState();
+  _ProfileUpdatePageState createState() => _ProfileUpdatePageState();
 }
 
-class ProfileUpdatePageState extends State<ProfileUpdatePage> {
+class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -30,12 +29,11 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  late String _selectedBloodType;
+  String _selectedBloodType = 'A+';
 
   @override
   void initState() {
     super.initState();
-    _selectedBloodType = 'A+';
     context.read<UserProfileBloc>().add(LoadUserProfile(widget.userId));
   }
 
@@ -51,56 +49,36 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
         listener: (context, state) {
           if (state is UserProfileError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error)),
+              SnackBar(
+                content: Text('Error: ${state.error}'),
+                backgroundColor: Colors.red,
+              ),
             );
-          } else if (state is UserProfileUpdated) {
+          } else if (state is UserProfileLoaded) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Profile updated successfully'),
                 backgroundColor: kSuccessColor,
               ),
             );
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
           }
         },
         builder: (context, state) {
-          if (state is UserProfileLoading) {
+          print('Current state: $state'); // Debug print
+          if (state is UserProfileLoading || state is UserProfileUpdating) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is UserProfileLoaded ||
-              state is UserProfileUpdated) {
-            final userProfile = (state is UserProfileLoaded)
-                ? state.userProfile
-                : (state as UserProfileUpdated).userProfile;
-            _populateFields(userProfile);
-            return _buildForm(userProfile);
+          } else if (state is UserProfileLoaded) {
+            return _buildForm(state.userProfile);
+          } else if (state is UserProfileError) {
+            return Center(child: Text('Error: ${state.error}'));
           } else {
-            return const Center(child: Text('Failed to load profile'));
+            return Center(
+                child: Text(
+                    'Unexpected state: ${state.runtimeType}. Please try again.'));
           }
         },
       ),
     );
-  }
-
-  Widget _buildProfileImage(BuildContext context, String? imageUrl) {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: CircleAvatar(
-        radius: 50,
-        backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-        child:
-            imageUrl == null ? const Icon(Icons.add_a_photo, size: 40) : null,
-      ),
-    );
-  }
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null && mounted) {
-      context.read<UserProfileBloc>().add(UploadProfileImage(File(image.path)));
-    }
   }
 
   void _populateFields(UserProfile userProfile) {
@@ -117,6 +95,7 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
   }
 
   Widget _buildForm(UserProfile userProfile) {
+    _populateFields(userProfile);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -196,7 +175,7 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _buildBloodTypeDropdown(),
+                  child: _buildBloodTypeDropdown(userProfile.bloodType),
                 ),
               ],
             ),
@@ -211,32 +190,64 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
     );
   }
 
-  Widget _buildBloodTypeDropdown() {
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            labelText: 'Blood Type',
-            border: OutlineInputBorder(),
+  Widget _buildProfileImage(BuildContext context, String? imageUrl) {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+            child: imageUrl == null
+                ? const Icon(Icons.add_a_photo, size: 40)
+                : null,
           ),
-          value: _selectedBloodType,
-          items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-              .map((String bloodType) {
-            return DropdownMenuItem<String>(
-              value: bloodType,
-              child: Text(bloodType),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              setState(() {
-                _selectedBloodType = newValue;
-              });
-            }
-          },
+          if (context.watch<UserProfileBloc>().state is UserProfileUpdating)
+            const CircularProgressIndicator(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBloodTypeDropdown(String? currentBloodType) {
+    return DropdownButtonFormField<String>(
+      decoration: const InputDecoration(
+        labelText: 'Blood Type',
+        border: OutlineInputBorder(),
+      ),
+      value: _selectedBloodType,
+      items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+          .map((String bloodType) {
+        return DropdownMenuItem<String>(
+          value: bloodType,
+          child: Text(bloodType),
         );
+      }).toList(),
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedBloodType = newValue;
+          });
+        }
       },
     );
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null && mounted) {
+        context
+            .read<UserProfileBloc>()
+            .add(UploadProfileImage(widget.userId, File(image.path)));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
   }
 
   void _updateProfile(UserProfile userProfile) {
@@ -251,8 +262,7 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
         city: _cityController.text,
         state: _stateController.text,
         postalCode: _postalCodeController.text,
-        bloodType: _selectedBloodType,
-        isProfileComplete: true,
+        bloodType: _selectedBloodType, // Include the updated blood type
       );
       context.read<UserProfileBloc>().add(UpdateUserProfile(updatedProfile));
     }
@@ -278,22 +288,26 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
     return null;
   }
 
-  String? validateCity(String? value) {
+  String? validateAge(String? value) {
     if (value == null || value.isEmpty) {
-      return 'City is required';
+      return 'Age is required';
     }
-    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-      return 'Invalid city';
+    int? age = int.tryParse(value);
+    if (age == null) {
+      return 'Age must be a valid number';
+    }
+    if (age < 10 || age > 120) {
+      return 'Age must be between 10 and 120';
     }
     return null;
   }
 
-  String? validateStreet(String? value) {
+  String? validatePhoneNumber(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Street is required';
+      return 'Phone number is required';
     }
-    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
-      return 'Invalid street';
+    if (!RegExp(r'^[789]\d{9}$').hasMatch(value)) {
+      return 'Invalid Indian phone number';
     }
     return null;
   }
@@ -308,16 +322,22 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
     return null;
   }
 
-  String? validateAge(String? value) {
+  String? validateStreet(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Age is required';
+      return 'Street is required';
     }
-    int? age = int.tryParse(value);
-    if (age == null) {
-      return 'Age must be a valid number';
+    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
+      return 'Invalid street';
     }
-    if (age < 10 || age > 120) {
-      return 'Age must be between 10 and 120';
+    return null;
+  }
+
+  String? validateCity(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'City is required';
+    }
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Invalid city';
     }
     return null;
   }
@@ -338,16 +358,6 @@ class ProfileUpdatePageState extends State<ProfileUpdatePage> {
     }
     if (value.length != 6 || int.tryParse(value) == null) {
       return 'Postal code must be a 6-digit number';
-    }
-    return null;
-  }
-
-  String? validatePhoneNumber(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Phone number is required';
-    }
-    if (!RegExp(r'^[789]\d{9}$').hasMatch(value)) {
-      return 'Invalid Indian phone number';
     }
     return null;
   }

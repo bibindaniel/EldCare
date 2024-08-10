@@ -102,6 +102,4 @@ class PharmacistProfile {
       'isProfileComplete': isProfileComplete,
     };
   }
-
-  toJson() {}
 }

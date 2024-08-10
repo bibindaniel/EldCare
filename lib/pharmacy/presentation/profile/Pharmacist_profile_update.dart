@@ -1,23 +1,23 @@
 import 'dart:io';
-import 'package:eldcare/elduser/blocs/userprofile/userprofile_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_event.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_state.dart';
 import 'package:eldcare/pharmacy/model/pharmacist.dart';
-import 'package:eldcare/pharmacy/presentation/homescreen/pharmhomescreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:eldcare/auth/presentation/widgets/textboxwidget.dart';
-import 'package:eldcare/auth/presentation/widgets/button_widget.dart';
-import 'package:eldcare/core/theme/colors.dart';
-import 'package:eldcare/core/theme/font.dart';
+import '../../../auth/presentation/widgets/textboxwidget.dart';
+import '../../../auth/presentation/widgets/button_widget.dart';
+import '../../../core/theme/colors.dart';
+import '../../../core/theme/font.dart';
 
 class PharmacistProfileUpdatePage extends StatefulWidget {
   final String pharmacistId;
 
-  const PharmacistProfileUpdatePage({super.key, required this.pharmacistId});
+  const PharmacistProfileUpdatePage({Key? key, required this.pharmacistId})
+      : super(key: key);
 
   @override
   PharmacistProfileUpdatePageState createState() =>
@@ -58,19 +58,11 @@ class PharmacistProfileUpdatePageState
       body: BlocConsumer<PharmacistProfileBloc, PharmacistProfileState>(
         listener: (context, state) {
           if (state is PharmacistProfileError) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.error)));
+          } else if (state is PharmacistProfileLoaded) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error)),
-            );
-          } else if (state is PharmacistProfileUpdated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profile updated successfully'),
-                backgroundColor: kSuccessColor,
-              ),
-            );
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                  builder: (context) => const PharmacistHomeScreen()),
+              const SnackBar(content: Text('Profile updated successfully')),
             );
           }
         },
@@ -78,12 +70,11 @@ class PharmacistProfileUpdatePageState
           if (state is PharmacistProfileLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is PharmacistProfileLoaded ||
-              state is PharmacistProfileUpdated) {
-            final pharmacistProfile = (state is PharmacistProfileLoaded)
+              state is PharmacistProfileUpdating) {
+            final profile = (state is PharmacistProfileLoaded)
                 ? state.pharmacistProfile
-                : (state as PharmacistProfileUpdated).pharmacistProfile;
-            _populateFields(pharmacistProfile);
-            return _buildForm(pharmacistProfile);
+                : (state as PharmacistProfileUpdating).pharmacistProfile;
+            return _buildForm(profile);
           } else {
             return const Center(child: Text('Failed to load profile'));
           }
@@ -92,42 +83,8 @@ class PharmacistProfileUpdatePageState
     );
   }
 
-  Widget _buildProfileImage(BuildContext context, String? imageUrl) {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: CircleAvatar(
-        radius: 50,
-        backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-        child:
-            imageUrl == null ? const Icon(Icons.add_a_photo, size: 40) : null,
-      ),
-    );
-  }
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null && mounted) {
-      context
-          .read<PharmacistProfileBloc>()
-          .add(UploadProfileImage(File(image.path)) as PharmacistProfileEvent);
-    }
-  }
-
-  void _populateFields(PharmacistProfile pharmacistProfile) {
-    _nameController.text = pharmacistProfile.name ?? '';
-    _emailController.text = pharmacistProfile.email ?? '';
-    _ageController.text = pharmacistProfile.age ?? '';
-    _phoneController.text = pharmacistProfile.phone ?? '';
-    _houseNameController.text = pharmacistProfile.houseName ?? '';
-    _streetController.text = pharmacistProfile.street ?? '';
-    _cityController.text = pharmacistProfile.city ?? '';
-    _stateController.text = pharmacistProfile.state ?? '';
-    _postalCodeController.text = pharmacistProfile.postalCode ?? '';
-    _licenseNumberController.text = pharmacistProfile.licenseNumber ?? '';
-  }
-
-  Widget _buildForm(PharmacistProfile pharmacistProfile) {
+  Widget _buildForm(PharmacistProfile profile) {
+    _populateFields(profile);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -135,44 +92,44 @@ class PharmacistProfileUpdatePageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildProfileImage(context, pharmacistProfile.profileImageUrl),
+            _buildProfileImage(context, profile.profileImageUrl),
             const SizedBox(height: 16),
             CustomTextFormField(
               controller: _nameController,
               label: 'Name',
-              validator: validateName,
+              validator: _validateName,
             ),
             const SizedBox(height: 16),
             CustomTextFormField(
               controller: _emailController,
               label: 'Email',
-              validator: validateEmail,
+              validator: _validateEmail,
             ),
             const SizedBox(height: 16),
             CustomTextFormField(
               controller: _ageController,
               label: 'Age',
               keyboardType: TextInputType.number,
-              validator: validateAge,
+              validator: _validateAge,
             ),
             const SizedBox(height: 16),
             CustomTextFormField(
               controller: _phoneController,
               label: 'Phone',
               keyboardType: TextInputType.phone,
-              validator: validatePhoneNumber,
+              validator: _validatePhoneNumber,
             ),
             const SizedBox(height: 16),
             CustomTextFormField(
               controller: _houseNameController,
               label: 'House Name',
-              validator: validateHouseName,
+              validator: _validateHouseName,
             ),
             const SizedBox(height: 16),
             CustomTextFormField(
               controller: _streetController,
               label: 'Street',
-              validator: validateStreet,
+              validator: _validateStreet,
             ),
             const SizedBox(height: 16),
             Row(
@@ -181,7 +138,7 @@ class PharmacistProfileUpdatePageState
                   child: CustomTextFormField(
                     controller: _cityController,
                     label: 'City',
-                    validator: validateCity,
+                    validator: _validateCity,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -189,28 +146,36 @@ class PharmacistProfileUpdatePageState
                   child: CustomTextFormField(
                     controller: _stateController,
                     label: 'State',
-                    validator: validateState,
+                    validator: _validateState,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            CustomTextFormField(
-              controller: _postalCodeController,
-              label: 'Postal Code',
-              keyboardType: TextInputType.number,
-              validator: validatePostalCode,
-            ),
-            const SizedBox(height: 16),
-            CustomTextFormField(
-              controller: _licenseNumberController,
-              label: 'License Number',
-              validator: validateLicenseNumber,
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextFormField(
+                    controller: _postalCodeController,
+                    label: 'Postal Code',
+                    keyboardType: TextInputType.number,
+                    validator: _validatePostalCode,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: CustomTextFormField(
+                    controller: _licenseNumberController,
+                    label: 'License Number',
+                    validator: _validateLicenseNumber,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             CustomButton(
               text: 'Update Profile',
-              onPressed: () => _updateProfile(pharmacistProfile),
+              onPressed: () => _updateProfile(profile),
             ),
           ],
         ),
@@ -218,9 +183,65 @@ class PharmacistProfileUpdatePageState
     );
   }
 
-  void _updateProfile(PharmacistProfile pharmacistProfile) {
+  Widget _buildProfileImage(BuildContext context, String? imageUrl) {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: BlocBuilder<PharmacistProfileBloc, PharmacistProfileState>(
+        builder: (context, state) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundImage: imageUrl != null
+                    ? CachedNetworkImageProvider(imageUrl) as ImageProvider
+                    : null,
+                child: imageUrl == null
+                    ? const Icon(Icons.add_a_photo, size: 40)
+                    : null,
+              ),
+              if (state is PharmacistProfileUpdating)
+                const CircularProgressIndicator(),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null && mounted) {
+        context.read<PharmacistProfileBloc>().add(
+              UploadPharmacistProfileImage(
+                  widget.pharmacistId, File(image.path)),
+            );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
+  }
+
+  void _populateFields(PharmacistProfile profile) {
+    _nameController.text = profile.name ?? '';
+    _emailController.text = profile.email ?? '';
+    _ageController.text = profile.age ?? '';
+    _phoneController.text = profile.phone ?? '';
+    _houseNameController.text = profile.houseName ?? '';
+    _streetController.text = profile.street ?? '';
+    _cityController.text = profile.city ?? '';
+    _stateController.text = profile.state ?? '';
+    _postalCodeController.text = profile.postalCode ?? '';
+    _licenseNumberController.text = profile.licenseNumber ?? '';
+  }
+
+  void _updateProfile(PharmacistProfile profile) {
     if (_formKey.currentState!.validate()) {
-      final updatedProfile = pharmacistProfile.copyWith(
+      final updatedProfile = profile.copyWith(
         name: _nameController.text,
         email: _emailController.text,
         age: _ageController.text,
@@ -231,7 +252,6 @@ class PharmacistProfileUpdatePageState
         state: _stateController.text,
         postalCode: _postalCodeController.text,
         licenseNumber: _licenseNumberController.text,
-        isProfileComplete: true,
       );
       context
           .read<PharmacistProfileBloc>()
@@ -239,103 +259,88 @@ class PharmacistProfileUpdatePageState
     }
   }
 
-  String? validateName(String? value) {
+  // Validation methods (same as in the completion page)
+  String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
       return 'Name is required';
-    }
-    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-      return 'Invalid name';
     }
     return null;
   }
 
-  String? validateEmail(String? value) {
+  String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Email is required';
     }
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Invalid email address';
+      return 'Enter a valid email address';
     }
     return null;
   }
 
-  String? validateCity(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'City is required';
-    }
-    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-      return 'Invalid city';
-    }
-    return null;
-  }
-
-  String? validateStreet(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Street is required';
-    }
-    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
-      return 'Invalid street';
-    }
-    return null;
-  }
-
-  String? validateHouseName(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'House Name is required';
-    }
-    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
-      return 'Invalid house name';
-    }
-    return null;
-  }
-
-  String? validateState(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'State is required';
-    }
-    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-      return 'Invalid state';
-    }
-    return null;
-  }
-
-  String? validateAge(String? value) {
+  String? _validateAge(String? value) {
     if (value == null || value.isEmpty) {
       return 'Age is required';
     }
-    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-      return 'Invalid age';
+    int? age = int.tryParse(value);
+    if (age == null || age < 18 || age > 100) {
+      return 'Enter a valid age between 18 and 100';
     }
     return null;
   }
 
-  String? validatePhoneNumber(String? value) {
+  String? _validatePhoneNumber(String? value) {
     if (value == null || value.isEmpty) {
       return 'Phone number is required';
     }
-    if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-      return 'Invalid phone number';
+    if (!RegExp(r'^[6789]\d{9}$').hasMatch(value)) {
+      return 'Enter a valid 10-digit Indian phone number';
     }
     return null;
   }
 
-  String? validatePostalCode(String? value) {
+  String? _validateHouseName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Postal Code is required';
-    }
-    if (!RegExp(r'^\d+$').hasMatch(value)) {
-      return 'Invalid postal code';
+      return 'House name is required';
     }
     return null;
   }
 
-  String? validateLicenseNumber(String? value) {
+  String? _validateStreet(String? value) {
     if (value == null || value.isEmpty) {
-      return 'License Number is required';
+      return 'Street is required';
     }
-    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value)) {
-      return 'Invalid license number';
+    return null;
+  }
+
+  String? _validateCity(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'City is required';
     }
+    return null;
+  }
+
+  String? _validateState(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'State is required';
+    }
+    return null;
+  }
+
+  String? _validatePostalCode(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Postal code is required';
+    }
+    if (!RegExp(r'^\d{6}$').hasMatch(value)) {
+      return 'Enter a valid 6-digit postal code';
+    }
+    return null;
+  }
+
+  String? _validateLicenseNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'License number is required';
+    }
+    // Add specific validation for license number format if needed
     return null;
   }
 }

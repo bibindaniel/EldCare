@@ -11,8 +11,6 @@ class PharmacistProfileBloc
     on<LoadPharmacistProfile>(_onLoadPharmacistProfile);
     on<UpdatePharmacistProfile>(_onUpdatePharmacistProfile);
     on<UploadPharmacistProfileImage>(_onUploadPharmacistProfileImage);
-    on<VerifyPharmacist>(_onVerifyPharmacist);
-    on<CompletePharmacistProfile>(_onCompletePharmacistProfile);
   }
 
   Future<void> _onLoadPharmacistProfile(
@@ -23,13 +21,8 @@ class PharmacistProfileBloc
     try {
       final pharmacistProfile =
           await _repository.getPharmacistProfile(event.pharmacistId);
-      if (pharmacistProfile != null) {
-        emit(PharmacistProfileLoaded(pharmacistProfile));
-      } else {
-        emit(PharmacistProfileError('Pharmacist profile not found'));
-      }
+      emit(PharmacistProfileLoaded(pharmacistProfile));
     } catch (e) {
-      print('Error loading pharmacist profile: $e');
       emit(PharmacistProfileError('Failed to load profile: ${e.toString()}'));
     }
   }
@@ -38,18 +31,19 @@ class PharmacistProfileBloc
     UpdatePharmacistProfile event,
     Emitter<PharmacistProfileState> emit,
   ) async {
-    emit(PharmacistProfileLoading());
-    try {
-      await _repository.updatePharmacistProfile(event.pharmacistProfile);
-      final updatedProfile =
-          await _repository.getPharmacistProfile(event.pharmacistProfile.id);
-      if (updatedProfile != null) {
-        emit(PharmacistProfileUpdated(updatedProfile));
-      } else {
-        emit(PharmacistProfileError('Failed to retrieve updated profile'));
+    final currentState = state;
+    if (currentState is PharmacistProfileLoaded) {
+      emit(PharmacistProfileUpdating(currentState.pharmacistProfile));
+      try {
+        await _repository.updatePharmacistProfile(event.profile);
+        emit(PharmacistProfileLoaded(event.profile));
+      } catch (e) {
+        emit(PharmacistProfileError(
+            'Failed to update profile: ${e.toString()}'));
       }
-    } catch (e) {
-      emit(PharmacistProfileError(e.toString()));
+    } else {
+      emit(
+          const PharmacistProfileError('Cannot update profile: Invalid state'));
     }
   }
 
@@ -57,56 +51,23 @@ class PharmacistProfileBloc
     UploadPharmacistProfileImage event,
     Emitter<PharmacistProfileState> emit,
   ) async {
-    emit(PharmacistProfileLoading());
-    try {
-      final imageUrl =
-          await _repository.uploadPharmacistProfileImage(event.image);
-      final currentState = state;
-      if (currentState is PharmacistProfileLoaded) {
+    final currentState = state;
+    if (currentState is PharmacistProfileLoaded) {
+      emit(PharmacistProfileUpdating(currentState.pharmacistProfile));
+      try {
+        final imageUrl = await _repository.uploadProfileImage(
+            event.pharmacistId, event.image);
         final updatedProfile = currentState.pharmacistProfile.copyWith(
           profileImageUrl: imageUrl,
         );
         await _repository.updatePharmacistProfile(updatedProfile);
-        emit(PharmacistProfileUpdated(updatedProfile));
-      } else {
-        throw Exception('Pharmacist profile not loaded');
+        emit(PharmacistProfileLoaded(updatedProfile));
+      } catch (e) {
+        emit(PharmacistProfileError('Failed to upload image: ${e.toString()}'));
       }
-    } catch (e) {
-      emit(PharmacistProfileError(e.toString()));
-    }
-  }
-
-  Future<void> _onVerifyPharmacist(
-    VerifyPharmacist event,
-    Emitter<PharmacistProfileState> emit,
-  ) async {
-    emit(PharmacistProfileLoading());
-    try {
-      await _repository.verifyPharmacist(event.pharmacistId);
-      final updatedProfile =
-          await _repository.getPharmacistProfile(event.pharmacistId);
-      if (updatedProfile != null) {
-        emit(PharmacistProfileUpdated(updatedProfile));
-      } else {
-        emit(PharmacistProfileError('Failed to retrieve updated profile'));
-      }
-    } catch (e) {
-      emit(PharmacistProfileError(e.toString()));
-    }
-  }
-
-  Future<void> _onCompletePharmacistProfile(
-    CompletePharmacistProfile event,
-    Emitter<PharmacistProfileState> emit,
-  ) async {
-    emit(PharmacistProfileLoading());
-    try {
-      final updatedProfile =
-          event.pharmacistProfile.copyWith(isProfileComplete: true);
-      await _repository.updatePharmacistProfile(updatedProfile);
-      emit(PharmacistProfileUpdated(updatedProfile));
-    } catch (e) {
-      emit(PharmacistProfileError(e.toString()));
+    } else {
+      emit(
+          PharmacistProfileError('Cannot update profile image: Invalid state'));
     }
   }
 }

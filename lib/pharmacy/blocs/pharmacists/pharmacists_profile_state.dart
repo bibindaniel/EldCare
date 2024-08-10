@@ -21,10 +21,10 @@ class PharmacistProfileLoaded extends PharmacistProfileState {
   List<Object> get props => [pharmacistProfile];
 }
 
-class PharmacistProfileUpdated extends PharmacistProfileState {
+class PharmacistProfileUpdating extends PharmacistProfileState {
   final PharmacistProfile pharmacistProfile;
 
-  const PharmacistProfileUpdated(this.pharmacistProfile);
+  const PharmacistProfileUpdating(this.pharmacistProfile);
 
   @override
   List<Object> get props => [pharmacistProfile];

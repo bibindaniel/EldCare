@@ -20,7 +20,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final elderlyUsers = await userRepository.getElderlyUsers();
       final pharmacists = await userRepository.getPharmacists();
       print(
-          'Fetched pharmacists: ${pharmacists.map((p) => p.toJson()).toList()}'); // Debug log
+          'Fetched pharmacists: ${pharmacists.map((p) => p.toMap()).toList()}'); // Updated debug log
       emit(UserLoaded(elderlyUsers: elderlyUsers, pharmacists: pharmacists));
     } catch (e) {
       emit(UserError(e.toString()));

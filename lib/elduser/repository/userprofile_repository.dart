@@ -1,69 +1,31 @@
 import 'dart:io';
-import 'package:eldcare/elduser/models/user_profile.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../models/user_profile.dart';
 
 class UserProfileRepository {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Future<UserProfile> getUserProfile(String userId) async {
-    try {
-      print('Fetching user profile for userId: $userId'); // Debugging
-      final docSnapshot =
-          await _firestore.collection('users').doc(userId).get();
-      if (docSnapshot.exists) {
-        print('User profile data: ${docSnapshot.data()}'); // Debugging
-        return UserProfile.fromMap(docSnapshot.data()!);
-      } else {
-        throw Exception('User profile not found');
-      }
-    } catch (e) {
-      throw Exception('Failed to get user profile: $e');
+    final docSnapshot = await _firestore.collection('users').doc(userId).get();
+    if (docSnapshot.exists) {
+      return UserProfile.fromMap(docSnapshot.data()!, docSnapshot.id);
+    } else {
+      throw Exception('User profile not found');
     }
   }
 
   Future<void> updateUserProfile(UserProfile userProfile) async {
-    try {
-      await _firestore
-          .collection('users')
-          .doc(userProfile.id)
-          .update(userProfile.toMap());
-    } catch (e) {
-      throw Exception('Failed to update user profile: $e');
-    }
+    await _firestore
+        .collection('users')
+        .doc(userProfile.id)
+        .update(userProfile.toMap());
   }
 
-  Future<String> uploadProfileImage(File image) async {
-    try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) throw Exception('User not authenticated');
-
-      final ref = _storage.ref().child('profile_images/$userId.jpg');
-      await ref.putFile(image);
-      final imageUrl = await ref.getDownloadURL();
-
-      // Update the user profile with the new image URL
-      await _firestore.collection('users').doc(userId).update({
-        'profileImageUrl': imageUrl,
-      });
-
-      return imageUrl;
-    } catch (e) {
-      throw Exception('Failed to upload profile image: $e');
-    }
-  }
-
-  Future<void> verifyUser(String userId) async {
-    try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .update({'isVerified': true});
-    } catch (e) {
-      throw Exception('Failed to verify user: $e');
-    }
+  Future<String> uploadProfileImage(String userId, File image) async {
+    final ref = _storage.ref().child('profile_images/$userId.jpg');
+    await ref.putFile(image);
+    return await ref.getDownloadURL();
   }
 }
