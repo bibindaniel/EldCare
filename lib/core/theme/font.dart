@@ -82,6 +82,10 @@ class AppFonts {
     fontSize: 16,
     color: Colors.black87,
   );
+  static const TextStyle cardSubtitle1 = TextStyle(
+    fontSize: 16,
+    color: kWhiteColor,
+  );
   static const TextStyle subtitle1Bold = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 16,

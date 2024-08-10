@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 const Color kPrimaryColor = Color(0xFF008080);
 const Color kSecondaryColor = Color(0xFF800040);
+const Color kShopColor = Color(0xFFE05754);
 const Color kThridColor = Color(0xFF004080);
 const Color kErrorColor = Color(0xFFFF6F61);
 const Color kSurfaceColor = Color.fromARGB(255, 241, 241, 223);

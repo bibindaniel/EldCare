@@ -27,22 +27,22 @@ class ShopCard extends StatelessWidget {
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: kSecondaryColor,
+        color: kThridColor,
         child: Container(
           width: 160,
           padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.store,
                     size: 40,
                     color: kWhiteColor,
                   ),
-                  const SizedBox(width: 8)
+                  SizedBox(width: 8)
                 ],
               ),
               const SizedBox(height: 12),

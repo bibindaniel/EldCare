@@ -22,7 +22,7 @@ class VerifiedShopCard extends StatelessWidget {
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: kSecondaryColor,
+        color: kThridColor,
         child: Container(
           padding: const EdgeInsets.all(12),
           child: Column(

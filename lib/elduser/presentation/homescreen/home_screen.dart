@@ -1,3 +1,4 @@
+import 'package:eldcare/elduser/blocs/VerifiedShopListing/verified_shop_listing_bloc.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/presentation/appoinment/appoinment_screen.dart';
 import 'package:eldcare/elduser/presentation/homescreen/homecontent.dart';
@@ -10,6 +11,7 @@ import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection
 import 'package:eldcare/elduser/presentation/medcine_schedule/add_schedule.dart';
 import 'package:eldcare/elduser/presentation/shop/shop_screen.dart';
 import 'package:eldcare/elduser/presentation/userprofile/profilecheck.dart';
+import 'package:eldcare/elduser/repository/shoplisting_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -30,6 +32,10 @@ class HomeScreen extends StatelessWidget {
             ..add(FetchMedicinesForDate(DateTime.now()))
             ..add(FetchCompletedMedicines()),
         ),
+        BlocProvider(
+            create: (context) => VerifiedShopListingBloc(
+                  repository: VerifiedShopListingRepository(),
+                )),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
