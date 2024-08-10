@@ -11,8 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class PharmacistProfileCheckPage extends StatelessWidget {
   final String pharmacistId;
 
-  const PharmacistProfileCheckPage({Key? key, required this.pharmacistId})
-      : super(key: key);
+  const PharmacistProfileCheckPage({super.key, required this.pharmacistId});
 
   @override
   Widget build(BuildContext context) {

@@ -16,8 +16,7 @@ import '../../../core/theme/font.dart';
 class PharmacistProfileUpdatePage extends StatefulWidget {
   final String pharmacistId;
 
-  const PharmacistProfileUpdatePage({Key? key, required this.pharmacistId})
-      : super(key: key);
+  const PharmacistProfileUpdatePage({super.key, required this.pharmacistId});
 
   @override
   PharmacistProfileUpdatePageState createState() =>
