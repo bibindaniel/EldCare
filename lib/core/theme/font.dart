@@ -94,4 +94,10 @@ class AppFonts {
     fontWeight: FontWeight.w600,
     color: kBlackColor,
   );
+  static const TextStyle headline4Dark = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: kBlackColor,
+  );
 }

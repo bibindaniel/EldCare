@@ -1,4 +1,5 @@
 import 'package:eldcare/pharmacy/presentation/inventory/add_categery.dart';
+import 'package:eldcare/pharmacy/presentation/inventory/add_medicine_name.dart';
 import 'package:eldcare/pharmacy/presentation/inventory/widgets/verified_shops.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -157,7 +158,10 @@ class InventoryPage extends StatelessWidget {
                 label: 'Add Medicine Name',
                 icon: Icons.medical_services,
                 onPressed: () {
-                  // Action for Add Medicine Name
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AddMedicinePage()));
                 },
               ),
             ],

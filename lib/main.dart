@@ -12,9 +12,13 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/screens/splashscreen.dart';
 import 'package:eldcare/pharmacy/blocs/category/category_bloc.dart';
+import 'package:eldcare/pharmacy/blocs/inventory/inventory_bloc.dart';
+import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
 import 'package:eldcare/pharmacy/repository/category_repo.dart';
+import 'package:eldcare/pharmacy/repository/inventory_repository.dart';
+import 'package:eldcare/pharmacy/repository/medicine_repositry.dart';
 import 'package:eldcare/pharmacy/repository/pharmacist_profile_repository.dart';
 import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -63,6 +67,8 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider(create: (_) => CategoryRepository()),
+        RepositoryProvider(create: (_) => MedicineNameRepository()),
+        RepositoryProvider(create: (_) => InventoryRepository())
       ],
       child: MultiBlocProvider(
           providers: [
@@ -87,6 +93,17 @@ class MyApp extends StatelessWidget {
             BlocProvider(
               create: (context) => CategoryBloc(
                 repository: RepositoryProvider.of<CategoryRepository>(context),
+              ),
+            ),
+            BlocProvider(
+              create: (context) => MedicineNameBloc(
+                repository:
+                    RepositoryProvider.of<MedicineNameRepository>(context),
+              ),
+            ),
+            BlocProvider(
+              create: (context) => InventoryBloc(
+                repository: RepositoryProvider.of<InventoryRepository>(context),
               ),
             ),
             BlocProvider(create: (context) => NavigationBloc()),
