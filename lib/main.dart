@@ -24,35 +24,12 @@ import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:workmanager/workmanager.dart';
 import 'package:timezone/data/latest.dart' as tz;
-
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    tz.initializeTimeZones();
-
-    switch (task) {
-      case 'scheduleMedicineNotification':
-        final id = inputData!['id'];
-        final title = inputData['title'];
-        final body = inputData['body'];
-        final hour = inputData['hour'];
-        final minute = inputData['minute'];
-
-        await NotificationService()
-            .scheduleNotificationFromBackground(id, title, body, hour, minute);
-        break;
-    }
-    return Future.value(true);
-  });
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
   await NotificationService().init();
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -112,10 +89,11 @@ class MyApp extends StatelessWidget {
                   ..add(FetchMedicinesForDate(DateTime.now()))
                   ..add(FetchCompletedMedicines())),
           ],
-          child: const MaterialApp(
+          child: MaterialApp(
+            navigatorKey: NotificationService.navigatorKey,
             onGenerateRoute: Myroutes.generateRoute,
             initialRoute: Myroutes.splash,
-            home: Splashscreen(),
+            home: const Splashscreen(),
             debugShowCheckedModeBanner: false,
           )),
     );

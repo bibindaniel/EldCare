@@ -269,12 +269,9 @@ class MedicineDetailPage extends StatelessWidget {
   }
 
   Widget _buildQuantityInfo() {
-    int totalQuantity = medicine.quantity *
-        medicine.scheduleTimes.length *
-        medicine.endDate.difference(medicine.startDate).inDays;
-    int remainingDays = medicine.endDate.difference(DateTime.now()).inDays;
-    int remainingQuantity =
-        medicine.quantity * medicine.scheduleTimes.length * remainingDays;
+    int totalQuantity = medicine.quantity;
+    int remainingQuantity = medicine.quantity;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

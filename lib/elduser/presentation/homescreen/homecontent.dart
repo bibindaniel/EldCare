@@ -1,4 +1,5 @@
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
+import 'package:eldcare/elduser/presentation/homescreen/notification_service.dart';
 import 'package:eldcare/elduser/widgets/medicine_card.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,18 @@ class HomeContent extends StatefulWidget {
 
 class HomeContentState extends State<HomeContent> {
   DateTime selectedDate = DateTime.now();
+  late NotificationService notificationService;
+
+  @override
+  void initState() {
+    super.initState();
+    notificationService = NotificationService();
+    _initializeNotificationService();
+  }
+
+  Future<void> _initializeNotificationService() async {
+    await notificationService.init();
+  }
 
   @override
   Widget build(BuildContext context) {

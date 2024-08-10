@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   static final NotificationService _notificationService =
       NotificationService._internal();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -19,15 +20,15 @@ class NotificationService {
   Future<void> init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestSoundPermission: true,
-      requestBadgePermission: true,
       requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
       onDidReceiveLocalNotification:
           (int id, String? title, String? body, String? payload) async {
-        // Handle iOS foreground notification
+        debugPrint(
+            'Received iOS notification: id=$id, title=$title, body=$body, payload=$payload');
       },
     );
 
@@ -35,7 +36,6 @@ class NotificationService {
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
-      macOS: initializationSettingsDarwin,
     );
 
     tz.initializeTimeZones();
@@ -44,81 +44,177 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
     );
-
-    // Request permissions for Android 13 and above
-    if (await Permission.notification.isDenied) {
-      await Permission.notification.request();
-    }
-
-    // Request permissions for iOS
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+    debugPrint('NotificationService initialized');
+    requestExactAlarmPermission();
   }
 
   Future<void> _onDidReceiveNotificationResponse(
       NotificationResponse notificationResponse) async {
     final String? payload = notificationResponse.payload;
-    if (notificationResponse.payload != null) {
-      print('notification payload: $payload');
-      // Handle navigation here
-      Navigator.of(navigationKey.currentContext!).pushNamed(
-        '/medicineDetail',
-        arguments: payload,
-      );
-    } else {
-      print('Notification tapped with no payload');
+    debugPrint('Notification tapped: payload=$payload');
+    if (payload != null) {
+      navigatorKey.currentState
+          ?.pushNamed('/medicineDetails', arguments: payload);
     }
   }
 
-  Future<void> showNotification(
-      int id, String title, String body, DateTime scheduledDate) async {
-    print(
-        'Scheduling notification: id=$id, title=$title, body=$body, scheduledDate=$scheduledDate');
-    try {
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledDate, tz.local),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'medicine_notification_channel',
-            'Medicine Notifications',
-            channelDescription: 'Notifications for medicine schedules',
-            importance: Importance.max,
-            priority: Priority.high,
-            ticker: 'ticker',
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
-      print('Notification scheduled successfully');
-    } catch (e) {
-      print('Error scheduling notification: $e');
-    }
+  Future<bool> areNotificationsEnabled() async {
+    final bool? result = await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.areNotificationsEnabled();
+    debugPrint('Are notifications enabled: $result');
+    return result ?? false;
   }
 
-  Future<void> scheduleNotificationFromBackground(
-      int id, String title, String body, int hour, int minute) async {
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+  Future<void> scheduleNotification(
+      int id, String title, String body, TimeOfDay scheduleTime) async {
+    tz.initializeTimeZones(); // Ensure this is called
+    final String timeZoneName = tz.local.name;
+    debugPrint('Local time zone: $timeZoneName');
+
+    final now = tz.TZDateTime.now(tz.getLocation(timeZoneName));
+    var scheduledDate = tz.TZDateTime(
+      tz.getLocation(timeZoneName),
+      now.year,
+      now.month,
+      now.day,
+      scheduleTime.hour,
+      scheduleTime.minute,
+    );
 
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
-    await showNotification(id, title, body, scheduledDate);
+    debugPrint(
+        'Scheduling notification: id=$id, title=$title, body=$body, scheduledDate=$scheduledDate, localTime=${scheduledDate.toLocal()}');
+
+    try {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'medicine_notification_channel',
+            'Medicine Reminders',
+            channelDescription: 'Reminders for medicine schedules',
+            importance: Importance.high,
+            priority: Priority.high,
+            ticker: 'ticker',
+            visibility: NotificationVisibility.public,
+            fullScreenIntent: true,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      debugPrint('Notification scheduled successfully');
+    } catch (e) {
+      debugPrint('Error scheduling notification: $e');
+    }
+  }
+
+  Future<void> requestExactAlarmPermission() async {
+    final androidImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      await androidImplementation.requestExactAlarmsPermission();
+    }
+  }
+
+  Future<void> cancelNotifications(int medicineId) async {
+    for (int i = 0; i < 24; i++) {
+      await flutterLocalNotificationsPlugin.cancel(medicineId + i.hashCode);
+    }
+    debugPrint('Notifications cancelled for medicineId=$medicineId');
+  }
+
+  Future<bool> _checkNotificationPermission() async {
+    // For Android
+    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImplementation != null) {
+      final bool? granted =
+          await androidImplementation.areNotificationsEnabled();
+      if (granted != null && !granted) {
+        // Optionally, you can request permission here
+        // final bool? requestResult = await androidImplementation.requestPermission();
+        // return requestResult ?? false;
+        return false;
+      }
+    }
+
+    // For iOS
+    final IOSFlutterLocalNotificationsPlugin? iOSImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>();
+
+    if (iOSImplementation != null) {
+      final bool? result = await iOSImplementation.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      return result ?? false;
+    }
+
+    // If we can't determine the permission status, assume it's granted
+    return true;
+  }
+
+  Future<void> showImmediateNotification() async {
+    // Check notification permission
+    final bool permissionGranted = await _checkNotificationPermission();
+    if (!permissionGranted) {
+      debugPrint('Notification permission not granted');
+      return;
+    }
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'medicine_notification_channel',
+      'Medicine Reminders',
+      channelDescription: 'Reminders for medicine schedules',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    try {
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        'Test Notification',
+        'This is a test notification',
+        platformChannelSpecifics,
+        payload: 'test',
+      );
+      debugPrint('Immediate notification sent');
+    } catch (e) {
+      debugPrint('Error sending immediate notification: $e');
+    }
+  }
+
+  Future<void> checkPendingNotifications() async {
+    final List<PendingNotificationRequest> pendingNotifications =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    debugPrint('Pending notifications: ${pendingNotifications.length}');
+    for (var notification in pendingNotifications) {
+      debugPrint(
+          'Pending notification: id=${notification.id}, title=${notification.title}, body=${notification.body}');
+    }
   }
 }
-
-final GlobalKey<NavigatorState> navigationKey = GlobalKey<NavigatorState>();
