@@ -9,10 +9,9 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
         emit(const NavigationState(currentItem: NavigationItem.home)));
     on<NavigateToSchedule>((event, emit) =>
         emit(const NavigationState(currentItem: NavigationItem.schedule)));
+    on<NavigateToShop>((event, emit) =>
+        emit(const NavigationState(currentItem: NavigationItem.shop)));
     on<NavigateToAppointment>((event, emit) =>
         emit(const NavigationState(currentItem: NavigationItem.appointment)));
-
-    on<NavigateToProfile>((event, emit) =>
-        emit(const NavigationState(currentItem: NavigationItem.profile)));
   }
 }

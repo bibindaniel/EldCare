@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum NavigationItem { home, schedule, profile, appointment }
+enum NavigationItem { home, schedule, shop, appointment }
 
 class NavigationState extends Equatable {
   final NavigationItem currentItem;

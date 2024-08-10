@@ -71,9 +71,15 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       SearchInventory event, Emitter<InventoryState> emit) async {
     emit(InventoryLoading());
     try {
-      final batches =
-          await repository.searchInventoryBatches(event.query, event.shopId);
-      emit(InventoryLoaded(batches));
+      if (event.query.isEmpty) {
+        final batches =
+            await repository.getInventoryBatchesForShop(event.shopId).first;
+        emit(InventoryLoaded(batches));
+      } else {
+        final batches =
+            await repository.searchInventoryBatches(event.query, event.shopId);
+        emit(InventoryLoaded(batches));
+      }
     } catch (e) {
       emit(InventoryError(e.toString()));
     }

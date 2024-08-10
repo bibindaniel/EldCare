@@ -1,4 +1,5 @@
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
+import 'package:eldcare/elduser/presentation/appoinment/appoinment_screen.dart';
 import 'package:eldcare/elduser/presentation/homescreen/homecontent.dart';
 import 'package:eldcare/elduser/presentation/medcine_schedule/medicine_schedule.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -7,9 +8,9 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:eldcare/elduser/presentation/medcine_schedule/add_schedule.dart';
+import 'package:eldcare/elduser/presentation/shop/shop_screen.dart';
 import 'package:eldcare/elduser/presentation/userprofile/profilecheck.dart';
 import 'package:flutter/material.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
@@ -115,10 +116,10 @@ class HomeScreen extends StatelessWidget {
         return const HomeContent();
       case NavigationItem.schedule:
         return const ScheduleScreen();
+      case NavigationItem.shop:
+        return const ShopScreen(); // You'll need to create this screen
       case NavigationItem.appointment:
-        return const Center(child: Text('Appointment Screen'));
-      case NavigationItem.profile:
-        return const Center(child: Text('Profile Screen'));
+        return const AppointmentScreen();
     }
   }
 
@@ -147,10 +148,11 @@ class HomeScreen extends StatelessWidget {
                 navigationState),
             _buildNavItem(context, Icons.calendar_today, 'Schedule',
                 NavigationItem.schedule, navigationState),
+            const SizedBox(width: 40),
+            _buildNavItem(context, Icons.shopping_cart, 'Shop',
+                NavigationItem.shop, navigationState),
             _buildNavItem(context, Icons.medical_services, 'Appointment',
                 NavigationItem.appointment, navigationState),
-            _buildNavItem(context, Icons.person, 'Profile',
-                NavigationItem.profile, navigationState),
           ],
         ),
       ),
@@ -183,10 +185,10 @@ class HomeScreen extends StatelessWidget {
         return NavigateToHome();
       case NavigationItem.schedule:
         return NavigateToSchedule();
+      case NavigationItem.shop:
+        return NavigateToShop();
       case NavigationItem.appointment:
         return NavigateToAppointment();
-      case NavigationItem.profile:
-        return NavigateToProfile();
     }
   }
 

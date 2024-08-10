@@ -11,6 +11,6 @@ class NavigateToHome extends NavigationEvent {}
 
 class NavigateToSchedule extends NavigationEvent {}
 
-class NavigateToAppointment extends NavigationEvent {}
+class NavigateToShop extends NavigationEvent {}
 
-class NavigateToProfile extends NavigationEvent {}
+class NavigateToAppointment extends NavigationEvent {}
