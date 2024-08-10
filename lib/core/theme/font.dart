@@ -88,4 +88,10 @@ class AppFonts {
     fontWeight: FontWeight.bold,
     color: kBlackColor,
   );
+  static const TextStyle bodyText1Dark = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: kBlackColor,
+  );
 }

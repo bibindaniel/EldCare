@@ -1,3 +1,4 @@
+import 'package:eldcare/pharmacy/presentation/inventory/add_categery.dart';
 import 'package:eldcare/pharmacy/presentation/inventory/widgets/verified_shops.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -145,7 +146,10 @@ class InventoryPage extends StatelessWidget {
                 label: 'Add Category',
                 icon: Icons.category,
                 onPressed: () {
-                  // Action for Add Category
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AddCategoryPage()));
                 },
               ),
               _buildActionButton(
