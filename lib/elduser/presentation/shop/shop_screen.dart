@@ -1,4 +1,6 @@
 import 'package:eldcare/elduser/models/shoplisting.dart';
+import 'package:eldcare/elduser/presentation/shop/shop_medicinescreen.dart';
+import 'package:eldcare/elduser/repository/shoplisting_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -7,21 +9,29 @@ import 'package:eldcare/elduser/blocs/VerifiedShopListing/verified_shop_listing_
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ShopScreen extends StatefulWidget {
+class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key});
 
   @override
-  _ShopScreenState createState() => _ShopScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) =>
+          VerifiedShopListingBloc(repository: VerifiedShopListingRepository())
+            ..add(LoadVerifiedShops()),
+      child: const ShopScreenView(),
+    );
+  }
 }
 
-class _ShopScreenState extends State<ShopScreen> {
-  final TextEditingController _searchController = TextEditingController();
+class ShopScreenView extends StatefulWidget {
+  const ShopScreenView({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    context.read<VerifiedShopListingBloc>().add(LoadVerifiedShops());
-  }
+  ShopScreenViewState createState() => ShopScreenViewState();
+}
+
+class ShopScreenViewState extends State<ShopScreenView> {
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -166,8 +176,15 @@ class _ShopScreenState extends State<ShopScreen> {
         ),
         trailing: ElevatedButton(
           onPressed: () {
-            // Navigate to shop details or inventory
-            // You can implement this navigation later
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ShopMedicinesScreen(
+                  shopId: shop.id,
+                  shopName: shop.name,
+                ),
+              ),
+            );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: kPrimaryColor,
