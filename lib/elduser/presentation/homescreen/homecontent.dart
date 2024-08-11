@@ -1,5 +1,6 @@
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/presentation/homescreen/notification_service.dart';
+import 'package:eldcare/elduser/presentation/medcine_schedule/add_schedule.dart';
 import 'package:eldcare/elduser/widgets/medicine_card.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:flutter/material.dart';
@@ -65,7 +66,8 @@ class HomeContentState extends State<HomeContent> {
                     borderRadius: BorderRadius.circular(30)),
               ),
               onPressed: () {
-                // Add your button action here
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const AddMedicinePage()));
               },
               child: const Text('Add', style: TextStyle(fontSize: 18)),
             ),

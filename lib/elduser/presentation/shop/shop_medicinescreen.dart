@@ -218,7 +218,7 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'RS ${medicine.price.toStringAsFixed(2)}',
+                  '₹ ${medicine.price.toStringAsFixed(2)}',
                   style: AppFonts.bodyText1Dark.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
