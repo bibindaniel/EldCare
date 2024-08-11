@@ -68,7 +68,11 @@ class NotificationService {
   }
 
   Future<void> scheduleNotification(
-      int id, String title, String body, TimeOfDay scheduleTime) async {
+    int id,
+    String medicineName,
+    String dosage,
+    TimeOfDay scheduleTime,
+  ) async {
     tz.initializeTimeZones(); // Ensure this is called
     final String timeZoneName = tz.local.name;
     debugPrint('Local time zone: $timeZoneName');
@@ -86,6 +90,10 @@ class NotificationService {
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
+    final String formattedTime =
+        '${scheduleTime.hour.toString().padLeft(2, '0')}:${scheduleTime.minute.toString().padLeft(2, '0')}';
+    final String title = 'Time to take $medicineName';
+    final String body = 'Take $dosage at $formattedTime';
 
     debugPrint(
         'Scheduling notification: id=$id, title=$title, body=$body, scheduledDate=$scheduledDate, localTime=${scheduledDate.toLocal()}');

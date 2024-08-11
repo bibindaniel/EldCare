@@ -179,7 +179,7 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('\RS ${medicine.price.toStringAsFixed(2)}',
+                Text('RS ${medicine.price.toStringAsFixed(2)}',
                     style: AppFonts.bodyText1Dark),
                 ElevatedButton(
                   onPressed: () {

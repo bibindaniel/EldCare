@@ -33,11 +33,14 @@ class MedicineDetailPage extends StatelessWidget {
             if (state is MedicineSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Operation Completed successfully'),
+                  content: Text('Medicine removed successfully'),
                   backgroundColor: kSuccessColor,
                 ),
               );
-              Navigator.pop(context);
+              // Navigate back to the previous screen after a short delay
+              Future.delayed(const Duration(seconds: 1), () {
+                Navigator.of(context).pop();
+              });
             } else if (state is MedicineError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -314,11 +317,13 @@ class MedicineDetailPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              // Close the dialog
+              Navigator.pop(dialogContext);
+              // Dispatch the remove event
               context
                   .read<MedicineBloc>()
                   .add(RemoveMedicine(medicineId: medicine.id));
-              Navigator.pop(dialogContext);
-              Navigator.pop(context);
+              // Don't pop the context here, let the BlocListener handle navigation
             },
             style: TextButton.styleFrom(foregroundColor: kErrorColor),
             child: const Text('Remove'),
