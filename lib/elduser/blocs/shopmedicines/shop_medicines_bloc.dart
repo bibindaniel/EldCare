@@ -63,14 +63,14 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
     if (existingItemIndex != -1) {
       updatedCart[existingItemIndex] = OrderItem(
         medicineId: event.shopMedicine.medicineId,
-        medicineName: event.shopMedicine.medicineName,
+        medicineName: event.shopMedicine.medicineName!,
         quantity: updatedCart[existingItemIndex].quantity + 1,
         price: event.shopMedicine.price,
       );
     } else {
       updatedCart.add(OrderItem(
         medicineId: event.shopMedicine.medicineId,
-        medicineName: event.shopMedicine.medicineName,
+        medicineName: event.shopMedicine.medicineName!,
         quantity: 1,
         price: event.shopMedicine.price,
       ));

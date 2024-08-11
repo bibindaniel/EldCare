@@ -99,7 +99,9 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
       builder: (context, state) {
         Set<String> categories = {
           'All',
-          ...state.shopMedicines.map((m) => m.category)
+          ...state.shopMedicines
+              .map((m) => m.category ?? 'Uncategorized')
+              .where((c) => c.isNotEmpty)
         };
         return SizedBox(
           height: 50,
@@ -142,8 +144,9 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
             final categoryMatches = _selectedCategory == 'All' ||
                 medicine.category == _selectedCategory;
             final searchMatches = medicine.medicineName
-                .toLowerCase()
-                .contains(_searchController.text.toLowerCase());
+                    ?.toLowerCase()
+                    .contains(_searchController.text.toLowerCase()) ??
+                false;
             return categoryMatches && searchMatches;
           }).toList();
 
@@ -172,22 +175,48 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(medicine.medicineName, style: AppFonts.bodyText1Dark),
+            Text(medicine.medicineName ?? 'Unknown Medicine',
+                style: AppFonts.headline1),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.category, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(medicine.category ?? 'Uncategorized',
+                      style: AppFonts.bodyText2),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
-            Text(medicine.category, style: AppFonts.bodyText2),
+            Row(
+              children: [
+                Icon(Icons.event, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  'Expires: ${_formatDate(medicine.expiryDate)}',
+                  style: AppFonts.bodyText2,
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('RS ${medicine.price.toStringAsFixed(2)}',
-                    style: AppFonts.bodyText1Dark),
+                Text(
+                  'RS ${medicine.price.toStringAsFixed(2)}',
+                  style: AppFonts.bodyText1Dark.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 ElevatedButton(
                   onPressed: () {
                     context.read<ShopMedicinesBloc>().add(AddToCart(medicine));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                          content:
-                              Text('${medicine.medicineName} added to cart')),
+                        content: Text(
+                            '${medicine.medicineName ?? 'Medicine'} added to cart'),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -204,5 +233,10 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
         ),
       ),
     );
+  }
+
+  // Add this method to your ShopMedicinesViewState class
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }

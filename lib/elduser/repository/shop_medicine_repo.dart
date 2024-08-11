@@ -4,17 +4,35 @@ import 'package:eldcare/elduser/models/shop_medicine.dart';
 class ShopMedicineRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  Future<ShopMedicine> _fetchMedicineDetails(ShopMedicine medicine) async {
+    final medicineDoc =
+        await _firestore.collection('medicines').doc(medicine.medicineId).get();
+    if (medicineDoc.exists) {
+      final medicineData = medicineDoc.data();
+      medicine.medicineName = medicineData?['name'];
+      medicine.dosage = medicineData?['dosage'];
+      final categoryId = medicineData?['categoryId'];
+      if (categoryId != null) {
+        final categoryDoc =
+            await _firestore.collection('categories').doc(categoryId).get();
+        final categoryData = categoryDoc.data();
+        medicine.category = categoryData?['name'];
+      }
+    }
+    return medicine;
+  }
+
   Stream<List<ShopMedicine>> getShopMedicinesStream(String shopId) {
     return _firestore
         .collection('inventory_batches')
         .where('shopId', isEqualTo: shopId)
         .snapshots()
-        .map((snapshot) {
-      print(
-          'Snapshot received with ${snapshot.docs.length} documents'); // Debug print
-      return snapshot.docs
-          .map((doc) => ShopMedicine.fromSnapshot(doc))
-          .toList();
+        .asyncMap((snapshot) async {
+      List<ShopMedicine> medicines =
+          snapshot.docs.map((doc) => ShopMedicine.fromSnapshot(doc)).toList();
+      List<ShopMedicine> detailedMedicines = await Future.wait(
+          medicines.map((medicine) => _fetchMedicineDetails(medicine)));
+      return detailedMedicines;
     });
   }
 
@@ -23,9 +41,19 @@ class ShopMedicineRepository {
     final snapshot = await _firestore
         .collection('inventory_batches')
         .where('shopId', isEqualTo: shopId)
-        .where('medicineName', isGreaterThanOrEqualTo: query)
-        .where('medicineName', isLessThanOrEqualTo: query + '\uf8ff')
         .get();
-    return snapshot.docs.map((doc) => ShopMedicine.fromSnapshot(doc)).toList();
+
+    List<ShopMedicine> medicines =
+        snapshot.docs.map((doc) => ShopMedicine.fromSnapshot(doc)).toList();
+    List<ShopMedicine> detailedMedicines = await Future.wait(
+        medicines.map((medicine) => _fetchMedicineDetails(medicine)));
+
+    return detailedMedicines
+        .where((medicine) =>
+            medicine.medicineName
+                ?.toLowerCase()
+                .contains(query.toLowerCase()) ??
+            false)
+        .toList();
   }
 }

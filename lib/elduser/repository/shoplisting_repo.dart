@@ -5,6 +5,7 @@ import 'dart:math' show cos, sqrt, asin;
 
 class VerifiedShopListingRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   Stream<List<VerifiedShopListing>> getVerifiedShops() {
     return _firestore
         .collection('shops')
