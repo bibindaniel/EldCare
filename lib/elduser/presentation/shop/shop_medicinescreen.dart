@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
 import 'package:eldcare/elduser/models/shop_medicine.dart';
 import 'package:eldcare/elduser/repository/order_repo.dart';
@@ -53,6 +55,13 @@ class ShopMedicinesView extends StatefulWidget {
 class ShopMedicinesViewState extends State<ShopMedicinesView> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'All';
+  Timer? _debounce;
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,13 +94,18 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        onChanged: (value) {
-          context
-              .read<ShopMedicinesBloc>()
-              .add(SearchShopMedicines(value, widget.shopId));
-        },
+        onChanged: _onSearchChanged,
       ),
     );
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      context
+          .read<ShopMedicinesBloc>()
+          .add(SearchShopMedicines(query, widget.shopId));
+    });
   }
 
   Widget _buildCategoryFilter() {
