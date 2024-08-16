@@ -1,5 +1,5 @@
 import 'package:eldcare/elduser/models/shoplisting.dart';
-import 'package:eldcare/elduser/presentation/shop/shop_medicinescreen.dart';
+import 'package:eldcare/elduser/presentation/shop/shopwrapper.dart';
 import 'package:eldcare/elduser/repository/shoplisting_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -176,10 +176,9 @@ class ShopScreenViewState extends State<ShopScreenView> {
         ),
         trailing: ElevatedButton(
           onPressed: () {
-            Navigator.push(
-              context,
+            Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => ShopMedicinesScreen(
+                builder: (context) => ShopWrapper(
                   shopId: shop.id,
                   shopName: shop.name,
                 ),

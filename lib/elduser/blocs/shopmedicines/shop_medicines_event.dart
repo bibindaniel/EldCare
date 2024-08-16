@@ -15,16 +15,20 @@ class SearchShopMedicines extends ShopMedicinesEvent {
 
 class AddToCart extends ShopMedicinesEvent {
   final ShopMedicine shopMedicine;
-  AddToCart(this.shopMedicine);
+  final int quantity;
+
+  AddToCart(this.shopMedicine, this.quantity);
 }
 
 class RemoveFromCart extends ShopMedicinesEvent {
-  final ShopMedicine shopMedicine;
-  RemoveFromCart(this.shopMedicine);
+  final OrderItem orderItem;
+
+  RemoveFromCart(this.orderItem);
 }
 
 class PlaceOrder extends ShopMedicinesEvent {
   final String userId;
   final String shopId;
-  PlaceOrder(this.userId, this.shopId);
+
+  PlaceOrder({required this.userId, required this.shopId});
 }

@@ -58,6 +58,7 @@ dependencies:
   expandable_datatable: ^0.0.7
   flutter_email_sender: ^6.0.3
   cached_network_image: ^3.4.0
+  file_picker: ^8.0.7
 
 
 dev_dependencies:

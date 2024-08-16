@@ -16,6 +16,8 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
     required this.orderRepository,
   }) : super(
             ShopMedicinesState(shopMedicines: [], cart: [], isLoading: false)) {
+    print(
+        'ShopMedicinesBloc created with initial cart size: ${state.cart.length}');
     on<LoadShopMedicines>(_onLoadShopMedicines);
     on<SearchShopMedicines>(_onSearchShopMedicines);
     on<AddToCart>(_onAddToCart);
@@ -64,25 +66,28 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
       updatedCart[existingItemIndex] = OrderItem(
         medicineId: event.shopMedicine.medicineId,
         medicineName: event.shopMedicine.medicineName!,
-        quantity: updatedCart[existingItemIndex].quantity + 1,
+        quantity: updatedCart[existingItemIndex].quantity + event.quantity,
         price: event.shopMedicine.price,
       );
     } else {
       updatedCart.add(OrderItem(
         medicineId: event.shopMedicine.medicineId,
         medicineName: event.shopMedicine.medicineName!,
-        quantity: 1,
+        quantity: event.quantity,
         price: event.shopMedicine.price,
       ));
     }
+    print(
+        'AddToCart event - Medicine: ${event.shopMedicine.medicineName}, Quantity: ${event.quantity}');
+    print('AddToCart event - Updated cart size: ${updatedCart.length}');
     emit(state.copyWith(cart: updatedCart));
   }
 
   void _onRemoveFromCart(
       RemoveFromCart event, Emitter<ShopMedicinesState> emit) {
     final updatedCart = List<OrderItem>.from(state.cart);
-    updatedCart.removeWhere(
-        (item) => item.medicineId == event.shopMedicine.medicineId);
+    updatedCart
+        .removeWhere((item) => item.medicineId == event.orderItem.medicineId);
     emit(state.copyWith(cart: updatedCart));
   }
 

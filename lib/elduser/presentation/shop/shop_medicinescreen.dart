@@ -1,9 +1,6 @@
 import 'dart:async';
-
 import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
 import 'package:eldcare/elduser/models/shop_medicine.dart';
-import 'package:eldcare/elduser/repository/order_repo.dart';
-import 'package:eldcare/elduser/repository/shop_medicine_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -21,23 +18,7 @@ class ShopMedicinesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiRepositoryProvider(
-      providers: [
-        RepositoryProvider<ShopMedicineRepository>(
-          create: (context) => ShopMedicineRepository(),
-        ),
-        RepositoryProvider<OrderRepository>(
-          create: (context) => OrderRepository(),
-        ),
-      ],
-      child: BlocProvider(
-        create: (context) => ShopMedicinesBloc(
-          shopMedicineRepository: context.read<ShopMedicineRepository>(),
-          orderRepository: context.read<OrderRepository>(),
-        )..add(LoadShopMedicines(shopId)),
-        child: ShopMedicinesView(shopName: shopName, shopId: shopId),
-      ),
-    );
+    return ShopMedicinesView(shopName: shopName, shopId: shopId);
   }
 }
 
@@ -65,19 +46,45 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.shopName} Medicines', style: AppFonts.headline3),
-        backgroundColor: kPrimaryColor,
-      ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          _buildCategoryFilter(),
-          Expanded(
-            child: _buildMedicineList(),
-          ),
-        ],
+    return BlocListener<ShopMedicinesBloc, ShopMedicinesState>(
+      listener: (context, state) {},
+      child: BlocBuilder<ShopMedicinesBloc, ShopMedicinesState>(
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.close, color: kWhiteColor),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).pop(),
+              ),
+              title: Text(widget.shopName, style: AppFonts.headline3),
+              backgroundColor: kPrimaryColor,
+              actions: [
+                IconButton(
+                  icon: Badge(
+                    label: Text(state.cart.length.toString()),
+                    child: const Icon(
+                      Icons.shopping_cart,
+                      color: kWhiteColor,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/cart');
+                  },
+                ),
+              ],
+            ),
+            body: Column(
+              children: [
+                _buildSearchBar(),
+                _buildCategoryFilter(),
+                Expanded(
+                  child: _buildMedicineList(),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -225,13 +232,7 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<ShopMedicinesBloc>().add(AddToCart(medicine));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            '${medicine.medicineName ?? 'Medicine'} added to cart'),
-                      ),
-                    );
+                    _showAddToCartDialog(context, medicine);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
@@ -252,5 +253,69 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
   // Add this method to your ShopMedicinesViewState class
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  void _showAddToCartDialog(BuildContext context, ShopMedicine medicine) {
+    int quantity = 1;
+    final blocContext = context;
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setState) {
+            return AlertDialog(
+              title: Text('Add ${medicine.medicineName} to Cart'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: () {
+                          if (quantity > 1) {
+                            setState(() => quantity--);
+                          }
+                        },
+                      ),
+                      Text(quantity.toString()),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () {
+                          setState(() => quantity++);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                ),
+                ElevatedButton(
+                  child: const Text('Add to Cart'),
+                  onPressed: () {
+                    // Use the captured context to access the bloc
+                    blocContext
+                        .read<ShopMedicinesBloc>()
+                        .add(AddToCart(medicine, quantity));
+                    Navigator.of(dialogContext).pop();
+                    ScaffoldMessenger.of(blocContext).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            '${medicine.medicineName ?? 'Medicine'} added to cart'),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

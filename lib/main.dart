@@ -4,8 +4,11 @@ import 'package:eldcare/admin/repository/users.dart';
 import 'package:eldcare/core/theme/routes/myroutes.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
+import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
 import 'package:eldcare/elduser/blocs/userprofile/userprofile_bloc.dart';
 import 'package:eldcare/elduser/presentation/homescreen/notification_service.dart';
+import 'package:eldcare/elduser/repository/order_repo.dart';
+import 'package:eldcare/elduser/repository/shop_medicine_repo.dart';
 import 'package:eldcare/elduser/repository/userprofile_repository.dart';
 import 'package:eldcare/firebase_options.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
@@ -88,6 +91,12 @@ class MyApp extends StatelessWidget {
                 create: (context) => MedicineBloc()
                   ..add(FetchMedicinesForDate(DateTime.now()))
                   ..add(FetchCompletedMedicines())),
+            BlocProvider<ShopMedicinesBloc>(
+              create: (context) => ShopMedicinesBloc(
+                shopMedicineRepository: ShopMedicineRepository(),
+                orderRepository: OrderRepository(),
+              ),
+            ),
           ],
           child: MaterialApp(
             navigatorKey: NotificationService.navigatorKey,
