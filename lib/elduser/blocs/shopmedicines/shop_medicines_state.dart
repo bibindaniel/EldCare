@@ -5,12 +5,14 @@ class ShopMedicinesState {
   final List<OrderItem> cart;
   final bool isLoading;
   final String? error;
+  final bool prescriptionUploaded;
 
   ShopMedicinesState({
     required this.shopMedicines,
     required this.cart,
     required this.isLoading,
     this.error,
+    this.prescriptionUploaded = false,
   });
 
   ShopMedicinesState copyWith({
@@ -18,12 +20,14 @@ class ShopMedicinesState {
     List<OrderItem>? cart,
     bool? isLoading,
     String? error,
+    bool? prescriptionUploaded,
   }) {
     return ShopMedicinesState(
       shopMedicines: shopMedicines ?? this.shopMedicines,
       cart: cart ?? this.cart,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: error,
+      prescriptionUploaded: prescriptionUploaded ?? this.prescriptionUploaded,
     );
   }
 }

@@ -29,6 +29,8 @@ class RemoveFromCart extends ShopMedicinesEvent {
 class PlaceOrder extends ShopMedicinesEvent {
   final String userId;
   final String shopId;
+  final File? prescriptionFile;
 
-  PlaceOrder({required this.userId, required this.shopId});
+  PlaceOrder(
+      {required this.userId, required this.shopId, this.prescriptionFile});
 }

@@ -8,6 +8,7 @@ class MedicineOrder {
   final double totalAmount;
   final String status;
   final DateTime createdAt;
+  final String? prescriptionUrl; // New field for prescription
 
   MedicineOrder({
     required this.id,
@@ -17,6 +18,7 @@ class MedicineOrder {
     required this.totalAmount,
     required this.status,
     required this.createdAt,
+    this.prescriptionUrl, // Optional prescription URL
   });
 
   factory MedicineOrder.fromFirestore(DocumentSnapshot doc) {
@@ -31,6 +33,7 @@ class MedicineOrder {
       totalAmount: (data['totalAmount'] ?? 0.0).toDouble(),
       status: data['status'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      prescriptionUrl: data['prescriptionUrl'], // Add this line
     );
   }
 
@@ -42,6 +45,7 @@ class MedicineOrder {
       'totalAmount': totalAmount,
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
+      'prescriptionUrl': prescriptionUrl, // Add this line
     };
   }
 }

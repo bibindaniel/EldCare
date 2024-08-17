@@ -92,7 +92,27 @@ class CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ShopMedicinesBloc, ShopMedicinesState>(
+    return BlocConsumer<ShopMedicinesBloc, ShopMedicinesState>(
+      listener: (context, state) {
+        if (state.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error!),
+              backgroundColor: kErrorColor,
+            ),
+          );
+        }
+        if (state.prescriptionUploaded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Prescription uploaded successfully',
+              ),
+              backgroundColor: kSuccessColor,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
@@ -170,11 +190,12 @@ class CartScreenState extends State<CartScreen> {
                                   : Icons.upload_file),
                               label: Text(
                                 _prescriptionFile != null
-                                    ? 'Prescription Uploaded'
+                                    ? 'Prescription Selected'
                                     : 'Upload Prescription (Optional)',
                                 style: AppFonts.button,
                               ),
-                              onPressed: _uploadPrescription,
+                              onPressed:
+                                  state.isLoading ? null : _uploadPrescription,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _prescriptionFile != null
                                     ? Colors.green
@@ -206,16 +227,20 @@ class CartScreenState extends State<CartScreen> {
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
-                              onPressed: () {
-                                _showOrderConfirmationDialog(context, state);
-                              },
+                              onPressed: state.isLoading
+                                  ? null
+                                  : () => _showOrderConfirmationDialog(
+                                      context, state),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: kPrimaryColor,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 16),
                               ),
-                              child: const Text('Place Order',
-                                  style: AppFonts.button),
+                              child: state.isLoading
+                                  ? CircularProgressIndicator(
+                                      color: Colors.white)
+                                  : const Text('Place Order',
+                                      style: AppFonts.button),
                             ),
                           ],
                         ),
@@ -244,6 +269,9 @@ class CartScreenState extends State<CartScreen> {
               Text('Total Items: ${state.cart.length}'),
               Text(
                   'Total Amount: ₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}'),
+              if (_prescriptionFile != null)
+                Text(
+                    'Prescription: ${_prescriptionFile!.path.split('/').last}'),
               const SizedBox(height: 16),
               const Text(
                 'Note: Some medicines may require a prescription. The pharmacist may reject the order if a prescription is not provided when necessary.',
@@ -259,18 +287,13 @@ class CartScreenState extends State<CartScreen> {
             ElevatedButton(
               child: const Text('Confirm Order'),
               onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
                 context.read<ShopMedicinesBloc>().add(PlaceOrder(
                       userId: 'user_id', // Replace with actual user ID
                       shopId: widget.shopId,
+                      prescriptionFile: _prescriptionFile,
                     ));
-                Navigator.of(dialogContext).pop(); // Close the dialog
                 Navigator.of(context).pop(); // Go back to the shop screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Order placed successfully',
-                        style: TextStyle(color: kSuccessColor)),
-                  ),
-                );
               },
             ),
           ],

@@ -307,6 +307,7 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
                       SnackBar(
                         content: Text(
                             '${medicine.medicineName ?? 'Medicine'} added to cart'),
+                        backgroundColor: kSuccessColor,
                       ),
                     );
                   },
