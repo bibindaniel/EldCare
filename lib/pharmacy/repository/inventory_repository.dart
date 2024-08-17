@@ -6,8 +6,9 @@ class InventoryRepository {
 
   Stream<List<InventoryBatch>> getInventoryBatchesForShop(String shopId) {
     return _firestore
+        .collection('shops')
+        .doc(shopId)
         .collection('inventory_batches')
-        .where('shopId', isEqualTo: shopId)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
@@ -17,25 +18,37 @@ class InventoryRepository {
   }
 
   Future<void> addInventoryBatch(InventoryBatch batch) {
-    return _firestore.collection('inventory_batches').add(batch.toMap());
+    return _firestore
+        .collection('shops')
+        .doc(batch.shopId)
+        .collection('inventory_batches')
+        .add(batch.toMap());
   }
 
   Future<void> updateInventoryBatch(InventoryBatch batch) {
     return _firestore
+        .collection('shops')
+        .doc(batch.shopId)
         .collection('inventory_batches')
         .doc(batch.id)
         .update(batch.toMap());
   }
 
-  Future<void> deleteInventoryBatch(String batchId) {
-    return _firestore.collection('inventory_batches').doc(batchId).delete();
+  Future<void> deleteInventoryBatch(String batchId, String shopId) {
+    return _firestore
+        .collection('shops')
+        .doc(shopId)
+        .collection('inventory_batches')
+        .doc(batchId)
+        .delete();
   }
 
   Future<List<InventoryBatch>> searchInventoryBatches(
       String query, String shopId) async {
     final snapshot = await _firestore
+        .collection('shops')
+        .doc(shopId)
         .collection('inventory_batches')
-        .where('shopId', isEqualTo: shopId)
         .get();
 
     final batches =

@@ -1,15 +1,15 @@
-import 'package:eldcare/pharmacy/blocs/category/category_bloc.dart';
-import 'package:eldcare/pharmacy/blocs/category/category_event.dart';
-import 'package:eldcare/pharmacy/blocs/category/category_state.dart';
-import 'package:eldcare/pharmacy/model/category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
+import 'package:eldcare/pharmacy/blocs/category/category_bloc.dart';
+import 'package:eldcare/pharmacy/model/category.dart';
 import 'package:lottie/lottie.dart';
 
 class AddCategoryPage extends StatefulWidget {
-  const AddCategoryPage({super.key});
+  final String shopId;
+
+  const AddCategoryPage({super.key, required this.shopId});
 
   @override
   State<AddCategoryPage> createState() => _AddCategoryPageState();
@@ -24,6 +24,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    context.read<CategoryBloc>().add(LoadCategories(widget.shopId));
   }
 
   @override
@@ -36,63 +37,65 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
   void _onSearchChanged() {
     final query = _searchController.text;
-    context.read<CategoryBloc>().add(SearchCategories(query));
+    context.read<CategoryBloc>().add(SearchCategories(query, widget.shopId));
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<CategoryBloc, CategoryState>(
+    return BlocConsumer<CategoryBloc, CategoryState>(
       listener: (context, state) {
         if (state is CategoryOperationSuccess) {
-          _showSnackBar(context, state.message);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(state.message), backgroundColor: kSuccessColor));
+          context.read<CategoryBloc>().add(LoadCategories(widget.shopId));
         } else if (state is CategoryError) {
-          _showSnackBar(context, state.message, isError: true);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(state.message), backgroundColor: kErrorColor));
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Manage Categories', style: AppFonts.headline3),
-          backgroundColor: kPrimaryColor,
-        ),
-        body: SingleChildScrollView(
-          child: Container(
-            color: kPrimaryColor,
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                _buildTopSection(context),
-                const SizedBox(height: 30),
-                _buildBottomSection(context),
-              ],
-            ),
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Manage Categories', style: AppFonts.headline3),
+            backgroundColor: kPrimaryColor,
           ),
-        ),
-      ),
+          body: Column(
+            children: [
+              _buildTopSection(context),
+              Expanded(child: _buildBottomSection(context, state)),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildTopSection(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: kPrimaryColor,
-            backgroundColor: kWhiteColor,
-            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+    return Container(
+      color: kPrimaryColor,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: kPrimaryColor,
+              backgroundColor: kWhiteColor,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
+            ),
+            onPressed: () => _showAddCategoryDialog(context),
+            child: const Text('Add Category', style: TextStyle(fontSize: 16)),
           ),
-          onPressed: () => _showAddCategoryDialog(context),
-          child: const Text('Add Category', style: TextStyle(fontSize: 18)),
-        ),
-        Lottie.asset('assets/animations/pharmacy2.json',
-            width: 150, height: 100),
-      ],
+          Lottie.asset('assets/animations/pharmacy2.json',
+              width: 100, height: 100),
+        ],
+      ),
     );
   }
 
-  Widget _buildBottomSection(BuildContext context) {
+  Widget _buildBottomSection(BuildContext context, CategoryState state) {
     return Container(
       decoration: BoxDecoration(
         color: kWhiteColor,
@@ -111,42 +114,16 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 20),
           _buildSearchField(),
-          BlocBuilder<CategoryBloc, CategoryState>(
-            builder: (context, state) {
-              if (state is CategoryLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is CategoryLoaded) {
-                return _buildExistingCategoriesSection(
-                    context, state.categories);
-              } else if (state is CategoryError) {
-                return Text('Error: ${state.message}');
-              }
-              return const SizedBox();
-            },
+          Expanded(
+            child: state is CategoryLoading
+                ? const Center(child: CircularProgressIndicator())
+                : state is CategoryLoaded
+                    ? _buildCategoryList(state.categories)
+                    : state is CategoryError
+                        ? Center(child: Text(state.message))
+                        : const SizedBox.shrink(),
           ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExistingCategoriesSection(
-      BuildContext context, List<Category> categories) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Existing Categories', style: AppFonts.headline3Dark),
-          const SizedBox(height: 20),
-          if (categories.isEmpty)
-            const Text('No categories found', style: AppFonts.bodyText1Dark)
-          else
-            ...categories
-                .map((category) => _buildCategoryTile(category, context))
-                .toList(),
         ],
       ),
     );
@@ -154,37 +131,34 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(16.0),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search categories',
+          hintText: 'Search categories...',
           prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCategoryTile(Category category, BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      decoration: BoxDecoration(
-        color: kPrimaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kPrimaryColor),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(category.name,
-              style: AppFonts.bodyText1Dark.copyWith(fontSize: 18)),
-          Row(
+  Widget _buildCategoryList(List<Category> categories) {
+    return ListView.separated(
+      itemCount: categories.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        return ListTile(
+          title: Text(category.name, style: AppFonts.subtitle1),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: const Icon(Icons.edit, color: kPrimaryColor),
-                onPressed: () => _showUpdateCategoryDialog(context, category),
+                onPressed: () => _showEditCategoryDialog(context, category),
               ),
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),
@@ -193,8 +167,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -203,37 +177,38 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add New Category', style: AppFonts.headline3Dark),
+          title: const Text('Add New Category'),
           content: Form(
             key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _categoryController,
-                  decoration:
-                      const InputDecoration(hintText: 'Enter category name'),
-                  validator: _categoryNameValidator,
-                  onChanged: _onCategoryNameChanged,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Please ensure the category name meets the following criteria:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Text('- Only one word is allowed'),
-                const Text('- Minimum of 3 letters'),
-              ],
+            child: TextFormField(
+              controller: _categoryController,
+              decoration:
+                  const InputDecoration(hintText: "Enter category name"),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a category name';
+                }
+                return null;
+              },
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
-            TextButton(
-              onPressed: () => _addCategory(context),
-              child: const Text('Add', style: TextStyle(color: kPrimaryColor)),
+            ElevatedButton(
+              child: const Text('Add'),
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  context.read<CategoryBloc>().add(
+                      AddCategory(_categoryController.text, widget.shopId));
+                  Navigator.of(context).pop();
+                  _categoryController.clear();
+                }
+              },
             ),
           ],
         );
@@ -241,42 +216,48 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     );
   }
 
-  void _showUpdateCategoryDialog(BuildContext context, Category category) {
-    final TextEditingController updateController =
-        TextEditingController(text: category.name);
-    final GlobalKey<FormState> updateFormKey = GlobalKey<FormState>();
-
+  void _showEditCategoryDialog(BuildContext context, Category category) {
+    _categoryController.text = category.name;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Update Category', style: AppFonts.headline3Dark),
+          title: const Text('Edit Category'),
           content: Form(
-            key: updateFormKey,
+            key: _formKey,
             child: TextFormField(
-              controller: updateController,
+              controller: _categoryController,
               decoration:
-                  const InputDecoration(hintText: 'Enter new category name'),
-              validator: _categoryNameValidator,
+                  const InputDecoration(hintText: "Enter category name"),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a category name';
+                }
+                return null;
+              },
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-            ),
-            TextButton(
+              child: const Text('Cancel'),
               onPressed: () {
-                if (updateFormKey.currentState?.validate() ?? false) {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Update'),
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
                   context.read<CategoryBloc>().add(UpdateCategory(
-                        Category(id: category.id, name: updateController.text),
+                        Category(
+                            id: category.id,
+                            name: _categoryController.text,
+                            shopId: widget.shopId),
                       ));
                   Navigator.of(context).pop();
-                  _showSnackBar(context, 'Category updated successfully');
+                  _categoryController.clear();
                 }
               },
-              child:
-                  const Text('Update', style: TextStyle(color: kPrimaryColor)),
             ),
           ],
         );
@@ -293,63 +274,23 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           content: Text('Are you sure you want to delete ${category.name}?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
-            ),
-            TextButton(
               onPressed: () {
-                context.read<CategoryBloc>().add(DeleteCategory(category.id));
                 Navigator.of(context).pop();
-                _showSnackBar(context, 'Category deleted successfully');
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+            ElevatedButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                context
+                    .read<CategoryBloc>()
+                    .add(DeleteCategory(category.id, widget.shopId));
+                Navigator.of(context).pop();
+              },
             ),
           ],
         );
       },
     );
-  }
-
-  void _showSnackBar(BuildContext context, String message,
-      {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-      ),
-    );
-  }
-
-  String? _categoryNameValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a category name';
-    }
-    final capitalized = value[0].toUpperCase() + value.substring(1);
-    if (!RegExp(r'^[A-Z][a-zA-Z]{2,}$').hasMatch(capitalized)) {
-      return 'Invalid category name. Please follow the criteria.';
-    }
-    return null;
-  }
-
-  void _onCategoryNameChanged(String value) {
-    if (value.isNotEmpty) {
-      final capitalized = value[0].toUpperCase() + value.substring(1);
-      _categoryController.value = _categoryController.value.copyWith(
-        text: capitalized,
-        selection: TextSelection.fromPosition(
-          TextPosition(offset: capitalized.length),
-        ),
-      );
-    }
-  }
-
-  void _addCategory(BuildContext context) {
-    if (_formKey.currentState?.validate() ?? false) {
-      final String categoryName = _categoryController.text;
-      context.read<CategoryBloc>().add(AddCategory(categoryName));
-      Navigator.of(context).pop();
-      _categoryController.clear();
-      _showSnackBar(context, 'Category added successfully');
-    }
   }
 }

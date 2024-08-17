@@ -1,5 +1,4 @@
 import 'package:eldcare/admin/blocs/users/users_bloc.dart';
-import 'package:eldcare/admin/presentation/users/userspage.dart';
 import 'package:eldcare/admin/repository/users.dart';
 import 'package:eldcare/core/theme/routes/myroutes.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
@@ -47,64 +46,63 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider(create: (_) => CategoryRepository()),
-        RepositoryProvider(create: (_) => MedicineNameRepository()),
-        RepositoryProvider(create: (_) => InventoryRepository())
+        RepositoryProvider(create: (_) => MedicineRepository()),
+        RepositoryProvider(create: (_) => InventoryRepository()),
+        RepositoryProvider(create: (_) => ShopRepository()),
+        RepositoryProvider(create: (_) => UserRepository()),
+        RepositoryProvider(create: (_) => UserProfileRepository()),
+        RepositoryProvider(create: (_) => PharmacistProfileRepository()),
+        RepositoryProvider(create: (_) => ShopMedicineRepository()),
+        RepositoryProvider(create: (_) => OrderRepository()),
       ],
       child: MultiBlocProvider(
-          providers: [
-            BlocProvider(
-                create: (context) => AuthBloc()..add(CheckLoginStatus())),
-            BlocProvider(create: (context) => AuthBloc()),
-            BlocProvider(
+        providers: [
+          BlocProvider(
+              create: (context) => AuthBloc()..add(CheckLoginStatus())),
+          BlocProvider(
               create: (context) =>
-                  UserBloc(UserRepository())..add(FetchUsers()),
-              child: const UsersPage(),
-            ),
-            BlocProvider(
-                create: (context) => UserProfileBloc(UserProfileRepository())),
-            BlocProvider(
-                create: (context) =>
-                    PharmacistProfileBloc(PharmacistProfileRepository())),
-            BlocProvider<ShopBloc>(
-              create: (context) => ShopBloc(
-                shopRepository: ShopRepository(),
-              ),
-            ),
-            BlocProvider(
+                  UserBloc(context.read<UserRepository>())..add(FetchUsers())),
+          BlocProvider(
+              create: (context) =>
+                  UserProfileBloc(context.read<UserProfileRepository>())),
+          BlocProvider(
+              create: (context) => PharmacistProfileBloc(
+                  context.read<PharmacistProfileRepository>())),
+          BlocProvider(
+              create: (context) =>
+                  ShopBloc(shopRepository: context.read<ShopRepository>())),
+          BlocProvider(
               create: (context) => CategoryBloc(
-                repository: RepositoryProvider.of<CategoryRepository>(context),
-              ),
-            ),
-            BlocProvider(
+                  repository: context.read<CategoryRepository>(),
+                  categoryRepository: CategoryRepository())),
+          BlocProvider(
               create: (context) => MedicineNameBloc(
-                repository:
-                    RepositoryProvider.of<MedicineNameRepository>(context),
-              ),
-            ),
-            BlocProvider(
+                  repository: context.read<MedicineRepository>(),
+                  medicineRepository: MedicineRepository())),
+          BlocProvider(
               create: (context) => InventoryBloc(
-                repository: RepositoryProvider.of<InventoryRepository>(context),
-              ),
+                  repository: context.read<InventoryRepository>(),
+                  inventoryRepository: InventoryRepository())),
+          BlocProvider(create: (context) => NavigationBloc()),
+          BlocProvider(
+              create: (context) => MedicineBloc()
+                ..add(FetchMedicinesForDate(DateTime.now()))
+                ..add(FetchCompletedMedicines())),
+          BlocProvider(
+            create: (context) => ShopMedicinesBloc(
+              shopMedicineRepository: context.read<ShopMedicineRepository>(),
+              orderRepository: context.read<OrderRepository>(),
             ),
-            BlocProvider(create: (context) => NavigationBloc()),
-            BlocProvider(
-                create: (context) => MedicineBloc()
-                  ..add(FetchMedicinesForDate(DateTime.now()))
-                  ..add(FetchCompletedMedicines())),
-            BlocProvider<ShopMedicinesBloc>(
-              create: (context) => ShopMedicinesBloc(
-                shopMedicineRepository: ShopMedicineRepository(),
-                orderRepository: OrderRepository(),
-              ),
-            ),
-          ],
-          child: MaterialApp(
-            navigatorKey: NotificationService.navigatorKey,
-            onGenerateRoute: Myroutes.generateRoute,
-            initialRoute: Myroutes.splash,
-            home: const Splashscreen(),
-            debugShowCheckedModeBanner: false,
-          )),
+          ),
+        ],
+        child: MaterialApp(
+          navigatorKey: NotificationService.navigatorKey,
+          onGenerateRoute: Myroutes.generateRoute,
+          initialRoute: Myroutes.splash,
+          home: const Splashscreen(),
+          debugShowCheckedModeBanner: false,
+        ),
+      ),
     );
   }
 }

@@ -1,63 +1,31 @@
-import 'package:eldcare/pharmacy/model/category.dart';
-import 'package:equatable/equatable.dart';
+part of 'category_bloc.dart';
 
-abstract class CategoryEvent extends Equatable {
-  const CategoryEvent();
-
-  @override
-  List<Object> get props => [];
-}
+abstract class CategoryEvent {}
 
 class LoadCategories extends CategoryEvent {
-  final List<Category> categories;
-
-  const LoadCategories({this.categories = const []});
-
-  @override
-  List<Object> get props => [categories];
+  final String shopId;
+  LoadCategories(this.shopId);
 }
 
 class AddCategory extends CategoryEvent {
   final String name;
-
-  const AddCategory(this.name);
-
-  @override
-  List<Object> get props => [name];
+  final String shopId;
+  AddCategory(this.name, this.shopId);
 }
 
 class UpdateCategory extends CategoryEvent {
   final Category category;
-
-  const UpdateCategory(this.category);
-
-  @override
-  List<Object> get props => [category];
+  UpdateCategory(this.category);
 }
 
 class DeleteCategory extends CategoryEvent {
-  final String id;
-
-  const DeleteCategory(this.id);
-
-  @override
-  List<Object> get props => [id];
+  final String categoryId;
+  final String shopId;
+  DeleteCategory(this.categoryId, this.shopId);
 }
 
 class SearchCategories extends CategoryEvent {
   final String query;
-
-  const SearchCategories(this.query);
-
-  @override
-  List<Object> get props => [query];
-}
-
-class CheckCategoryExists extends CategoryEvent {
-  final String name;
-
-  const CheckCategoryExists(this.name);
-
-  @override
-  List<Object> get props => [name];
+  final String shopId;
+  SearchCategories(this.query, this.shopId);
 }

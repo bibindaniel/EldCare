@@ -1,18 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eldcare/pharmacy/model/medicine.dart';
 
-class MedicineNameRepository {
+class MedicineRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<List<Medicine>> getMedicinesStream() {
-    return _firestore.collection('medicines').snapshots().map((snapshot) {
+  Stream<List<Medicine>> getMedicinesStream(String shopId) {
+    return _firestore
+        .collection('shops')
+        .doc(shopId)
+        .collection('medicines')
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) => Medicine.fromSnapshot(doc)).toList();
     });
   }
 
   Future<void> addMedicine(Medicine medicine) async {
     try {
-      await _firestore.collection('medicines').add(medicine.toMap());
+      await _firestore
+          .collection('shops')
+          .doc(medicine.shopId)
+          .collection('medicines')
+          .add(medicine.toMap());
     } catch (e) {
       throw Exception('Failed to add medicine: $e');
     }
@@ -21,6 +30,8 @@ class MedicineNameRepository {
   Future<void> updateMedicine(Medicine medicine) async {
     try {
       await _firestore
+          .collection('shops')
+          .doc(medicine.shopId)
           .collection('medicines')
           .doc(medicine.id)
           .update(medicine.toMap());
@@ -29,17 +40,24 @@ class MedicineNameRepository {
     }
   }
 
-  Future<void> deleteMedicine(String id) async {
+  Future<void> deleteMedicine(String id, String shopId) async {
     try {
-      await _firestore.collection('medicines').doc(id).delete();
+      await _firestore
+          .collection('shops')
+          .doc(shopId)
+          .collection('medicines')
+          .doc(id)
+          .delete();
     } catch (e) {
       throw Exception('Failed to delete medicine: $e');
     }
   }
 
-  Future<List<Medicine>> searchMedicines(String query) async {
+  Future<List<Medicine>> searchMedicines(String query, String shopId) async {
     try {
       final snapshot = await _firestore
+          .collection('shops')
+          .doc(shopId)
           .collection('medicines')
           .where('name', isGreaterThanOrEqualTo: query)
           .where('name', isLessThanOrEqualTo: query + '\uf8ff')

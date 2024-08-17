@@ -1,17 +1,17 @@
-import 'package:eldcare/pharmacy/blocs/category/category_bloc.dart';
-import 'package:eldcare/pharmacy/blocs/category/category_state.dart';
-import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_bloc.dart';
-import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_event.dart';
-import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_state.dart';
-import 'package:eldcare/pharmacy/model/medicine.dart';
-import 'package:eldcare/pharmacy/model/category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
+import 'package:eldcare/pharmacy/blocs/category/category_bloc.dart';
+import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_bloc.dart';
+import 'package:eldcare/pharmacy/model/category.dart';
+import 'package:eldcare/pharmacy/model/medicine.dart';
+import 'package:lottie/lottie.dart';
 
 class AddMedicinePage extends StatefulWidget {
-  const AddMedicinePage({super.key});
+  final String shopId;
+
+  const AddMedicinePage({super.key, required this.shopId});
 
   @override
   State<AddMedicinePage> createState() => _AddMedicinePageState();
@@ -23,11 +23,14 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   final TextEditingController _dosageController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   Category? _selectedCategory;
+  bool _requiresPrescription = false;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    context.read<MedicineNameBloc>().add(LoadMedicines(widget.shopId));
+    context.read<CategoryBloc>().add(LoadCategories(widget.shopId));
   }
 
   @override
@@ -41,40 +44,33 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
 
   void _onSearchChanged() {
     final query = _searchController.text;
-    context.read<MedicineNameBloc>().add(SearchMedicines(query));
+    context.read<MedicineNameBloc>().add(SearchMedicines(query, widget.shopId));
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MedicineNameBloc, MedicineNameState>(
+    return BlocConsumer<MedicineNameBloc, MedicineNameState>(
+      listener: (context, state) {
+        if (state is MedicineOperationSuccess) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.message)));
+          context.read<MedicineNameBloc>().add(LoadMedicines(widget.shopId));
+        } else if (state is MedicineNameError) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(state.message), backgroundColor: Colors.red));
+        }
+      },
       builder: (context, state) {
-        return BlocListener<MedicineNameBloc, MedicineNameState>(
-          listener: (context, state) {
-            if (state is MedicineOperationSuccess) {
-              _showSnackBar(context, state.message);
-              context.read<MedicineNameBloc>().add(LoadMedicines());
-            } else if (state is MedicineError) {
-              _showSnackBar(context, state.message, isError: true);
-            }
-          },
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text('Manage Medicines', style: AppFonts.headline3),
-              backgroundColor: kPrimaryColor,
-            ),
-            body: SingleChildScrollView(
-              child: Container(
-                color: kPrimaryColor,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildTopSection(context),
-                    const SizedBox(height: 30),
-                    _buildBottomSection(context),
-                  ],
-                ),
-              ),
-            ),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Manage Medicines', style: AppFonts.headline3),
+            backgroundColor: kPrimaryColor,
+          ),
+          body: Column(
+            children: [
+              _buildTopSection(context),
+              Expanded(child: _buildBottomSection(context, state)),
+            ],
           ),
         );
       },
@@ -82,25 +78,31 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   }
 
   Widget _buildTopSection(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: kPrimaryColor,
-            backgroundColor: kWhiteColor,
-            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+    return Container(
+      color: kPrimaryColor,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: kPrimaryColor,
+              backgroundColor: kWhiteColor,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
+            ),
+            onPressed: () => _showAddMedicineDialog(context),
+            child: const Text('Add Medicine', style: TextStyle(fontSize: 16)),
           ),
-          onPressed: () => _showAddMedicineDialog(context),
-          child: const Text('Add Medicine', style: TextStyle(fontSize: 18)),
-        ),
-      ],
+          Lottie.asset('assets/animations/pharmacy2.json',
+              width: 100, height: 100),
+        ],
+      ),
     );
   }
 
-  Widget _buildBottomSection(BuildContext context) {
+  Widget _buildBottomSection(BuildContext context, MedicineNameState state) {
     return Container(
       decoration: BoxDecoration(
         color: kWhiteColor,
@@ -119,21 +121,16 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 20),
           _buildSearchField(),
-          BlocBuilder<MedicineNameBloc, MedicineNameState>(
-            builder: (context, state) {
-              if (state is MedicineLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is MedicineLoaded) {
-                return _buildExistingMedicinesSection(context, state.medicines);
-              } else if (state is MedicineError) {
-                return Text('Error: ${state.message}');
-              }
-              return const SizedBox();
-            },
+          Expanded(
+            child: state is MedicineNameLoading
+                ? const Center(child: CircularProgressIndicator())
+                : state is MedicineNameLoaded
+                    ? _buildMedicineList(state.medicines)
+                    : state is MedicineNameError
+                        ? Center(child: Text(state.message))
+                        : const Center(child: Text('No medicines available')),
           ),
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -141,64 +138,35 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(16.0),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search medicines',
+          hintText: 'Search medicines...',
           prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildExistingMedicinesSection(
-      BuildContext context, List<Medicine> medicines) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Existing Medicines', style: AppFonts.headline3Dark),
-          const SizedBox(height: 20),
-          if (medicines.isEmpty)
-            const Text('No medicines found', style: AppFonts.bodyText1Dark)
-          else
-            ...medicines
-                .map((medicine) => _buildMedicineTile(medicine, context))
-                .toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMedicineTile(Medicine medicine, BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      decoration: BoxDecoration(
-        color: kPrimaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kPrimaryColor),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(medicine.name,
-                  style: AppFonts.bodyText1Dark.copyWith(fontSize: 18)),
-              Text('Dosage: ${medicine.dosage}',
-                  style: AppFonts.bodyText1Dark.copyWith(fontSize: 14)),
-            ],
-          ),
-          Row(
+  Widget _buildMedicineList(List<Medicine> medicines) {
+    return ListView.separated(
+      itemCount: medicines.length,
+      separatorBuilder: (context, index) => const Divider(),
+      itemBuilder: (context, index) {
+        final medicine = medicines[index];
+        return ListTile(
+          title: Text(medicine.name, style: AppFonts.subtitle1),
+          subtitle: Text(medicine.dosage, style: AppFonts.bodyText2),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: const Icon(Icons.edit, color: kPrimaryColor),
-                onPressed: () => _showUpdateMedicineDialog(context, medicine),
+                onPressed: () => _showEditMedicineDialog(context, medicine),
               ),
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),
@@ -207,8 +175,9 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
               ),
             ],
           ),
-        ],
-      ),
+          onTap: () => _showEditMedicineDialog(context, medicine),
+        );
+      },
     );
   }
 
@@ -216,133 +185,233 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Add New Medicine', style: AppFonts.headline3Dark),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _medicineNameController,
-                  decoration:
-                      const InputDecoration(hintText: 'Enter medicine name'),
-                  validator: _medicineNameValidator,
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Add New Medicine'),
+              content: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _medicineNameController,
+                      decoration: const InputDecoration(
+                          hintText: "Enter medicine name"),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a medicine name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _dosageController,
+                      decoration:
+                          const InputDecoration(hintText: "Enter dosage"),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a dosage';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    BlocBuilder<CategoryBloc, CategoryState>(
+                      builder: (context, state) {
+                        if (state is CategoryLoaded) {
+                          return DropdownButtonFormField<Category>(
+                            value: _selectedCategory,
+                            hint: const Text('Select a category'),
+                            items: state.categories.map((Category category) {
+                              return DropdownMenuItem(
+                                value: category,
+                                child: Text(category.name),
+                              );
+                            }).toList(),
+                            onChanged: (Category? newValue) {
+                              setState(() {
+                                _selectedCategory = newValue;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Please select a category';
+                              }
+                              return null;
+                            },
+                          );
+                        }
+                        return const CircularProgressIndicator();
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    CheckboxListTile(
+                      title: const Text("Requires Prescription"),
+                      value: _requiresPrescription,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _requiresPrescription = value ?? false;
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                _buildCategoryDropdown(),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _dosageController,
-                  decoration: const InputDecoration(hintText: 'Enter dosage'),
-                  validator: _dosageValidator,
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text('Add'),
+                  onPressed: () {
+                    if (_formKey.currentState!.validate() &&
+                        _selectedCategory != null) {
+                      context.read<MedicineNameBloc>().add(AddMedicine(
+                            Medicine(
+                              id: '',
+                              name: _medicineNameController.text,
+                              dosage: _dosageController.text,
+                              categoryId: _selectedCategory!.id,
+                              shopId: widget.shopId,
+                              requiresPrescription: _requiresPrescription,
+                            ),
+                          ));
+                      Navigator.of(context).pop();
+                      _medicineNameController.clear();
+                      _dosageController.clear();
+                      _selectedCategory = null;
+                      _requiresPrescription = false;
+                    }
+                  },
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-            ),
-            TextButton(
-              onPressed: () => _addMedicine(context),
-              child: const Text('Add', style: TextStyle(color: kPrimaryColor)),
-            ),
-          ],
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildCategoryDropdown() {
-    return BlocBuilder<CategoryBloc, CategoryState>(
-      builder: (context, state) {
-        if (state is CategoryLoading) {
-          return const CircularProgressIndicator();
-        } else if (state is CategoryLoaded) {
-          return DropdownButtonFormField<Category>(
-            value: _selectedCategory,
-            hint: const Text('Select category'),
-            onChanged: (Category? newValue) {
-              setState(() {
-                _selectedCategory = newValue!;
-              });
-            },
-            items: state.categories.map((Category category) {
-              return DropdownMenuItem<Category>(
-                value: category,
-                child: Text(category.name),
-              );
-            }).toList(),
-            validator: (value) =>
-                value == null ? 'Please select a category' : null,
-          );
-        } else if (state is CategoryError) {
-          return Text('Error: ${state.message}');
-        }
-        return const Text('No categories available');
-      },
-    );
-  }
-
-  void _showUpdateMedicineDialog(BuildContext context, Medicine medicine) {
-    final TextEditingController updateController =
-        TextEditingController(text: medicine.name);
-    final TextEditingController updateDosageController =
-        TextEditingController(text: medicine.dosage);
-    final GlobalKey<FormState> updateFormKey = GlobalKey<FormState>();
+  void _showEditMedicineDialog(BuildContext context, Medicine medicine) {
+    _medicineNameController.text = medicine.name;
+    _dosageController.text = medicine.dosage;
+    _selectedCategory =
+        null; // You might want to fetch the actual category here
+    _requiresPrescription = medicine.requiresPrescription;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Update Medicine', style: AppFonts.headline3Dark),
-          content: Form(
-            key: updateFormKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: updateController,
-                  decoration:
-                      const InputDecoration(hintText: 'Enter medicine name'),
-                  validator: _medicineNameValidator,
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Edit Medicine'),
+              content: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _medicineNameController,
+                      decoration: const InputDecoration(
+                          hintText: "Enter medicine name"),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a medicine name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _dosageController,
+                      decoration:
+                          const InputDecoration(hintText: "Enter dosage"),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a dosage';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    BlocBuilder<CategoryBloc, CategoryState>(
+                      builder: (context, state) {
+                        if (state is CategoryLoaded) {
+                          return DropdownButtonFormField<Category>(
+                            value: _selectedCategory,
+                            hint: const Text('Select a category'),
+                            items: state.categories.map((Category category) {
+                              return DropdownMenuItem(
+                                value: category,
+                                child: Text(category.name),
+                              );
+                            }).toList(),
+                            onChanged: (Category? newValue) {
+                              setState(() {
+                                _selectedCategory = newValue;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Please select a category';
+                              }
+                              return null;
+                            },
+                          );
+                        }
+                        return const CircularProgressIndicator();
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    CheckboxListTile(
+                      title: const Text("Requires Prescription"),
+                      value: _requiresPrescription,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _requiresPrescription = value ?? false;
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: updateDosageController,
-                  decoration: const InputDecoration(hintText: 'Enter dosage'),
-                  validator: _dosageValidator,
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text('Update'),
+                  onPressed: () {
+                    if (_formKey.currentState!.validate() &&
+                        _selectedCategory != null) {
+                      context.read<MedicineNameBloc>().add(UpdateMedicine(
+                            medicine.copyWith(
+                              name: _medicineNameController.text,
+                              dosage: _dosageController.text,
+                              categoryId: _selectedCategory!.id,
+                              requiresPrescription: _requiresPrescription,
+                            ),
+                          ));
+                      Navigator.of(context).pop();
+                      _medicineNameController.clear();
+                      _dosageController.clear();
+                      _selectedCategory = null;
+                      _requiresPrescription = false;
+                    }
+                  },
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-            ),
-            TextButton(
-              onPressed: () {
-                if (updateFormKey.currentState?.validate() ?? false) {
-                  context.read<MedicineNameBloc>().add(UpdateMedicine(
-                        Medicine(
-                          id: medicine.id,
-                          name: updateController.text,
-                          categoryId: medicine.categoryId,
-                          dosage: updateDosageController.text,
-                        ),
-                      ));
-                  Navigator.of(context).pop();
-                  _searchController.clear(); // Clear the search field
-                  _showSnackBar(context, 'Medicine updated successfully');
-                }
-              },
-              child:
-                  const Text('Update', style: TextStyle(color: kPrimaryColor)),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -357,65 +426,23 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
           content: Text('Are you sure you want to delete ${medicine.name}?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
-            TextButton(
+            ElevatedButton(
+              child: const Text('Delete'),
               onPressed: () {
                 context
                     .read<MedicineNameBloc>()
-                    .add(DeleteMedicine(medicine.id));
+                    .add(DeleteMedicine(medicine.id, widget.shopId));
                 Navigator.of(context).pop();
-                _searchController.clear(); // Clear the search field
-                _showSnackBar(context, 'Medicine deleted successfully');
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
       },
     );
-  }
-
-  void _showSnackBar(BuildContext context, String message,
-      {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-      ),
-    );
-  }
-
-  String? _medicineNameValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a medicine name';
-    }
-    return null;
-  }
-
-  String? _dosageValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter the dosage';
-    }
-    return null;
-  }
-
-  void _addMedicine(BuildContext context) {
-    if (_formKey.currentState?.validate() ?? false) {
-      final Medicine medicine = Medicine(
-        id: '', // Firestore will generate this ID.
-        name: _medicineNameController.text,
-        categoryId: _selectedCategory!.id,
-        dosage: _dosageController.text,
-      );
-      context.read<MedicineNameBloc>().add(AddMedicine(medicine));
-      Navigator.of(context).pop();
-      _medicineNameController.clear();
-      _dosageController.clear();
-      _selectedCategory = null;
-      _searchController.clear(); // Clear the search field
-      _showSnackBar(context, 'Medicine added successfully');
-    }
   }
 }

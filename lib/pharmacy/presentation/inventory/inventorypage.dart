@@ -1,11 +1,10 @@
-import 'package:eldcare/pharmacy/presentation/inventory/add_categery.dart';
-import 'package:eldcare/pharmacy/presentation/inventory/add_medicine_name.dart';
-import 'package:eldcare/pharmacy/presentation/inventory/widgets/verified_shops.dart';
+import 'package:eldcare/pharmacy/model/shop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
+import 'package:eldcare/pharmacy/presentation/inventory/inventory_management.dart';
 import 'package:lottie/lottie.dart';
 
 class InventoryPage extends StatelessWidget {
@@ -48,7 +47,7 @@ class InventoryPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30)),
               ),
               onPressed: () {
-                // Add your button action here
+                // This button's functionality might need to change based on your new structure
               },
               child: const Text('Add Item', style: TextStyle(fontSize: 18)),
             ),
@@ -80,8 +79,6 @@ class InventoryPage extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          _buildCategoryAndMedicineSection(context),
-          const SizedBox(height: 20),
           _buildShopsSection(),
           const SizedBox(height: 20),
         ],
@@ -99,91 +96,75 @@ class InventoryPage extends StatelessWidget {
           if (shops.isEmpty) {
             return const Center(child: Text('No shops available.'));
           }
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text("Your Shops", style: AppFonts.headline3Dark),
-                ),
-                ...shops.map((shop) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 16.0),
-                    child: VerifiedShopCard(
-                      shop: shop,
-                    ),
-                  );
-                }),
-              ],
-            ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text("Your Shops", style: AppFonts.headline3Dark),
+              ),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: shops.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) =>
+                    _buildShopCard(context, shops[index]),
+              ),
+            ],
           );
-        } else if (state is ShopErrorState) {
-          return Center(child: Text('Error: ${state.error}'));
         } else {
-          return const Center(child: Text('No shops available.'));
+          return const Center(child: Text('Error loading shops.'));
         }
       },
     );
   }
 
-  Widget _buildCategoryAndMedicineSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Manage Categories & Medicines',
-            style: AppFonts.headline3Dark,
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  Widget _buildShopCard(BuildContext context, Shop shop) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => InventoryManagementPage(shop: shop),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildActionButton(
-                context,
-                label: 'Add Category',
-                icon: Icons.category,
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AddCategoryPage()));
-                },
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: kPrimaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.store, color: kPrimaryColor, size: 30),
               ),
-              _buildActionButton(
-                context,
-                label: 'Add Medicine Name',
-                icon: Icons.medical_services,
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AddMedicinePage()));
-                },
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(shop.name, style: AppFonts.headline4Dark),
+                    const SizedBox(height: 4),
+                    Text(shop.address, style: AppFonts.bodyText2),
+                    const SizedBox(height: 8),
+                    Text('Tap to manage inventory',
+                        style: AppFonts.caption.copyWith(color: kPrimaryColor)),
+                  ],
+                ),
               ),
+              const Icon(Icons.chevron_right, color: kPrimaryColor),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(BuildContext context,
-      {required String label,
-      required IconData icon,
-      required VoidCallback onPressed}) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, color: kPrimaryColor),
-      label: Text(label, style: const TextStyle(color: kPrimaryColor)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: kWhiteColor,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
         ),
       ),
     );

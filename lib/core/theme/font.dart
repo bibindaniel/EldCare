@@ -86,12 +86,6 @@ class AppFonts {
     fontSize: 16,
     color: kWhiteColor,
   );
-  static const TextStyle subtitle1Bold = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-    color: kBlackColor,
-  );
   static const TextStyle bodyText1Dark = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 20,
@@ -101,6 +95,25 @@ class AppFonts {
   static const TextStyle headline4Dark = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: kBlackColor,
+  );
+  static const TextStyle caption = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+    color: Colors.grey,
+  );
+  static const TextStyle subtitle1 = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    color: kBlackColor,
+  );
+
+  static const TextStyle subtitle1Bold = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 16,
     fontWeight: FontWeight.bold,
     color: kBlackColor,
   );

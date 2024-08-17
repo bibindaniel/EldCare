@@ -1,15 +1,18 @@
-import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_event.dart';
-import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_state.dart';
+import 'package:eldcare/pharmacy/repository/medicine_repositry.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/pharmacy/model/medicine.dart';
-import 'package:eldcare/pharmacy/repository/medicine_repositry.dart';
+
+part 'medicine_name_event.dart';
+part 'medicine_name_state.dart';
 
 class MedicineNameBloc extends Bloc<MedicineNameEvent, MedicineNameState> {
-  final MedicineNameRepository repository;
-  Stream<List<Medicine>>? _medicineStream;
+  final MedicineRepository _medicineRepository;
 
-  MedicineNameBloc({required this.repository}) : super(MedicineInitial()) {
-    _startMedicineStream();
+  MedicineNameBloc(
+      {required MedicineRepository medicineRepository,
+      required MedicineRepository repository})
+      : _medicineRepository = medicineRepository,
+        super(MedicineNameInitial()) {
     on<LoadMedicines>(_onLoadMedicines);
     on<AddMedicine>(_onAddMedicine);
     on<UpdateMedicine>(_onUpdateMedicine);
@@ -17,64 +20,59 @@ class MedicineNameBloc extends Bloc<MedicineNameEvent, MedicineNameState> {
     on<SearchMedicines>(_onSearchMedicines);
   }
 
-  void _startMedicineStream() {
-    _medicineStream = repository.getMedicinesStream();
-    _medicineStream?.listen((medicines) {
-      add(LoadMedicines());
-    });
-  }
-
-  Future<void> _onLoadMedicines(
+  void _onLoadMedicines(
       LoadMedicines event, Emitter<MedicineNameState> emit) async {
-    emit(MedicineLoading());
+    emit(MedicineNameLoading());
     try {
-      final medicines = await repository.getMedicinesStream().first;
-      emit(MedicineLoaded(medicines));
+      await emit.forEach(
+        _medicineRepository.getMedicinesStream(event.shopId),
+        onData: (List<Medicine> medicines) => MedicineNameLoaded(medicines),
+        onError: (error, stackTrace) => MedicineNameError(error.toString()),
+      );
     } catch (e) {
-      emit(MedicineError(e.toString()));
+      emit(MedicineNameError(e.toString()));
     }
   }
 
-  Future<void> _onAddMedicine(
+  void _onAddMedicine(
       AddMedicine event, Emitter<MedicineNameState> emit) async {
     try {
-      await repository.addMedicine(event.medicine);
-      // The stream listener will trigger LoadMedicines
-      emit(const MedicineOperationSuccess('Medicine added successfully'));
+      await _medicineRepository.addMedicine(event.medicine);
+      emit(MedicineOperationSuccess('Medicine added successfully'));
     } catch (e) {
-      emit(MedicineError(e.toString()));
+      emit(MedicineNameError(e.toString()));
     }
   }
 
-  Future<void> _onUpdateMedicine(
+  void _onUpdateMedicine(
       UpdateMedicine event, Emitter<MedicineNameState> emit) async {
     try {
-      await repository.updateMedicine(event.medicine);
-      // The stream listener will trigger LoadMedicines
-      emit(const MedicineOperationSuccess('Medicine updated successfully'));
+      await _medicineRepository.updateMedicine(event.medicine);
+      emit(MedicineOperationSuccess('Medicine updated successfully'));
     } catch (e) {
-      emit(MedicineError(e.toString()));
+      emit(MedicineNameError(e.toString()));
     }
   }
 
-  Future<void> _onDeleteMedicine(
+  void _onDeleteMedicine(
       DeleteMedicine event, Emitter<MedicineNameState> emit) async {
     try {
-      await repository.deleteMedicine(event.id);
-      // The stream listener will trigger LoadMedicines
-      emit(const MedicineOperationSuccess('Medicine deleted successfully'));
+      await _medicineRepository.deleteMedicine(event.medicineId, event.shopId);
+      emit(MedicineOperationSuccess('Medicine deleted successfully'));
     } catch (e) {
-      emit(MedicineError(e.toString()));
+      emit(MedicineNameError(e.toString()));
     }
   }
 
-  Future<void> _onSearchMedicines(
+  void _onSearchMedicines(
       SearchMedicines event, Emitter<MedicineNameState> emit) async {
+    emit(MedicineNameLoading());
     try {
-      final medicines = await repository.searchMedicines(event.query);
-      emit(MedicineLoaded(medicines));
+      final medicines =
+          await _medicineRepository.searchMedicines(event.query, event.shopId);
+      emit(MedicineNameLoaded(medicines));
     } catch (e) {
-      emit(MedicineError(e.toString()));
+      emit(MedicineNameError(e.toString()));
     }
   }
 }

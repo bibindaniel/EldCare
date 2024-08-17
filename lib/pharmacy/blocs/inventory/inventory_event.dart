@@ -1,6 +1,5 @@
-import 'package:eldcare/pharmacy/model/inventory_batch.dart';
+part of 'inventory_bloc.dart';
 
-// Events
 abstract class InventoryEvent {}
 
 class LoadInventory extends InventoryEvent {
@@ -20,7 +19,8 @@ class UpdateInventoryBatch extends InventoryEvent {
 
 class DeleteInventoryBatch extends InventoryEvent {
   final String batchId;
-  DeleteInventoryBatch(this.batchId);
+  final String shopId;
+  DeleteInventoryBatch(this.batchId, this.shopId);
 }
 
 class SearchInventory extends InventoryEvent {

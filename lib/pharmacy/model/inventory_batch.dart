@@ -50,4 +50,28 @@ class InventoryBatch {
       'medicineName': medicineName,
     };
   }
+
+  InventoryBatch copyWith({
+    String? id,
+    String? shopId,
+    String? medicineId,
+    int? quantity,
+    DateTime? expiryDate,
+    String? supplier,
+    String? lotNumber,
+    double? price,
+    String? medicineName,
+  }) {
+    return InventoryBatch(
+      id: id ?? this.id,
+      shopId: shopId ?? this.shopId,
+      medicineId: medicineId ?? this.medicineId,
+      quantity: quantity ?? this.quantity,
+      expiryDate: expiryDate ?? this.expiryDate,
+      supplier: supplier ?? this.supplier,
+      lotNumber: lotNumber ?? this.lotNumber,
+      price: price ?? this.price,
+      medicineName: medicineName ?? this.medicineName,
+    );
+  }
 }

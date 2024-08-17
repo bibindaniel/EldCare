@@ -1,40 +1,22 @@
-import 'package:equatable/equatable.dart';
-import 'package:eldcare/pharmacy/model/medicine.dart';
+part of 'medicine_name_bloc.dart';
 
-abstract class MedicineNameState extends Equatable {
-  const MedicineNameState();
+abstract class MedicineNameState {}
 
-  @override
-  List<Object> get props => [];
-}
+class MedicineNameInitial extends MedicineNameState {}
 
-class MedicineInitial extends MedicineNameState {}
+class MedicineNameLoading extends MedicineNameState {}
 
-class MedicineLoading extends MedicineNameState {}
-
-class MedicineLoaded extends MedicineNameState {
+class MedicineNameLoaded extends MedicineNameState {
   final List<Medicine> medicines;
-
-  const MedicineLoaded(this.medicines);
-
-  @override
-  List<Object> get props => [medicines];
+  MedicineNameLoaded(this.medicines);
 }
 
 class MedicineOperationSuccess extends MedicineNameState {
   final String message;
-
-  const MedicineOperationSuccess(this.message);
-
-  @override
-  List<Object> get props => [message];
+  MedicineOperationSuccess(this.message);
 }
 
-class MedicineError extends MedicineNameState {
+class MedicineNameError extends MedicineNameState {
   final String message;
-
-  const MedicineError(this.message);
-
-  @override
-  List<Object> get props => [message];
+  MedicineNameError(this.message);
 }
