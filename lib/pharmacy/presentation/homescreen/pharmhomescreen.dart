@@ -1,10 +1,13 @@
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacist_navigation/pharmacist_navigation_bloc.dart';
+import 'package:eldcare/pharmacy/blocs/pharmacist_order/pharmacist_order_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_event.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_state.dart';
+import 'package:eldcare/pharmacy/presentation/order/pharmacist_order_screen.dart';
 import 'package:eldcare/pharmacy/presentation/profile/profilecompletionpage.dart';
+import 'package:eldcare/pharmacy/repository/pharmacistorderrepositry.dart';
 import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -119,7 +122,17 @@ class PharmacistHomeScreen extends StatelessWidget {
       case NavigationItem.inventory:
         return const InventoryPage();
       case NavigationItem.orders:
-        return const Center(child: Text('Orders Screen'));
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<PharmacistOrderBloc>(
+              create: (context) => PharmacistOrderBloc(
+                orderRepository: PharmacistOrderRepository(),
+                pharmacistOrderRepository: PharmacistOrderRepository(),
+              ),
+            ),
+          ],
+          child: const PharmacistOrdersScreen(),
+        );
       case NavigationItem.analytics:
         return const Center(child: Text('Analytics Screen'));
       case NavigationItem.profile:

@@ -1,0 +1,136 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+enum OrderStatus {
+  pending,
+  confirmed,
+  preparing,
+  readyForPickup,
+  completed,
+  cancelled
+}
+
+class PharmacistOrderModel {
+  final String id;
+  final String customerId;
+  final String shopId;
+  final List<PharmacistOrderItem> items;
+  final double totalAmount;
+  final OrderStatus status;
+  final DateTime createdAt;
+  final String? deliveryAddress;
+  final String? deliveryInstructions;
+
+  PharmacistOrderModel({
+    required this.id,
+    required this.customerId,
+    required this.shopId,
+    required this.items,
+    required this.totalAmount,
+    required this.status,
+    required this.createdAt,
+    this.deliveryAddress,
+    this.deliveryInstructions,
+  });
+
+  factory PharmacistOrderModel.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    return PharmacistOrderModel(
+      id: doc.id,
+      customerId: _parseString(data['customerId']),
+      shopId: _parseString(data['shopId']),
+      items: _parseItems(data['items']),
+      totalAmount: _parseDouble(data['totalAmount']),
+      status: _parseOrderStatus(data['status']),
+      createdAt: _parseDateTime(data['createdAt']),
+      deliveryAddress: _parseString(data['deliveryAddress']),
+      deliveryInstructions: _parseString(data['deliveryInstructions']),
+    );
+  }
+
+  static String _parseString(dynamic value) {
+    if (value is String) {
+      return value;
+    } else if (value is Map) {
+      return value.toString();
+    }
+    return '';
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return 0.0;
+  }
+
+  static OrderStatus _parseOrderStatus(dynamic value) {
+    if (value is String) {
+      return OrderStatus.values.firstWhere(
+        (e) => e.toString() == 'OrderStatus.$value',
+        orElse: () => OrderStatus.pending,
+      );
+    }
+    return OrderStatus.pending;
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    return DateTime.now();
+  }
+
+  static List<PharmacistOrderItem> _parseItems(dynamic value) {
+    if (value is List) {
+      return value
+          .map((item) =>
+              PharmacistOrderItem.fromMap(item as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'customerId': customerId,
+      'shopId': shopId,
+      'items': items.map((item) => item.toMap()).toList(),
+      'totalAmount': totalAmount,
+      'status': status.toString().split('.').last,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'deliveryAddress': deliveryAddress,
+      'deliveryInstructions': deliveryInstructions,
+    };
+  }
+}
+
+class PharmacistOrderItem {
+  final String medicineId;
+  final String medicineName;
+  final int quantity;
+  final double price;
+
+  PharmacistOrderItem({
+    required this.medicineId,
+    required this.medicineName,
+    required this.quantity,
+    required this.price,
+  });
+
+  factory PharmacistOrderItem.fromMap(Map<String, dynamic> map) {
+    return PharmacistOrderItem(
+      medicineId: PharmacistOrderModel._parseString(map['medicineId']),
+      medicineName: PharmacistOrderModel._parseString(map['medicineName']),
+      quantity: map['quantity'] is int ? map['quantity'] : 0,
+      price: PharmacistOrderModel._parseDouble(map['price']),
+    );
+  }
+  Map<String, dynamic> toMap() {
+    return {
+      'medicineId': medicineId,
+      'medicineName': medicineName,
+      'quantity': quantity,
+      'price': price,
+    };
+  }
+}
