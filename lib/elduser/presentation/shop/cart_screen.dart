@@ -1,4 +1,8 @@
 import 'dart:io';
+import 'package:eldcare/elduser/models/delivary_address.dart';
+import 'package:eldcare/elduser/presentation/shop/delivary_deatils_screen.dart';
+import 'package:eldcare/elduser/repository/delivery_adress_repo.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
@@ -20,6 +24,48 @@ class CartScreen extends StatefulWidget {
 class CartScreenState extends State<CartScreen> {
   File? _prescriptionFile;
   final ImagePicker _picker = ImagePicker();
+  DeliveryAddress? _selectedAddress;
+  final DeliveryAddressRepository _addressRepository =
+      DeliveryAddressRepository();
+  String? _phoneNumber;
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+
+    _loadDefaultAddress();
+    _loadPhoneNumber();
+  }
+
+  Future<void> _loadUserId() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        _userId = user.uid;
+      });
+    }
+  }
+
+  Future<void> _loadDefaultAddress() async {
+    if (_userId == null) return;
+    final addresses = await _addressRepository.getDeliveryAddresses(_userId!);
+    if (addresses.isNotEmpty) {
+      setState(() {
+        _selectedAddress = addresses.firstWhere((addr) => addr.isDefault,
+            orElse: () => addresses.first);
+      });
+    }
+  }
+
+  Future<void> _loadPhoneNumber() async {
+    // TODO: Implement loading phone number from user profile
+    setState(() {
+      _phoneNumber =
+          '+1234567890'; // Replace with actual phone number from user profile
+    });
+  }
 
   Future<void> _uploadPrescription() async {
     showModalBottomSheet(
@@ -112,7 +158,6 @@ class CartScreenState extends State<CartScreen> {
             ),
           );
         }
-        // Add this condition to check if the order was placed successfully
         if (state.cart.isEmpty && !state.isLoading && state.error == null) {
           _showOrderSuccessDialog(context);
         }
@@ -231,10 +276,26 @@ class CartScreenState extends State<CartScreen> {
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
+                              onPressed: () =>
+                                  _navigateToDeliveryDetails(context, state),
+                              child: Text(_selectedAddress == null
+                                  ? 'Select Delivery Address'
+                                  : 'Change Delivery Address'),
+                            ),
+                            if (_selectedAddress != null)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Text(
+                                  'Delivery to: ${_selectedAddress!.label}',
+                                  style: AppFonts.bodyText2,
+                                ),
+                              ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
                               onPressed: state.isLoading
                                   ? null
-                                  : () => _showOrderConfirmationDialog(
-                                      context, state),
+                                  : () => _placeOrder(context, state),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: kPrimaryColor,
                                 padding:
@@ -255,6 +316,101 @@ class CartScreenState extends State<CartScreen> {
         );
       },
     );
+  }
+
+  void _navigateToDeliveryDetails(
+      BuildContext context, ShopMedicinesState state) {
+    if (_userId == null) {
+      // Handle the case where the user ID is not available
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DeliveryDetailsScreen(
+          shopId: widget.shopId,
+          shopName: widget.shopName,
+          totalAmount: state.cart
+              .fold(0.0, (sum, item) => sum + (item.price * item.quantity)),
+          userId: _userId!,
+          prescriptionFile: _prescriptionFile,
+          cart: state.cart,
+          onAddressSelected: (address) {
+            setState(() {
+              _selectedAddress = address;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showChangePhoneNumberDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String newPhoneNumber = _phoneNumber ?? '';
+        return AlertDialog(
+          title: const Text('Change Phone Number'),
+          content: TextField(
+            decoration:
+                const InputDecoration(hintText: "Enter new phone number"),
+            onChanged: (value) {
+              newPhoneNumber = value;
+            },
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                setState(() {
+                  _phoneNumber = newPhoneNumber;
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _placeOrder(BuildContext context, ShopMedicinesState state) {
+    if (_userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+    if (_selectedAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a delivery address')),
+      );
+      return;
+    }
+    if (_phoneNumber == null || _phoneNumber!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please provide a contact number')),
+      );
+      return;
+    }
+
+    context.read<ShopMedicinesBloc>().add(PlaceOrder(
+          userId: _userId!,
+          shopId: widget.shopId,
+          prescriptionFile: _prescriptionFile,
+          deliveryAddress: _selectedAddress!,
+          phoneNumber: _phoneNumber!,
+        ));
   }
 
   void _showOrderSuccessDialog(BuildContext context) {
@@ -279,51 +435,59 @@ class CartScreenState extends State<CartScreen> {
     );
   }
 
-  void _showOrderConfirmationDialog(
-      BuildContext context, ShopMedicinesState state) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Confirm Order'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Total Items: ${state.cart.length}'),
-              Text(
-                  'Total Amount: ₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _uploadPrescription,
-                child: const Text('Upload Prescription'),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Note: Some medicines may require a prescription. The pharmacist may reject the order if a prescription is not provided when necessary.',
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('Confirm Order'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // Close the dialog
-                context.read<ShopMedicinesBloc>().add(PlaceOrder(
-                      userId: 'user_id', // Replace with actual user ID
-                      shopId: widget.shopId,
-                      prescriptionFile: _prescriptionFile,
-                    ));
-                Navigator.of(context).pop(); // Go back to the shop screen
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // void _showOrderConfirmationDialog(
+  //     BuildContext context, ShopMedicinesState state) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext dialogContext) {
+  //       return AlertDialog(
+  //         title: const Text('Confirm Order'),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Text('Total Items: ${state.cart.length}'),
+  //             Text(
+  //                 'Total Amount: ₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}'),
+  //             const SizedBox(height: 16),
+  //             ElevatedButton(
+  //               onPressed: _uploadPrescription,
+  //               child: const Text('Upload Prescription'),
+  //             ),
+  //             const SizedBox(height: 16),
+  //             const Text(
+  //               'Note: Some medicines may require a prescription. The pharmacist may reject the order if a prescription is not provided when necessary.',
+  //               style: TextStyle(color: Colors.red, fontSize: 12),
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             child: const Text('Cancel'),
+  //             onPressed: () => Navigator.of(dialogContext).pop(),
+  //           ),
+  //           ElevatedButton(
+  //             child: const Text('Proceed to Delivery Details'),
+  //             onPressed: () {
+  //               Navigator.of(dialogContext).pop();
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => DeliveryDetailsScreen(
+  //                     shopId: widget.shopId,
+  //                     shopName: widget.shopName,
+  //                     totalAmount: state.cart.fold(0.0,
+  //                         (sum, item) => sum + (item.price * item.quantity)),
+  //                     userId: 'user_id',
+  //                     prescriptionFile: _prescriptionFile,
+  //                     cart: state.cart,
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 }

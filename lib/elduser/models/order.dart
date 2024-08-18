@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eldcare/elduser/models/delivary_address.dart';
 
 class MedicineOrder {
   final String id;
@@ -8,7 +9,9 @@ class MedicineOrder {
   final double totalAmount;
   final String status;
   final DateTime createdAt;
-  final String? prescriptionUrl; // New field for prescription
+  final String? prescriptionUrl;
+  final DeliveryAddress deliveryAddress;
+  final String phoneNumber;
 
   MedicineOrder({
     required this.id,
@@ -18,7 +21,9 @@ class MedicineOrder {
     required this.totalAmount,
     required this.status,
     required this.createdAt,
-    this.prescriptionUrl, // Optional prescription URL
+    this.prescriptionUrl,
+    required this.deliveryAddress,
+    required this.phoneNumber,
   });
 
   factory MedicineOrder.fromFirestore(DocumentSnapshot doc) {
@@ -33,7 +38,10 @@ class MedicineOrder {
       totalAmount: (data['totalAmount'] ?? 0.0).toDouble(),
       status: data['status'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      prescriptionUrl: data['prescriptionUrl'], // Add this line
+      prescriptionUrl: data['prescriptionUrl'],
+      deliveryAddress: DeliveryAddress.fromMap(data['deliveryAddress'] ?? {},
+          id: data['deliveryAddress']?['id']),
+      phoneNumber: data['phoneNumber'] ?? '',
     );
   }
 
@@ -45,7 +53,9 @@ class MedicineOrder {
       'totalAmount': totalAmount,
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
-      'prescriptionUrl': prescriptionUrl, // Add this line
+      'prescriptionUrl': prescriptionUrl,
+      'deliveryAddress': deliveryAddress.toMap(),
+      'phoneNumber': phoneNumber,
     };
   }
 }

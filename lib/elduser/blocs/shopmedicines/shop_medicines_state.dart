@@ -7,6 +7,7 @@ class ShopMedicinesState {
   final bool isLoading;
   final String? error;
   final bool prescriptionUploaded;
+  final DeliveryAddress? selectedDeliveryAddress;
 
   ShopMedicinesState({
     required this.shopMedicines,
@@ -15,9 +16,9 @@ class ShopMedicinesState {
     required this.isLoading,
     this.error,
     required this.prescriptionUploaded,
+    this.selectedDeliveryAddress,
   });
 
-  // Update the factory constructor for the initial state
   factory ShopMedicinesState.initial() {
     return ShopMedicinesState(
       shopMedicines: [],
@@ -26,6 +27,7 @@ class ShopMedicinesState {
       isLoading: false,
       error: null,
       prescriptionUploaded: false,
+      selectedDeliveryAddress: null,
     );
   }
 
@@ -36,6 +38,7 @@ class ShopMedicinesState {
     bool? isLoading,
     String? error,
     bool? prescriptionUploaded,
+    DeliveryAddress? selectedDeliveryAddress,
   }) {
     return ShopMedicinesState(
       shopMedicines: shopMedicines ?? this.shopMedicines,
@@ -44,6 +47,8 @@ class ShopMedicinesState {
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       prescriptionUploaded: prescriptionUploaded ?? this.prescriptionUploaded,
+      selectedDeliveryAddress:
+          selectedDeliveryAddress ?? this.selectedDeliveryAddress,
     );
   }
 }

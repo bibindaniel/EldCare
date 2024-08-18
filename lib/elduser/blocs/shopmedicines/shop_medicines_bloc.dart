@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:eldcare/elduser/models/delivary_address.dart';
 import 'package:eldcare/elduser/models/order.dart';
 import 'package:eldcare/elduser/models/shop_medicine.dart';
 import 'package:eldcare/elduser/repository/order_repo.dart';
@@ -15,16 +16,17 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
   final ShopMedicineRepository shopMedicineRepository;
   final OrderRepository orderRepository;
 
-  ShopMedicinesBloc(
-      {required this.shopMedicineRepository, required this.orderRepository})
-      : super(ShopMedicinesState.initial()) {
+  ShopMedicinesBloc({
+    required this.shopMedicineRepository,
+    required this.orderRepository,
+  }) : super(ShopMedicinesState.initial()) {
     on<LoadShopMedicines>(_onLoadShopMedicines);
     on<SearchShopMedicines>(_onSearchShopMedicines);
     on<AddToCart>(_onAddToCart);
     on<RemoveFromCart>(_onRemoveFromCart);
     on<PlaceOrder>(_onPlaceOrder);
-    on<UpdateShopMedicines>(
-        _onUpdateShopMedicines); // Add this line if not already present
+    on<UpdateShopMedicines>(_onUpdateShopMedicines);
+    on<SelectDeliveryAddress>(_onSelectDeliveryAddress);
   }
 
   Future<void> _onLoadShopMedicines(
@@ -105,6 +107,53 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
     emit(state.copyWith(cart: updatedCart));
   }
 
+  // void _onPlaceOrder(PlaceOrder event, Emitter<ShopMedicinesState> emit) async {
+  //   emit(state.copyWith(isLoading: true));
+  //   try {
+  //     String? prescriptionUrl;
+  //     if (event.prescriptionFile != null) {
+  //       // Upload prescription to Firebase Storage
+  //       final storageRef = FirebaseStorage.instance.ref().child(
+  //           'prescriptions/${DateTime.now().toIso8601String()}_${event.prescriptionFile!.path.split('/').last}');
+  //       final uploadTask = storageRef.putFile(event.prescriptionFile!);
+  //       final snapshot = await uploadTask.whenComplete(() {});
+  //       prescriptionUrl = await snapshot.ref.getDownloadURL();
+  //     }
+
+  //     final order = MedicineOrder(
+  //       id: '', // Firestore will generate this
+  //       userId: event.userId,
+  //       shopId: event.shopId,
+  //       items: state.cart,
+  //       totalAmount: state.cart
+  //           .fold(0, (sum, item) => sum + (item.price * item.quantity)),
+  //       status: 'pending',
+  //       createdAt: DateTime.now(),
+  //       prescriptionUrl: prescriptionUrl,
+  //     );
+
+  //     await orderRepository.createOrder(order);
+  //     emit(state.copyWith(
+  //         isLoading: false,
+  //         cart: [],
+  //         prescriptionUploaded: prescriptionUrl != null));
+  //   } catch (e) {
+  //     emit(state.copyWith(isLoading: false, error: e.toString()));
+  //   }
+  // }
+
+  void _onUpdateShopMedicines(
+      UpdateShopMedicines event, Emitter<ShopMedicinesState> emit) {
+    emit(state.copyWith(shopMedicines: event.medicines, isLoading: false));
+  }
+
+  void _onSelectDeliveryAddress(
+    SelectDeliveryAddress event,
+    Emitter<ShopMedicinesState> emit,
+  ) {
+    emit(state.copyWith(selectedDeliveryAddress: event.deliveryAddress));
+  }
+
   void _onPlaceOrder(PlaceOrder event, Emitter<ShopMedicinesState> emit) async {
     emit(state.copyWith(isLoading: true));
     try {
@@ -128,20 +177,18 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
         status: 'pending',
         createdAt: DateTime.now(),
         prescriptionUrl: prescriptionUrl,
+        deliveryAddress: event.deliveryAddress,
+        phoneNumber: event.phoneNumber,
       );
 
       await orderRepository.createOrder(order);
       emit(state.copyWith(
           isLoading: false,
           cart: [],
-          prescriptionUploaded: prescriptionUrl != null));
+          prescriptionUploaded: prescriptionUrl != null,
+          selectedDeliveryAddress: null));
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }
-  }
-
-  void _onUpdateShopMedicines(
-      UpdateShopMedicines event, Emitter<ShopMedicinesState> emit) {
-    emit(state.copyWith(shopMedicines: event.medicines, isLoading: false));
   }
 }

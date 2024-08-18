@@ -26,13 +26,25 @@ class RemoveFromCart extends ShopMedicinesEvent {
   RemoveFromCart(this.orderItem);
 }
 
+class SelectDeliveryAddress extends ShopMedicinesEvent {
+  final DeliveryAddress deliveryAddress;
+
+  SelectDeliveryAddress(this.deliveryAddress);
+}
+
 class PlaceOrder extends ShopMedicinesEvent {
   final String userId;
   final String shopId;
   final File? prescriptionFile;
-
-  PlaceOrder(
-      {required this.userId, required this.shopId, this.prescriptionFile});
+  final DeliveryAddress deliveryAddress;
+  final String phoneNumber;
+  PlaceOrder({
+    required this.userId,
+    required this.shopId,
+    this.prescriptionFile,
+    required this.deliveryAddress,
+    required this.phoneNumber,
+  });
 }
 
 class UpdateShopMedicines extends ShopMedicinesEvent {
