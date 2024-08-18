@@ -26,7 +26,7 @@ class PharmacistOrderBloc
       emit(PharmacistOrderLoaded(orders));
     } catch (e) {
       if (e is FirebaseException && e.code == 'failed-precondition') {
-        emit(PharmacistOrderError(
+        emit(const PharmacistOrderError(
             'The database index is still being built. Please try again in a few minutes.'));
       } else {
         emit(PharmacistOrderError(e.toString()));
