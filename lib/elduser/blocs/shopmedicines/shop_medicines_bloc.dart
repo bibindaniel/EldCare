@@ -3,8 +3,10 @@ import 'package:eldcare/elduser/models/order.dart';
 import 'package:eldcare/elduser/models/shop_medicine.dart';
 import 'package:eldcare/elduser/repository/order_repo.dart';
 import 'package:eldcare/elduser/repository/shop_medicine_repo.dart';
+import 'package:eldcare/pharmacy/model/category.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rxdart/rxdart.dart';
 
 part 'shop_medicines_event.dart';
 part 'shop_medicines_state.dart';
@@ -13,38 +15,51 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
   final ShopMedicineRepository shopMedicineRepository;
   final OrderRepository orderRepository;
 
-  ShopMedicinesBloc({
-    required this.shopMedicineRepository,
-    required this.orderRepository,
-  }) : super(
-            ShopMedicinesState(shopMedicines: [], cart: [], isLoading: false)) {
-    print(
-        'ShopMedicinesBloc created with initial cart size: ${state.cart.length}');
+  ShopMedicinesBloc(
+      {required this.shopMedicineRepository, required this.orderRepository})
+      : super(ShopMedicinesState.initial()) {
     on<LoadShopMedicines>(_onLoadShopMedicines);
     on<SearchShopMedicines>(_onSearchShopMedicines);
     on<AddToCart>(_onAddToCart);
     on<RemoveFromCart>(_onRemoveFromCart);
     on<PlaceOrder>(_onPlaceOrder);
+    on<UpdateShopMedicines>(
+        _onUpdateShopMedicines); // Add this line if not already present
   }
 
-  void _onLoadShopMedicines(
+  Future<void> _onLoadShopMedicines(
       LoadShopMedicines event, Emitter<ShopMedicinesState> emit) async {
     emit(state.copyWith(isLoading: true));
     try {
-      print('Loading medicines for shop: ${event.shopId}'); // Debug print
+      final shopMedicinesStream =
+          shopMedicineRepository.getShopMedicinesStream(event.shopId);
+      final categoriesStream =
+          shopMedicineRepository.getCategoriesStream(event.shopId);
+
+      final combinedStream = Rx.combineLatest2(
+        shopMedicinesStream,
+        categoriesStream,
+        (List<ShopMedicine> medicines, List<Category> categories) =>
+            (medicines, categories),
+      );
+
       await emit.forEach(
-        shopMedicineRepository.getShopMedicinesStream(event.shopId),
-        onData: (List<ShopMedicine> shopMedicines) {
-          print('Received ${shopMedicines.length} medicines'); // Debug print
+        combinedStream,
+        onData: (data) {
+          final medicines = data.$1;
+          final categories = data.$2;
           return state.copyWith(
-            shopMedicines: shopMedicines,
+            shopMedicines: medicines,
+            categories: categories,
             isLoading: false,
           );
         },
+        onError: (error, stackTrace) {
+          return state.copyWith(error: error.toString(), isLoading: false);
+        },
       );
     } catch (e) {
-      print('Error loading medicines: $e'); // Debug print
-      emit(state.copyWith(isLoading: false, error: e.toString()));
+      emit(state.copyWith(error: e.toString(), isLoading: false));
     }
   }
 
@@ -52,9 +67,9 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
       SearchShopMedicines event, Emitter<ShopMedicinesState> emit) async {
     emit(state.copyWith(isLoading: true));
     try {
-      final shopMedicines = await shopMedicineRepository.searchShopMedicines(
+      final medicines = await shopMedicineRepository.searchShopMedicines(
           event.query, event.shopId);
-      emit(state.copyWith(shopMedicines: shopMedicines, isLoading: false));
+      emit(state.copyWith(isLoading: false, shopMedicines: medicines));
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }
@@ -63,25 +78,22 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
   void _onAddToCart(AddToCart event, Emitter<ShopMedicinesState> emit) {
     final updatedCart = List<OrderItem>.from(state.cart);
     final existingItemIndex = updatedCart
-        .indexWhere((item) => item.medicineId == event.shopMedicine.medicineId);
+        .indexWhere((item) => item.medicineId == event.shopMedicine.id);
     if (existingItemIndex != -1) {
       updatedCart[existingItemIndex] = OrderItem(
-        medicineId: event.shopMedicine.medicineId,
-        medicineName: event.shopMedicine.medicineName!,
+        medicineId: event.shopMedicine.id,
+        medicineName: event.shopMedicine.medicineName,
         quantity: updatedCart[existingItemIndex].quantity + event.quantity,
         price: event.shopMedicine.price,
       );
     } else {
       updatedCart.add(OrderItem(
-        medicineId: event.shopMedicine.medicineId,
-        medicineName: event.shopMedicine.medicineName!,
+        medicineId: event.shopMedicine.id,
+        medicineName: event.shopMedicine.medicineName,
         quantity: event.quantity,
         price: event.shopMedicine.price,
       ));
     }
-    print(
-        'AddToCart event - Medicine: ${event.shopMedicine.medicineName}, Quantity: ${event.quantity}');
-    print('AddToCart event - Updated cart size: ${updatedCart.length}');
     emit(state.copyWith(cart: updatedCart));
   }
 
@@ -126,5 +138,10 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }
+  }
+
+  void _onUpdateShopMedicines(
+      UpdateShopMedicines event, Emitter<ShopMedicinesState> emit) {
+    emit(state.copyWith(shopMedicines: event.medicines, isLoading: false));
   }
 }

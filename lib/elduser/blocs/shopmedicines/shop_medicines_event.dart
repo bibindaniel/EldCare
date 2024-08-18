@@ -34,3 +34,9 @@ class PlaceOrder extends ShopMedicinesEvent {
   PlaceOrder(
       {required this.userId, required this.shopId, this.prescriptionFile});
 }
+
+class UpdateShopMedicines extends ShopMedicinesEvent {
+  final List<ShopMedicine> medicines;
+
+  UpdateShopMedicines(this.medicines);
+}

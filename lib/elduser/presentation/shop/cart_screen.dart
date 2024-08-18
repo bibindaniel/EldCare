@@ -112,6 +112,10 @@ class CartScreenState extends State<CartScreen> {
             ),
           );
         }
+        // Add this condition to check if the order was placed successfully
+        if (state.cart.isEmpty && !state.isLoading && state.error == null) {
+          _showOrderSuccessDialog(context);
+        }
       },
       builder: (context, state) {
         return Scaffold(
@@ -237,7 +241,7 @@ class CartScreenState extends State<CartScreen> {
                                     const EdgeInsets.symmetric(vertical: 16),
                               ),
                               child: state.isLoading
-                                  ? CircularProgressIndicator(
+                                  ? const CircularProgressIndicator(
                                       color: Colors.white)
                                   : const Text('Place Order',
                                       style: AppFonts.button),
@@ -253,6 +257,28 @@ class CartScreenState extends State<CartScreen> {
     );
   }
 
+  void _showOrderSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Order Placed Successfully'),
+          content:
+              const Text('Your order has been placed and is being processed.'),
+          actions: [
+            ElevatedButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+                Navigator.of(context).pop(); // Go back to the shop screen
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showOrderConfirmationDialog(
       BuildContext context, ShopMedicinesState state) {
     showDialog(
@@ -262,16 +288,15 @@ class CartScreenState extends State<CartScreen> {
           title: const Text('Confirm Order'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Please review your order:'),
-              const SizedBox(height: 8),
               Text('Total Items: ${state.cart.length}'),
               Text(
                   'Total Amount: ₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}'),
-              if (_prescriptionFile != null)
-                Text(
-                    'Prescription: ${_prescriptionFile!.path.split('/').last}'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _uploadPrescription,
+                child: const Text('Upload Prescription'),
+              ),
               const SizedBox(height: 16),
               const Text(
                 'Note: Some medicines may require a prescription. The pharmacist may reject the order if a prescription is not provided when necessary.',

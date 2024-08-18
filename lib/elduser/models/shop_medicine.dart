@@ -1,40 +1,52 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eldcare/pharmacy/model/inventory_batch.dart';
+import 'package:eldcare/pharmacy/model/medicine.dart';
 
 class ShopMedicine {
   final String id;
   final String medicineId;
-  String? medicineName;
-  String? category;
+  final String medicineName;
+  final String categoryId;
+  final String? categoryName;
+  final String dosage;
   final int quantity;
-  final double price;
   final DateTime expiryDate;
   final String supplier;
   final String lotNumber;
-  String? dosage;
+  final double price;
+  final String shopId;
+  final bool requiresPrescription;
 
   ShopMedicine({
     required this.id,
     required this.medicineId,
-    this.medicineName,
-    this.category,
+    required this.medicineName,
+    required this.categoryId,
+    this.categoryName,
+    required this.dosage,
     required this.quantity,
-    required this.price,
     required this.expiryDate,
     required this.supplier,
     required this.lotNumber,
-    this.dosage,
+    required this.price,
+    required this.shopId,
+    required this.requiresPrescription,
   });
 
-  factory ShopMedicine.fromSnapshot(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ShopMedicine.fromMedicineAndBatch(
+      Medicine medicine, InventoryBatch batch) {
     return ShopMedicine(
-      id: doc.id,
-      medicineId: data['medicineId'] ?? '',
-      quantity: data['quantity'] ?? 0,
-      price: (data['price'] ?? 0.0).toDouble(),
-      expiryDate: (data['expiryDate'] as Timestamp).toDate(),
-      supplier: data['supplier'] ?? '',
-      lotNumber: data['lotNumber'] ?? '',
+      id: batch.id,
+      medicineId: medicine.id,
+      medicineName: medicine.name,
+      categoryId: medicine.categoryId,
+      dosage: medicine.dosage,
+      quantity: batch.quantity,
+      expiryDate: batch.expiryDate,
+      supplier: batch.supplier,
+      lotNumber: batch.lotNumber,
+      price: batch.price,
+      shopId: medicine.shopId,
+      requiresPrescription: medicine.requiresPrescription,
     );
   }
 }
