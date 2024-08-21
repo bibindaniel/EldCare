@@ -22,7 +22,6 @@ import 'package:eldcare/pharmacy/presentation/shop/add_shop.dart';
 
 class PharmacistHomeScreen extends StatelessWidget {
   const PharmacistHomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -41,6 +40,12 @@ class PharmacistHomeScreen extends StatelessWidget {
               return ShopBloc(shopRepository: ShopRepository());
             }
           },
+        ),
+        BlocProvider<PharmacistOrderBloc>(
+          create: (context) => PharmacistOrderBloc(
+            pharmacistOrderRepository: PharmacistOrderRepository(),
+            orderRepository: PharmacistOrderRepository(),
+          ),
         ),
       ],
       child: BlocListener<AuthBloc, AuthState>(
@@ -122,15 +127,11 @@ class PharmacistHomeScreen extends StatelessWidget {
       case NavigationItem.inventory:
         return const InventoryPage();
       case NavigationItem.orders:
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider<PharmacistOrderBloc>(
-              create: (context) => PharmacistOrderBloc(
-                orderRepository: PharmacistOrderRepository(),
-                pharmacistOrderRepository: PharmacistOrderRepository(),
-              ),
-            ),
-          ],
+        return BlocProvider<PharmacistOrderBloc>(
+          create: (context) => PharmacistOrderBloc(
+            pharmacistOrderRepository: PharmacistOrderRepository(),
+            orderRepository: PharmacistOrderRepository(),
+          ),
           child: const PharmacistOrdersScreen(),
         );
       case NavigationItem.analytics:

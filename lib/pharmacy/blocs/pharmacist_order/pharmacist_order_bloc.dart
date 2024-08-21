@@ -34,6 +34,16 @@ class PharmacistOrderBloc
     }
   }
 
+  Future<void> _refreshOrders(
+      String shopId, Emitter<PharmacistOrderState> emit) async {
+    try {
+      final updatedOrders = await pharmacistOrderRepository.getOrders(shopId);
+      emit(PharmacistOrderLoaded(updatedOrders));
+    } catch (e) {
+      emit(PharmacistOrderError(e.toString()));
+    }
+  }
+
   Future<void> _onUpdatePharmacistOrderStatus(
     UpdatePharmacistOrderStatus event,
     Emitter<PharmacistOrderState> emit,
@@ -43,9 +53,7 @@ class PharmacistOrderBloc
           event.orderId, event.newStatus);
       if (state is PharmacistOrderLoaded) {
         final currentState = state as PharmacistOrderLoaded;
-        final updatedOrders = await pharmacistOrderRepository
-            .getOrders(currentState.orders.first.shopId);
-        emit(PharmacistOrderLoaded(updatedOrders));
+        await _refreshOrders(currentState.orders.first.shopId, emit);
       }
     } catch (e) {
       emit(PharmacistOrderError(e.toString()));

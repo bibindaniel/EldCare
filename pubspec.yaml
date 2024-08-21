@@ -60,6 +60,7 @@ dependencies:
   cached_network_image: ^3.4.0
   file_picker: ^8.0.7
   rxdart: ^0.28.0
+  timeline_tile: ^2.0.0
 
 
 dev_dependencies:

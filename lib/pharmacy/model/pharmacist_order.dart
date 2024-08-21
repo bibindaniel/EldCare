@@ -5,6 +5,7 @@ enum OrderStatus {
   confirmed,
   preparing,
   readyForPickup,
+  inTransit,
   completed,
   cancelled
 }
@@ -19,6 +20,13 @@ class PharmacistOrderModel {
   final DateTime createdAt;
   final String? deliveryAddress;
   final String? deliveryInstructions;
+  String get formattedStatus {
+    return status.toString().split('.').last;
+  }
+
+  String get formattedDate {
+    return "${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}";
+  }
 
   PharmacistOrderModel({
     required this.id,
