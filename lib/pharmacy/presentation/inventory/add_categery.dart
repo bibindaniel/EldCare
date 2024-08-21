@@ -56,7 +56,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Manage Categories', style: AppFonts.headline3),
+            title: Text('Manage Categories', style: AppFonts.headline3Light),
             backgroundColor: kPrimaryColor,
           ),
           body: Column(
@@ -152,7 +152,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       itemBuilder: (context, index) {
         final category = categories[index];
         return ListTile(
-          title: Text(category.name, style: AppFonts.subtitle1),
+          title: Text(category.name, style: AppFonts.cardSubtitle),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

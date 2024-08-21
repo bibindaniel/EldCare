@@ -40,9 +40,7 @@ class VerifiedShopCard extends StatelessWidget {
                   Flexible(
                     child: Text(
                       shop.name,
-                      style: AppFonts.subtitle1Bold.copyWith(
-                        color: kWhiteColor,
-                      ),
+                      style: AppFonts.cardTitle,
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

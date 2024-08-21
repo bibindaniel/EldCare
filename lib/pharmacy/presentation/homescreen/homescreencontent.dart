@@ -12,76 +12,86 @@ class PharmacistHomeContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Container(
-        color: kPrimaryColor,
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            _buildTopSection(),
-            const SizedBox(height: 30),
-            _buildBottomSection(),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildQuickActions(),
+          const SizedBox(height: 24),
+          _buildShopsSection(),
+          const SizedBox(height: 24),
+          _buildRecentOrdersSection(),
+        ],
       ),
     );
   }
 
-  Widget _buildTopSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Column(
-          children: [
-            const Text('Manage Shops', style: AppFonts.headline3),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: kPrimaryColor,
-                backgroundColor: kWhiteColor,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30)),
-              ),
-              onPressed: () {
-                // Add your button action here
-              },
-              child: const Text('Add', style: TextStyle(fontSize: 18)),
-            ),
-          ],
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: kPrimaryColor,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
-        Lottie.asset('assets/animations/pharmacy2.json',
-            width: 150, height: 100),
-      ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Manage Your Pharmacy', style: AppFonts.headline3Light),
+              const SizedBox(height: 8),
+            ],
+          ),
+          Lottie.asset('assets/animations/pharmacy2.json',
+              width: 100, height: 100),
+        ],
+      ),
     );
   }
 
-  Widget _buildBottomSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: kWhiteColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: const Offset(0, -3),
+  Widget _buildQuickActions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Quick Actions', style: AppFonts.headline4),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildActionButton(
+                  Icons.add_business, 'Add Shop', kSecondaryColor),
+              _buildActionButton(
+                  Icons.inventory_2, 'Manage Inventory', kAccentColor),
+              _buildActionButton(
+                  Icons.receipt_long, 'View Orders', kSuccessColor),
+            ],
           ),
         ],
       ),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          _buildShopsSection(),
-          const SizedBox(height: 12),
-          _buildRecentOrdersSection(),
-          const SizedBox(height: 20),
-        ],
-      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, String label, Color color) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(icon, color: color, size: 32),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: AppFonts.bodyText2),
+      ],
     );
   }
 
@@ -93,24 +103,27 @@ class PharmacistHomeContent extends StatelessWidget {
         } else if (state is ShopsLoadedState) {
           final shops = state.shops;
           if (shops.isEmpty) {
-            return const Center(child: Text('No shops available.'));
+            return const Center(
+                child: Text('No shops available.', style: AppFonts.bodyText1));
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Your Shops", style: AppFonts.headline3Dark),
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Text("Your Shops", style: AppFonts.headline4),
               ),
+              const SizedBox(height: 16),
               SizedBox(
-                height: 200,
+                height: 220,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: shops.length,
                   itemBuilder: (context, index) {
                     final shop = shops[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding:
+                          EdgeInsets.only(left: index == 0 ? 24 : 0, right: 16),
                       child: ShopCard(shop: shop),
                     );
                   },
@@ -119,47 +132,54 @@ class PharmacistHomeContent extends StatelessWidget {
             ],
           );
         } else if (state is ShopErrorState) {
-          return Center(child: Text('Error: ${state.error}'));
+          return Center(
+              child: Text('Error: ${state.error}', style: AppFonts.bodyText1));
         } else {
-          return const Center(child: Text('No shops available.'));
+          return const Center(
+              child: Text('No shops available.', style: AppFonts.bodyText1));
         }
       },
     );
   }
 
   Widget _buildRecentOrdersSection() {
-    return Column(
-      children: [
-        const Text("Recent Orders", style: AppFonts.headline3Dark),
-        const SizedBox(height: 10),
-        Card(
-          color: kPrimaryColor,
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildOrderItem('Order #1001', 'Pending'),
-                const SizedBox(height: 10),
-                _buildOrderItem('Order #1002', 'Completed'),
-              ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Recent Orders", style: AppFonts.headline4),
+          const SizedBox(height: 16),
+          Card(
+            elevation: 2,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildOrderItem('Order #1001', 'Pending', kWarningColor),
+                  const Divider(height: 24),
+                  _buildOrderItem('Order #1002', 'Completed', kSuccessColor),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildOrderItem(String orderNumber, String status) {
+  Widget _buildOrderItem(String orderNumber, String status, Color statusColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(orderNumber, style: AppFonts.bodyText1),
         Chip(
-          label: Text(status),
-          backgroundColor: status == 'Pending' ? Colors.orange : Colors.green,
-          labelStyle: const TextStyle(color: Colors.white),
+          label:
+              Text(status, style: AppFonts.button.copyWith(color: statusColor)),
+          backgroundColor: statusColor.withOpacity(0.1),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
       ],
     );

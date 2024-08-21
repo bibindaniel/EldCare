@@ -71,6 +71,7 @@ class HomeScreen extends StatelessWidget {
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: kPrimaryColor,
+      elevation: 0,
       leading: Builder(
         builder: (context) {
           return Padding(
@@ -99,7 +100,7 @@ class HomeScreen extends StatelessWidget {
         builder: (context, state) {
           if (state is Authenticated) {
             return Text('Hey, ${state.user.displayName ?? 'User'}',
-                style: AppFonts.headline3);
+                style: AppFonts.headline3Light);
           } else {
             return const Text('Hey, User', style: AppFonts.headline3);
           }
@@ -135,14 +136,15 @@ class HomeScreen extends StatelessWidget {
         Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const AddMedicinePage()));
       },
-      backgroundColor: kSecondaryColor,
-      child: const Icon(Icons.add),
+      backgroundColor: kAccentColor,
+      child: const Icon(Icons.add, color: kWhiteColor),
     );
   }
 
   Widget _buildBottomNavigationBar(
       BuildContext context, NavigationState navigationState) {
     return BottomAppBar(
+      color: kLightPrimaryColor,
       shape: const CircularNotchedRectangle(),
       notchMargin: 10,
       child: SizedBox(
@@ -177,9 +179,19 @@ class HomeScreen extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: state.currentItem == item ? kPrimaryColor : Colors.grey,
+            color: state.currentItem == item
+                ? kSecondaryColor
+                : kSecondaryTextColor,
           ),
-          Text(label),
+          Text(
+            label,
+            style: TextStyle(
+              color: state.currentItem == item
+                  ? kSecondaryColor
+                  : kSecondaryTextColor,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );

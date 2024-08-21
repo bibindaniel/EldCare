@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum OrderStatus {
   pending,
   confirmed,
-  preparing,
   readyForPickup,
+  assignedToDelivery,
   inTransit,
   completed,
   cancelled

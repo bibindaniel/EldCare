@@ -37,7 +37,7 @@ class ShopScreenViewState extends State<ShopScreenView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pharmacy Shops', style: AppFonts.headline3),
+        title: Text('Pharmacy Shops', style: AppFonts.headline3Light),
         backgroundColor: kPrimaryColor,
       ),
       body: Column(
@@ -80,18 +80,25 @@ class ShopScreenViewState extends State<ShopScreenView> {
         onPressed: () => _findNearbyShops(),
         icon: const Icon(
           Icons.location_on,
-          color: kSecondaryColor,
+          color: kWhiteColor, // Changed to white for better contrast
+          size: 24, // Explicitly set icon size
         ),
-        label: const Text(
+        label: Text(
           'Find Nearby Shops',
-          style: AppFonts.cardSubtitle1,
+          style: AppFonts.button.copyWith(
+            fontSize: 16, // Slightly larger font size
+            fontWeight: FontWeight.w600, // Semi-bold weight
+          ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: kPrimaryColor,
+          foregroundColor: kWhiteColor, // Ensure text and icon are white
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          padding: const EdgeInsets.symmetric(
+              vertical: 16, horizontal: 24), // Increased padding
+          elevation: 3, // Add a slight shadow
         ),
       ),
     );
@@ -155,46 +162,76 @@ class ShopScreenViewState extends State<ShopScreenView> {
 
   Widget _buildShopCard(VerifiedShopListing shop) {
     return Card(
+      elevation: 2,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: kPrimaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.local_pharmacy, color: kPrimaryColor),
-        ),
-        title: Text(shop.name, style: AppFonts.bodyText1Dark),
-        subtitle: Column(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Address: ${shop.address}', style: AppFonts.bodyText2),
-            Text('Phone: ${shop.phoneNumber}', style: AppFonts.bodyText2),
-          ],
-        ),
-        trailing: ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ShopWrapper(
-                  shopId: shop.id,
-                  shopName: shop.name,
+            Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: kPrimaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.local_pharmacy,
+                      color: kPrimaryColor, size: 30),
                 ),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kPrimaryColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(shop.name, style: AppFonts.headline6),
+                      const SizedBox(height: 4),
+                      Text(shop.address,
+                          style: AppFonts.bodyText2
+                              .copyWith(color: kSecondaryTextColor)),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          child: const Text(
-            'View',
-            style: AppFonts.cardSubtitle1,
-          ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Phone: ${shop.phoneNumber}', style: AppFonts.bodyText2),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ShopWrapper(
+                          shopId: shop.id,
+                          shopName: shop.name,
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    foregroundColor: kWhiteColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
+                  child: Text(
+                    'View',
+                    style: AppFonts.button.copyWith(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

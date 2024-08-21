@@ -169,7 +169,8 @@ class CartScreenState extends State<CartScreen> {
               icon: const Icon(Icons.arrow_back, color: kWhiteColor),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: Text('Cart - ${widget.shopName}', style: AppFonts.headline3),
+            title: Text('Cart - ${widget.shopName}',
+                style: AppFonts.headline3Light),
             backgroundColor: kPrimaryColor,
           ),
           body: state.cart.isEmpty
@@ -199,7 +200,7 @@ class CartScreenState extends State<CartScreen> {
                             child: ListTile(
                               contentPadding: const EdgeInsets.all(16),
                               title: Text(item.medicineName,
-                                  style: AppFonts.headline4Dark),
+                                  style: AppFonts.headline4),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -209,7 +210,7 @@ class CartScreenState extends State<CartScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                       '₹${(item.price * item.quantity).toStringAsFixed(2)}',
-                                      style: AppFonts.bodyText1Dark),
+                                      style: AppFonts.bodyText1),
                                 ],
                               ),
                               trailing: IconButton(
@@ -266,8 +267,7 @@ class CartScreenState extends State<CartScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Total:',
-                                    style: AppFonts.headline3Dark),
+                                const Text('Total:', style: AppFonts.headline3),
                                 Text(
                                   '₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}',
                                   style: AppFonts.headline1,

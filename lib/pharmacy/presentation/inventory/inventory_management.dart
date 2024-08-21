@@ -64,8 +64,8 @@ class InventoryManagementPageState extends State<InventoryManagementPage> {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title:
-                Text('Manage ${widget.shop.name}', style: AppFonts.headline3),
+            title: Text('Manage ${widget.shop.name}',
+                style: AppFonts.headline3Light),
             backgroundColor: kPrimaryColor,
           ),
           body: Column(
@@ -164,7 +164,7 @@ class InventoryManagementPageState extends State<InventoryManagementPage> {
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: ListTile(
             title: Text(batch.medicineName ?? 'Unknown Medicine',
-                style: AppFonts.subtitle1Bold),
+                style: AppFonts.cardTitle),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -315,7 +315,7 @@ class _InventoryDetailsDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(batch.medicineName ?? 'Unknown Medicine',
-          style: AppFonts.headline4Dark),
+          style: AppFonts.headline4),
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +349,7 @@ class _InventoryDetailsDialog extends StatelessWidget {
             width: 100,
             child: Text(
               '$label:',
-              style: AppFonts.subtitle1Bold,
+              style: AppFonts.cardTitle,
             ),
           ),
           Expanded(

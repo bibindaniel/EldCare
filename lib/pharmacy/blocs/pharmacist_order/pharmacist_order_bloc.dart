@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:eldcare/pharmacy/repository/pharmacistorderrepositry.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacist_order/pharmacist_order_event.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacist_order/pharmacist_order_state.dart';
@@ -7,56 +7,51 @@ import 'package:eldcare/pharmacy/blocs/pharmacist_order/pharmacist_order_state.d
 class PharmacistOrderBloc
     extends Bloc<PharmacistOrderEvent, PharmacistOrderState> {
   final PharmacistOrderRepository pharmacistOrderRepository;
+  StreamSubscription? _ordersSubscription;
 
-  PharmacistOrderBloc(
-      {required this.pharmacistOrderRepository,
-      required PharmacistOrderRepository orderRepository})
+  PharmacistOrderBloc({required this.pharmacistOrderRepository})
       : super(PharmacistOrderInitial()) {
     on<LoadPharmacistOrders>(_onLoadPharmacistOrders);
     on<UpdatePharmacistOrderStatus>(_onUpdatePharmacistOrderStatus);
+    on<OrdersUpdated>(_onOrdersUpdated);
   }
 
-  Future<void> _onLoadPharmacistOrders(
+  void _onLoadPharmacistOrders(
     LoadPharmacistOrders event,
     Emitter<PharmacistOrderState> emit,
   ) async {
     emit(PharmacistOrderLoading());
-    try {
-      final orders = await pharmacistOrderRepository.getOrders(event.shopId);
-      emit(PharmacistOrderLoaded(orders));
-    } catch (e) {
-      if (e is FirebaseException && e.code == 'failed-precondition') {
-        emit(const PharmacistOrderError(
-            'The database index is still being built. Please try again in a few minutes.'));
-      } else {
-        emit(PharmacistOrderError(e.toString()));
-      }
-    }
+    await _ordersSubscription?.cancel();
+    _ordersSubscription =
+        pharmacistOrderRepository.getOrdersStream(event.shopId).listen(
+              (orders) => add(OrdersUpdated(orders)),
+              onError: (error) => add(OrdersError(error.toString())),
+            );
   }
 
-  Future<void> _refreshOrders(
-      String shopId, Emitter<PharmacistOrderState> emit) async {
-    try {
-      final updatedOrders = await pharmacistOrderRepository.getOrders(shopId);
-      emit(PharmacistOrderLoaded(updatedOrders));
-    } catch (e) {
-      emit(PharmacistOrderError(e.toString()));
-    }
+  void _onOrdersUpdated(
+    OrdersUpdated event,
+    Emitter<PharmacistOrderState> emit,
+  ) {
+    emit(PharmacistOrderLoaded(event.orders));
   }
 
-  Future<void> _onUpdatePharmacistOrderStatus(
+  void _onUpdatePharmacistOrderStatus(
     UpdatePharmacistOrderStatus event,
     Emitter<PharmacistOrderState> emit,
   ) async {
     try {
       await pharmacistOrderRepository.updateOrderStatus(
           event.orderId, event.newStatus);
-      if (state is PharmacistOrderLoaded) {
-        final currentState = state as PharmacistOrderLoaded;
-        await _refreshOrders(currentState.orders.first.shopId, emit);
-      }
+      // The stream will automatically emit the updated orders
     } catch (e) {
       emit(PharmacistOrderError(e.toString()));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _ordersSubscription?.cancel();
+    return super.close();
   }
 }

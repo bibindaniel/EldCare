@@ -17,7 +17,6 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
 import 'package:eldcare/pharmacy/presentation/homescreen/homescreencontent.dart';
 import 'package:eldcare/pharmacy/presentation/inventory/inventorypage.dart';
-import 'package:eldcare/pharmacy/presentation/profile/profilecheck.dart';
 import 'package:eldcare/pharmacy/presentation/shop/add_shop.dart';
 
 class PharmacistHomeScreen extends StatelessWidget {
@@ -43,9 +42,7 @@ class PharmacistHomeScreen extends StatelessWidget {
         ),
         BlocProvider<PharmacistOrderBloc>(
           create: (context) => PharmacistOrderBloc(
-            pharmacistOrderRepository: PharmacistOrderRepository(),
-            orderRepository: PharmacistOrderRepository(),
-          ),
+              pharmacistOrderRepository: PharmacistOrderRepository()),
         ),
       ],
       child: BlocListener<AuthBloc, AuthState>(
@@ -59,11 +56,11 @@ class PharmacistHomeScreen extends StatelessWidget {
             return Scaffold(
               appBar: _buildAppBar(context),
               body: _getSelectedScreen(navigationState.currentItem),
+              bottomNavigationBar:
+                  _buildBottomNavigationBar(context, navigationState),
               floatingActionButton: _buildFloatingActionButton(context),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.centerDocked,
-              bottomNavigationBar:
-                  _buildBottomNavigationBar(context, navigationState),
               drawer: _buildDrawer(context),
             );
           },
@@ -75,43 +72,26 @@ class PharmacistHomeScreen extends StatelessWidget {
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: kPrimaryColor,
+      elevation: 0,
       leading: Builder(
-        builder: (context) {
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: GestureDetector(
-              onTap: () => Scaffold.of(context).openDrawer(),
-              child: BlocBuilder<AuthBloc, AuthState>(
-                builder: (context, state) {
-                  String imageUrl = 'assets/images/user/user1.jpg';
-                  if (state is Authenticated &&
-                      state.user.photoURL != null &&
-                      state.user.photoURL!.isNotEmpty) {
-                    imageUrl = state.user.photoURL!;
-                  }
-                  return CircleAvatar(
-                    radius: 15,
-                    backgroundImage: AssetImage(imageUrl),
-                  );
-                },
-              ),
-            ),
-          );
-        },
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: kWhiteColor),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
       ),
       title: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is Authenticated) {
-            return Text('Hey, ${state.user.displayName ?? 'Pharmacist'}',
-                style: AppFonts.headline3);
+            return Text('Welcome, ${state.user.displayName ?? 'Pharmacist'}',
+                style: AppFonts.headline3.copyWith(color: kWhiteColor));
           } else {
-            return const Text('Hey, Pharmacist', style: AppFonts.headline3);
+            return const Text('Welcome', style: AppFonts.headline3);
           }
         },
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications_active, color: kWhiteColor),
+          icon: const Icon(Icons.notifications_outlined, color: kWhiteColor),
           onPressed: () {
             // Add notification action here
           },
@@ -130,7 +110,6 @@ class PharmacistHomeScreen extends StatelessWidget {
         return BlocProvider<PharmacistOrderBloc>(
           create: (context) => PharmacistOrderBloc(
             pharmacistOrderRepository: PharmacistOrderRepository(),
-            orderRepository: PharmacistOrderRepository(),
           ),
           child: const PharmacistOrdersScreen(),
         );
@@ -149,8 +128,8 @@ class PharmacistHomeScreen extends StatelessWidget {
           _checkProfileAndNavigate(context, authState.user.uid);
         }
       },
-      backgroundColor: kThridColor,
-      child: const Icon(Icons.add),
+      backgroundColor: kAccentColor,
+      child: const Icon(Icons.add, color: kWhiteColor),
     );
   }
 
@@ -244,17 +223,18 @@ class PharmacistHomeScreen extends StatelessWidget {
       BuildContext context, PharmacistNavigationState navigationState) {
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
-      notchMargin: 10,
-      child: SizedBox(
+      notchMargin: 8,
+      color: kSurfaceColor,
+      child: Container(
         height: 60,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             _buildNavItem(context, Icons.store, 'Shops', NavigationItem.shops,
                 navigationState),
             _buildNavItem(context, Icons.inventory, 'Inventory',
                 NavigationItem.inventory, navigationState),
-            const SizedBox(width: 40), // Space for the FloatingActionButton
+            const SizedBox(width: 40),
             _buildNavItem(context, Icons.shopping_cart, 'Orders',
                 NavigationItem.orders, navigationState),
             _buildNavItem(context, Icons.analytics, 'Analytics',
@@ -267,19 +247,25 @@ class PharmacistHomeScreen extends StatelessWidget {
 
   Widget _buildNavItem(BuildContext context, IconData icon, String label,
       NavigationItem item, PharmacistNavigationState state) {
-    return MaterialButton(
-      minWidth: 40,
-      onPressed: () {
+    final isSelected = state.currentItem == item;
+    return InkWell(
+      onTap: () {
         context.read<PharmacistNavigationBloc>().add(_getNavigationEvent(item));
       },
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            color: state.currentItem == item ? kPrimaryColor : Colors.grey,
+            color: isSelected ? kPrimaryColor : kSecondaryTextColor,
           ),
-          Text(label),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? kPrimaryColor : kSecondaryTextColor,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -306,83 +292,71 @@ class PharmacistHomeScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: <Widget>[
           DrawerHeader(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: kPrimaryColor,
             ),
             child: BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
                 if (state is Authenticated) {
-                  String imageUrl = 'assets/images/user/user1.jpg';
-                  if (state.user.photoURL != null &&
-                      state.user.photoURL!.isNotEmpty) {
-                    imageUrl = state.user.photoURL!;
-                  }
                   return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       CircleAvatar(
                         radius: 30,
-                        backgroundImage: imageUrl.startsWith('http')
-                            ? NetworkImage(imageUrl)
-                            : AssetImage(imageUrl) as ImageProvider,
+                        backgroundImage: state.user.photoURL != null
+                            ? NetworkImage(state.user.photoURL!)
+                            : const AssetImage(
+                                    'assets/images/default_avatar.png')
+                                as ImageProvider,
                       ),
                       const SizedBox(height: 10),
                       Text(
                         state.user.displayName ?? 'Pharmacist',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 20),
+                        style: AppFonts.headline4.copyWith(color: kWhiteColor),
                       ),
                       Text(
                         state.user.email ?? '',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 14),
+                        style: AppFonts.bodyText2
+                            .copyWith(color: kLightPrimaryColor),
                       ),
                     ],
                   );
                 } else {
                   return const Text(
-                    'User Info',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
+                    'Eldcare Pharmacy',
+                    style: TextStyle(color: kWhiteColor, fontSize: 24),
                   );
                 }
               },
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            onTap: () {
-              Navigator.pop(context);
-              final authState = context.read<AuthBloc>().state;
-              if (authState is Authenticated) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PharmacistProfileCheckPage(
-                        pharmacistId: authState.user.uid),
-                  ),
-                );
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to settings screen
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () {
-              Navigator.pop(context);
-              context.read<AuthBloc>().add(LogoutEvent());
-            },
-          ),
+          _buildDrawerItem(context, Icons.person, 'Profile', () {
+            // Navigate to profile
+          }),
+          _buildDrawerItem(context, Icons.settings, 'Settings', () {
+            // Navigate to settings
+          }),
+          _buildDrawerItem(context, Icons.help, 'Help & Support', () {
+            // Navigate to help & support
+          }),
+          const Divider(),
+          _buildDrawerItem(context, Icons.logout, 'Logout', () {
+            context.read<AuthBloc>().add(LogoutEvent());
+          }),
         ],
       ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+      BuildContext context, IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: kPrimaryColor),
+      title: Text(title, style: AppFonts.bodyText1),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
     );
   }
 }

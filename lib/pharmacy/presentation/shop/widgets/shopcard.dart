@@ -26,40 +26,41 @@ class ShopCard extends StatelessWidget {
       },
       child: Card(
         elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: kThridColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: kSurfaceColor,
         child: Container(
           width: 160,
+          height: 220, // Fixed height to prevent overflow
           padding: const EdgeInsets.all(12),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.store,
-                    size: 40,
-                    color: kWhiteColor,
-                  ),
-                  SizedBox(width: 8)
-                ],
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: kPrimaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.store,
+                  size: 36,
+                  color: kPrimaryColor,
+                ),
               ),
               const SizedBox(height: 12),
-              Text(
-                shop.name,
-                style: AppFonts.subtitle1Bold.copyWith(
-                  color: kWhiteColor,
+              Expanded(
+                child: Text(
+                  shop.name,
+                  style: AppFonts.headline6,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               _buildVerificationBadge(),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 8),
               _buildStatusChip(),
             ],
           ),
@@ -72,43 +73,39 @@ class ShopCard extends StatelessWidget {
     return shop.isVerified
         ? const Icon(
             Icons.verified,
-            color: kPrimaryColor,
+            color: kSuccessColor,
             size: 24,
           )
         : const Icon(
             Icons.pending,
-            color: Colors.orange,
+            color: kWarningColor,
             size: 24,
           );
   }
 
   Widget _buildStatusChip() {
+    final isVerified = shop.isVerified;
+    final backgroundColor = isVerified ? kSuccessColor : kWarningColor;
+    final textColor = isVerified ? kSuccessColor : kWarningColor;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: shop.isVerified
-            ? kPrimaryColor.withOpacity(0.2)
-            : Colors.orange.withOpacity(0.2),
+        color: backgroundColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: backgroundColor),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Verification Status',
-            style: TextStyle(
-              color: shop.isVerified ? kPrimaryColor : Colors.orange,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
+            style: AppFonts.caption.copyWith(color: textColor),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
-            shop.isVerified ? 'Verified' : 'Pending',
-            style: TextStyle(
-              color: shop.isVerified ? kPrimaryColor : Colors.orange,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
+            isVerified ? 'Verified' : 'Pending',
+            style: AppFonts.button.copyWith(color: textColor, fontSize: 10),
           ),
         ],
       ),

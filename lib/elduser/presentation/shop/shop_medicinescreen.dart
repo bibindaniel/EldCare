@@ -62,7 +62,7 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
               icon: const Icon(Icons.close, color: kWhiteColor),
               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
             ),
-            title: Text(widget.shopName, style: AppFonts.headline3),
+            title: Text(widget.shopName, style: AppFonts.headline3Light),
             backgroundColor: kPrimaryColor,
             actions: [
               IconButton(
@@ -189,7 +189,9 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(medicine.medicineName, style: AppFonts.headline1),
+            Text(medicine.medicineName,
+                style:
+                    AppFonts.headline4), // Changed from headline1 to headline4
             const SizedBox(height: 8),
             Row(
               children: [
@@ -233,8 +235,8 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
               children: [
                 Text(
                   '₹ ${medicine.price.toStringAsFixed(2)}',
-                  style: AppFonts.bodyText1Dark
-                      .copyWith(fontWeight: FontWeight.bold),
+                  style:
+                      AppFonts.bodyText1.copyWith(fontWeight: FontWeight.bold),
                 ),
                 ElevatedButton(
                   onPressed: () => _showAddToCartDialog(context, medicine),
@@ -243,7 +245,8 @@ class ShopMedicinesViewState extends State<ShopMedicinesView> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18)),
                   ),
-                  child: const Text('Add to Cart'),
+                  child: Text('Add to Cart',
+                      style: AppFonts.button), // Applied button style
                 ),
               ],
             ),

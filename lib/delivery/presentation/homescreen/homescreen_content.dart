@@ -150,7 +150,7 @@ class DeliveryPersonnelHomeContentState
   Widget _buildSummarySection() {
     return Column(
       children: [
-        const Text("Today's Summary", style: AppFonts.headline3Dark),
+        const Text("Today's Summary", style: AppFonts.headline3),
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -174,7 +174,7 @@ class DeliveryPersonnelHomeContentState
             Icon(icon, size: 30, color: kPrimaryColor),
             const SizedBox(height: 10),
             Text(title, style: AppFonts.bodyText2),
-            Text(value, style: AppFonts.headline4Dark),
+            Text(value, style: AppFonts.headline4),
           ],
         ),
       ),
@@ -184,7 +184,7 @@ class DeliveryPersonnelHomeContentState
   Widget _buildCurrentDeliverySection() {
     return Column(
       children: [
-        const Text("Current Delivery", style: AppFonts.headline3Dark),
+        const Text("Current Delivery", style: AppFonts.headline3),
         const SizedBox(height: 20),
         Card(
           margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -193,11 +193,12 @@ class DeliveryPersonnelHomeContentState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Order #12345', style: AppFonts.headline4Dark),
+                const Text('Order #12345', style: AppFonts.headline4),
                 const SizedBox(height: 10),
-                Text('123 Main St, City, State', style: AppFonts.bodyText1Dark),
+                const Text('123 Main St, City, State',
+                    style: AppFonts.bodyText1),
                 const SizedBox(height: 10),
-                Text('2 items', style: AppFonts.bodyText2),
+                const Text('2 items', style: AppFonts.bodyText2),
                 const SizedBox(height: 15),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -233,7 +234,7 @@ class DeliveryPersonnelHomeContentState
   Widget _buildAvailableOrdersSection() {
     return Column(
       children: [
-        const Text("Available Orders", style: AppFonts.headline3Dark),
+        const Text("Available Orders", style: AppFonts.headline3),
         const SizedBox(height: 20),
         BlocBuilder<DeliveryOrderBloc, DeliveryOrderState>(
           builder: (context, state) {
@@ -244,7 +245,7 @@ class DeliveryPersonnelHomeContentState
               print('Number of orders: ${state.orders.length}'); // Debug print
               if (state.orders.isEmpty) {
                 return const Text('No orders available',
-                    style: AppFonts.bodyText1Dark);
+                    style: AppFonts.bodyText1);
               }
               return ListView.builder(
                 shrinkWrap: true,
@@ -254,11 +255,9 @@ class DeliveryPersonnelHomeContentState
                     _buildOrderItem(state.orders[index]),
               );
             } else if (state is DeliveryOrderError) {
-              return Text('Error: ${state.message}',
-                  style: AppFonts.bodyText1Dark);
+              return Text('Error: ${state.message}', style: AppFonts.bodyText1);
             }
-            return const Text('No orders available',
-                style: AppFonts.bodyText1Dark);
+            return const Text('No orders available', style: AppFonts.bodyText1);
           },
         ),
       ],
@@ -273,7 +272,7 @@ class DeliveryPersonnelHomeContentState
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         title: Text('Order #${order.id.substring(0, 8)}...',
-            style: AppFonts.bodyText1Dark.copyWith(color: kPrimaryColor)),
+            style: AppFonts.bodyText1.copyWith(color: kPrimaryColor)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -292,7 +291,7 @@ class DeliveryPersonnelHomeContentState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Delivery Address:',
-                    style: AppFonts.bodyText1Dark.copyWith(
+                    style: AppFonts.bodyText1.copyWith(
                         fontWeight: FontWeight.bold, color: kDarkTextColor)),
                 const SizedBox(height: 8),
                 _buildAddressDetails(order.deliveryAddress),
@@ -306,13 +305,13 @@ class DeliveryPersonnelHomeContentState
                         .read<DeliveryOrderBloc>()
                         .add(AcceptOrder(order.id, 'delivery_boy_id'));
                   },
-                  child: const Text('Accept Order'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
                     foregroundColor: kWhiteColor,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
+                  child: const Text('Accept Order'),
                 ),
               ],
             ),

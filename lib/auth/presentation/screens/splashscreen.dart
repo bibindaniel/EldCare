@@ -61,9 +61,9 @@ class SplashscreenState extends State<Splashscreen> {
                 const SizedBox(
                   height: 20,
                 ),
-                const Text(
+                Text(
                   "EldCare",
-                  style: AppFonts.headline,
+                  style: AppFonts.headline1Light,
                 ),
               ],
             ),

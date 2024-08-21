@@ -101,7 +101,7 @@ class InventoryPage extends StatelessWidget {
             children: [
               const Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text("Your Shops", style: AppFonts.headline3Dark),
+                child: Text("Your Shops", style: AppFonts.headline3),
               ),
               ListView.separated(
                 shrinkWrap: true,
@@ -153,7 +153,7 @@ class InventoryPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(shop.name, style: AppFonts.headline4Dark),
+                    Text(shop.name, style: AppFonts.headline4),
                     const SizedBox(height: 4),
                     Text(shop.address, style: AppFonts.bodyText2),
                     const SizedBox(height: 8),

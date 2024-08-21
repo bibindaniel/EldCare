@@ -63,7 +63,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Manage Medicines', style: AppFonts.headline3),
+            title: Text('Manage Medicines', style: AppFonts.headline3Light),
             backgroundColor: kPrimaryColor,
           ),
           body: Column(
@@ -159,7 +159,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       itemBuilder: (context, index) {
         final medicine = medicines[index];
         return ListTile(
-          title: Text(medicine.name, style: AppFonts.subtitle1),
+          title: Text(medicine.name, style: AppFonts.cardSubtitle),
           subtitle: Text(medicine.dosage, style: AppFonts.bodyText2),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,

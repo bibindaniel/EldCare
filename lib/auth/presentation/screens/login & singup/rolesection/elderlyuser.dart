@@ -158,7 +158,7 @@ class ElderlyUserDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Text('Please fill in your details:',
-                          style: AppFonts.coloredbodyText1),
+                          style: AppFonts.bodyText1),
                       const SizedBox(height: 24),
                       CustomTextFormField(
                         controller: _ageController,

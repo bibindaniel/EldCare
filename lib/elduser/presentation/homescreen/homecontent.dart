@@ -54,7 +54,7 @@ class HomeContentState extends State<HomeContent> {
       children: [
         Column(
           children: [
-            const Text('Create a New Schedule', style: AppFonts.headline3),
+            Text('Create a New Schedule', style: AppFonts.headline3Light),
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -172,7 +172,7 @@ class HomeContentState extends State<HomeContent> {
   Widget _buildMedicineSection() {
     return Column(
       children: [
-        const Text("To Take", style: AppFonts.headline3Dark),
+        const Text("To Take", style: AppFonts.headline3),
         const SizedBox(height: 20),
         BlocBuilder<MedicineBloc, MedicineState>(
           builder: (context, state) {
@@ -210,7 +210,7 @@ class HomeContentState extends State<HomeContent> {
   Widget _buildUpcomingEvents() {
     return const Column(
       children: [
-        Text("Upcoming Events", style: AppFonts.headline3Dark),
+        Text("Upcoming Events", style: AppFonts.headline3),
         SizedBox(height: 10),
         Card(
           color: kPrimaryColor,
