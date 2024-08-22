@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:eldcare/pharmacy/model/pharmacist_order.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacist_order/pharmacist_order_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacist_order/pharmacist_order_event.dart';
@@ -10,7 +12,7 @@ import 'package:timeline_tile/timeline_tile.dart';
 class OrderDetailsScreen extends StatelessWidget {
   final PharmacistOrderModel order;
 
-  const OrderDetailsScreen({Key? key, required this.order}) : super(key: key);
+  const OrderDetailsScreen({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -57,16 +59,81 @@ class OrderDetailsScreen extends StatelessWidget {
             ...order.items.map((item) => _buildItemRow(item)),
             if (order.deliveryAddress != null) ...[
               const SizedBox(height: 16),
-              Text('Delivery Address:', style: AppFonts.headline6),
-              Text(order.deliveryAddress!, style: AppFonts.bodyText2),
+              const Text('Delivery Address:', style: AppFonts.headline6),
+              const SizedBox(height: 8),
+              _buildDeliveryAddress(order.deliveryAddress!),
             ],
-            if (order.deliveryInstructions != null) ...[
-              const SizedBox(height: 16),
-              Text('Delivery Instructions:', style: AppFonts.headline6),
-              Text(order.deliveryInstructions!, style: AppFonts.bodyText2),
-            ],
+            const SizedBox(height: 16),
+            _buildPrescriptionButton(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDeliveryAddress(String addressString) {
+    try {
+      // Parse the string into a Map
+      final deliveryAddress = json.decode(addressString.replaceAll("'", '"'))
+          as Map<String, dynamic>;
+      final address = deliveryAddress['address'] as Map<String, dynamic>?;
+
+      if (address == null) {
+        return const Text('Address details not available',
+            style: AppFonts.bodyText2);
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(address['houseName'] ?? '', style: AppFonts.bodyText2),
+          Text(address['street'] ?? '', style: AppFonts.bodyText2),
+          Text(
+              '${address['city'] ?? ''}, ${address['state'] ?? ''} ${address['postalCode'] ?? ''}',
+              style: AppFonts.bodyText2),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.label_outline, size: 16, color: kPrimaryColor),
+              const SizedBox(width: 4),
+              Text('Label: ${deliveryAddress['label'] ?? ''}',
+                  style: AppFonts.bodyText2Colored
+                      .copyWith(fontStyle: FontStyle.italic)),
+            ],
+          ),
+          if (deliveryAddress['isDefault'] == true) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.check_circle_outline,
+                    size: 16, color: kSuccessColor),
+                const SizedBox(width: 4),
+                Text('Default Address',
+                    style: AppFonts.bodyText2.copyWith(color: kSuccessColor)),
+              ],
+            ),
+          ],
+        ],
+      );
+    } catch (e) {
+      // If parsing fails, display the raw string
+      return Text('Address: $addressString', style: AppFonts.bodyText2);
+    }
+  }
+
+  Widget _buildPrescriptionButton() {
+    return ElevatedButton.icon(
+      onPressed: () {
+        // TODO: Implement prescription viewing functionality
+        print('View prescription');
+      },
+      icon: const Icon(Icons.description),
+      label: const Text('View Prescription'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: kPrimaryColor,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     );
   }

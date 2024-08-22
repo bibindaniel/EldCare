@@ -107,41 +107,6 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
     emit(state.copyWith(cart: updatedCart));
   }
 
-  // void _onPlaceOrder(PlaceOrder event, Emitter<ShopMedicinesState> emit) async {
-  //   emit(state.copyWith(isLoading: true));
-  //   try {
-  //     String? prescriptionUrl;
-  //     if (event.prescriptionFile != null) {
-  //       // Upload prescription to Firebase Storage
-  //       final storageRef = FirebaseStorage.instance.ref().child(
-  //           'prescriptions/${DateTime.now().toIso8601String()}_${event.prescriptionFile!.path.split('/').last}');
-  //       final uploadTask = storageRef.putFile(event.prescriptionFile!);
-  //       final snapshot = await uploadTask.whenComplete(() {});
-  //       prescriptionUrl = await snapshot.ref.getDownloadURL();
-  //     }
-
-  //     final order = MedicineOrder(
-  //       id: '', // Firestore will generate this
-  //       userId: event.userId,
-  //       shopId: event.shopId,
-  //       items: state.cart,
-  //       totalAmount: state.cart
-  //           .fold(0, (sum, item) => sum + (item.price * item.quantity)),
-  //       status: 'pending',
-  //       createdAt: DateTime.now(),
-  //       prescriptionUrl: prescriptionUrl,
-  //     );
-
-  //     await orderRepository.createOrder(order);
-  //     emit(state.copyWith(
-  //         isLoading: false,
-  //         cart: [],
-  //         prescriptionUploaded: prescriptionUrl != null));
-  //   } catch (e) {
-  //     emit(state.copyWith(isLoading: false, error: e.toString()));
-  //   }
-  // }
-
   void _onUpdateShopMedicines(
       UpdateShopMedicines event, Emitter<ShopMedicinesState> emit) {
     emit(state.copyWith(shopMedicines: event.medicines, isLoading: false));

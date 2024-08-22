@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eldcare/delivery/presentation/model/delivery_order_model.dart';
+import 'package:eldcare/delivery/model/delivery_order_model.dart';
 import 'package:eldcare/pharmacy/model/pharmacist_order.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -108,15 +108,69 @@ class DeliveryOrderRepository {
     return result;
   }
 
-  Future<void> acceptOrder(String orderId, String deliveryBoyId) async {
+  Future<DeliveryOrderModel> acceptOrder(
+      String orderId, String deliveryPersonId) async {
     try {
       await _firestore.collection('orders').doc(orderId).update({
         'status': OrderStatus.inTransit.toString().split('.').last,
-        'deliveryBoyId': deliveryBoyId,
+        'deliveryPersonId': deliveryPersonId,
       });
+
+      // Fetch and return the updated order
+      DocumentSnapshot updatedDoc =
+          await _firestore.collection('orders').doc(orderId).get();
+      return DeliveryOrderModel.fromFirestore(updatedDoc);
     } catch (e) {
       print('Error accepting order: $e');
       rethrow;
+    }
+  }
+
+  Future<DeliveryOrderModel?> getCurrentDelivery(
+      String deliveryPersonId) async {
+    try {
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('orders')
+          .where('deliveryPersonId', isEqualTo: deliveryPersonId)
+          .where('status',
+              isEqualTo: OrderStatus.inTransit.toString().split('.').last)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return DeliveryOrderModel.fromFirestore(querySnapshot.docs.first);
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching current delivery: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, int>> getDeliverySummary(String deliveryPersonId) async {
+    try {
+      final QuerySnapshot completedOrders = await _firestore
+          .collection('orders')
+          .where('deliveryPersonId', isEqualTo: deliveryPersonId)
+          .where('status',
+              isEqualTo: OrderStatus.completed.toString().split('.').last)
+          .get();
+
+      final QuerySnapshot pendingOrders = await _firestore
+          .collection('orders')
+          .where('deliveryPersonId', isEqualTo: deliveryPersonId)
+          .where('status',
+              isEqualTo: OrderStatus.inTransit.toString().split('.').last)
+          .get();
+
+      return {
+        'total': completedOrders.docs.length + pendingOrders.docs.length,
+        'completed': completedOrders.docs.length,
+        'pending': pendingOrders.docs.length,
+      };
+    } catch (e) {
+      print('Error fetching delivery summary: $e');
+      return {'total': 0, 'completed': 0, 'pending': 0};
     }
   }
 }

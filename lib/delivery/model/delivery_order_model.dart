@@ -12,6 +12,7 @@ class DeliveryOrderModel {
   final GeoPoint? shopLocation;
   final double totalAmount;
   double? distanceToCustomer;
+  final String? deliveryPersonId;
 
   DeliveryOrderModel({
     required this.id,
@@ -24,6 +25,7 @@ class DeliveryOrderModel {
     this.shopLocation,
     required this.totalAmount,
     this.distanceToCustomer,
+    this.deliveryPersonId,
   });
 
   factory DeliveryOrderModel.fromFirestore(DocumentSnapshot doc) {
@@ -41,19 +43,8 @@ class DeliveryOrderModel {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       shopLocation: _parseGeoPoint(data['shopLocation']),
       totalAmount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      deliveryPersonId: data['deliveryPersonId'] as String?,
     );
-  }
-
-  static GeoPoint? _parseGeoPoint(dynamic value) {
-    if (value is GeoPoint) {
-      return value;
-    } else if (value is Map<String, dynamic> && value.containsKey('location')) {
-      var location = value['location'];
-      if (location is GeoPoint) {
-        return location;
-      }
-    }
-    return null;
   }
 
   static String _parseString(dynamic value) {
@@ -76,8 +67,49 @@ class DeliveryOrderModel {
     return OrderStatus.pending;
   }
 
+  static GeoPoint? _parseGeoPoint(dynamic value) {
+    if (value is GeoPoint) {
+      return value;
+    } else if (value is Map<String, dynamic> && value.containsKey('location')) {
+      var location = value['location'];
+      if (location is GeoPoint) {
+        return location;
+      }
+    }
+    return null;
+  }
+
   @override
   String toString() {
-    return 'DeliveryOrderModel(id: $id, shopId: $shopId, customerId: $customerId, deliveryAddress: $deliveryAddress, status: $status, totalAmount: $totalAmount)';
+    return 'DeliveryOrderModel(id: $id, shopId: $shopId, customerId: $customerId, deliveryAddress: $deliveryAddress, status: $status, totalAmount: $totalAmount, deliveryPersonId: $deliveryPersonId)';
+  }
+
+  // Add a method to create a copy of the order with updated fields
+  DeliveryOrderModel copyWith({
+    String? id,
+    String? shopId,
+    String? customerId,
+    Map<String, dynamic>? deliveryAddress,
+    String? deliveryInstructions,
+    OrderStatus? status,
+    DateTime? createdAt,
+    GeoPoint? shopLocation,
+    double? totalAmount,
+    double? distanceToCustomer,
+    String? deliveryPersonId,
+  }) {
+    return DeliveryOrderModel(
+      id: id ?? this.id,
+      shopId: shopId ?? this.shopId,
+      customerId: customerId ?? this.customerId,
+      deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      deliveryInstructions: deliveryInstructions ?? this.deliveryInstructions,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      shopLocation: shopLocation ?? this.shopLocation,
+      totalAmount: totalAmount ?? this.totalAmount,
+      distanceToCustomer: distanceToCustomer ?? this.distanceToCustomer,
+      deliveryPersonId: deliveryPersonId ?? this.deliveryPersonId,
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:eldcare/admin/blocs/users/users_bloc.dart';
+import 'package:eldcare/admin/presentation/delivery/delivery_charges.dart';
 import 'package:eldcare/admin/presentation/sidebar.dart';
 import 'package:eldcare/admin/repository/users.dart';
 import 'package:flutter/material.dart';
@@ -78,6 +79,8 @@ class AdminPanelState extends State<AdminPanel> {
           ],
           child: const ShopsPage(),
         );
+      case 3:
+        return const DeliveryChargesPage();
       default:
         return const Center(child: Text('Page not implemented'));
     }

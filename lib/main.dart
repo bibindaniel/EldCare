@@ -1,4 +1,6 @@
+import 'package:eldcare/admin/blocs/delivery_charges/delivery_charges_bloc.dart';
 import 'package:eldcare/admin/blocs/users/users_bloc.dart';
+import 'package:eldcare/admin/repository/delivery_repo.dart';
 import 'package:eldcare/admin/repository/users.dart';
 import 'package:eldcare/core/theme/routes/myroutes.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
@@ -93,6 +95,11 @@ class MyApp extends StatelessWidget {
               shopMedicineRepository: context.read<ShopMedicineRepository>(),
               orderRepository: context.read<OrderRepository>(),
             ),
+          ),
+          BlocProvider<DeliveryChargesBloc>(
+            create: (context) => DeliveryChargesBloc(
+              repository: DeliveryChargesRepository(),
+            )..add(LoadDeliveryCharges()),
           ),
         ],
         child: MaterialApp(

@@ -11,7 +11,19 @@ class FetchAvailableOrders extends DeliveryOrderEvent {
 
 class AcceptOrder extends DeliveryOrderEvent {
   final String orderId;
-  final String deliveryBoyId;
+  final String deliveryPersonId;
 
-  AcceptOrder(this.orderId, this.deliveryBoyId);
+  AcceptOrder(this.orderId, this.deliveryPersonId);
+}
+
+class FetchCurrentDelivery extends DeliveryOrderEvent {
+  final String deliveryPersonId;
+
+  FetchCurrentDelivery(this.deliveryPersonId);
+}
+
+class FetchDeliverySummary extends DeliveryOrderEvent {
+  final String deliveryPersonId;
+
+  FetchDeliverySummary(this.deliveryPersonId);
 }

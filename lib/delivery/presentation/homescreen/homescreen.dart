@@ -50,6 +50,7 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: kPrimaryColor,
+      elevation: 0,
       leading: Builder(
         builder: (context) {
           return Padding(
@@ -67,6 +68,7 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
                   return CircleAvatar(
                     radius: 15,
                     backgroundImage: AssetImage(imageUrl),
+                    backgroundColor: kLightPrimaryColor,
                   );
                 },
               ),
@@ -78,10 +80,10 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
         builder: (context, state) {
           if (state is Authenticated) {
             return Text('Hey, ${state.user.displayName ?? 'Delivery Partner'}',
-                style: AppFonts.headline3);
+                style: AppFonts.headline4Light);
           } else {
-            return const Text('Hey, Delivery Partner',
-                style: AppFonts.headline3);
+            return Text('Hey, Delivery Partner',
+                style: AppFonts.headline4Light);
           }
         },
       ),
@@ -112,10 +114,10 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.list_alt, size: 80, color: kPrimaryColor),
-          SizedBox(height: 20),
+          const Icon(Icons.list_alt, size: 80, color: kPrimaryColor),
+          const SizedBox(height: 20),
           Text('Orders', style: AppFonts.headline2),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Text('You have 5 pending orders', style: AppFonts.bodyText1),
           SizedBox(height: 20),
           ElevatedButton(
@@ -186,6 +188,10 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
           label: 'Profile',
         ),
       ],
+      selectedItemColor: kPrimaryColor,
+      unselectedItemColor: kSecondaryTextColor,
+      backgroundColor: kWhiteColor,
+      elevation: 8,
     );
   }
 
@@ -225,32 +231,31 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
                         backgroundImage: imageUrl.startsWith('http')
                             ? NetworkImage(imageUrl)
                             : AssetImage(imageUrl) as ImageProvider,
+                        backgroundColor: kLightPrimaryColor,
                       ),
                       const SizedBox(height: 10),
                       Text(
                         state.user.displayName ?? 'Delivery Partner',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 20),
+                        style: AppFonts.headline5Light,
                       ),
                       Text(
                         state.user.email ?? '',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 14),
+                        style: AppFonts.bodyText2Light,
                       ),
                     ],
                   );
                 } else {
-                  return const Text(
+                  return Text(
                     'Delivery Partner Info',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
+                    style: AppFonts.headline4Light,
                   );
                 }
               },
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
+            leading: const Icon(Icons.person, color: kPrimaryColor),
+            title: Text('Profile', style: AppFonts.bodyText1),
             onTap: () {
               Navigator.pop(context);
               context
@@ -259,16 +264,16 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
+            leading: const Icon(Icons.settings, color: kPrimaryColor),
+            title: Text('Settings', style: AppFonts.bodyText1),
             onTap: () {
               Navigator.pop(context);
               // Navigate to settings screen
             },
           ),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
+            leading: const Icon(Icons.logout, color: kErrorColor),
+            title: Text('Logout', style: AppFonts.bodyText1),
             onTap: () {
               Navigator.pop(context);
               context.read<AuthBloc>().add(LogoutEvent());
