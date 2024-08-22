@@ -25,6 +25,15 @@ class DeliveryAddressRepository {
         .add(address.toMap());
   }
 
+  Future<void> deleteDeliveryAddress(String userId, String addressId) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('delivery_addresses')
+        .doc(addressId)
+        .delete();
+  }
+
   Future<void> updateDeliveryAddress(
       String userId, DeliveryAddress address) async {
     await _firestore
@@ -35,7 +44,7 @@ class DeliveryAddressRepository {
         .update(address.toMap());
   }
 
-  Future<void> deleteDeliveryAddress(String userId, String addressId) async {
+  Future<void> removeDeliveryAddress(String userId, String addressId) async {
     await _firestore
         .collection('users')
         .doc(userId)

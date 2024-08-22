@@ -28,10 +28,12 @@ import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   tz.initializeTimeZones();
   await NotificationService().init();
   await Firebase.initializeApp(
@@ -94,6 +96,7 @@ class MyApp extends StatelessWidget {
             create: (context) => ShopMedicinesBloc(
               shopMedicineRepository: context.read<ShopMedicineRepository>(),
               orderRepository: context.read<OrderRepository>(),
+              deliveryChargesRepository: DeliveryChargesRepository(),
             ),
           ),
           BlocProvider<DeliveryChargesBloc>(

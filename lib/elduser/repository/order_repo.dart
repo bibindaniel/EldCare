@@ -4,9 +4,10 @@ import 'package:eldcare/elduser/models/order.dart';
 class OrderRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> createOrder(MedicineOrder order) async {
+  Future<String> createOrder(MedicineOrder order) async {
     try {
-      await _firestore.collection('orders').add(order.toMap());
+      final docRef = await _firestore.collection('orders').add(order.toMap());
+      return docRef.id;
     } catch (e) {
       throw Exception('Failed to create order: $e');
     }
@@ -65,6 +66,35 @@ class OrderRepository {
       await _firestore.collection('orders').doc(orderId).delete();
     } catch (e) {
       throw Exception('Failed to delete order: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getPaymentDetails(String orderId) async {
+    try {
+      final orderDoc = await _firestore.collection('orders').doc(orderId).get();
+      final orderData = orderDoc.data() as Map<String, dynamic>;
+      return {
+        'amount': orderData['totalAmount'],
+        'orderId': orderId,
+        // Add any other necessary payment details
+      };
+    } catch (e) {
+      throw Exception('Failed to get payment details: $e');
+    }
+  }
+
+  Future<void> updateOrderPaymentStatus({
+    required String orderId,
+    required String paymentId,
+    required String status,
+  }) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'paymentId': paymentId,
+        'status': status == 'success' ? 'paid' : 'payment_failed',
+      });
+    } catch (e) {
+      throw Exception('Failed to update order payment status: $e');
     }
   }
 }

@@ -8,6 +8,10 @@ class ShopMedicinesState {
   final String? error;
   final bool prescriptionUploaded;
   final DeliveryAddress? selectedDeliveryAddress;
+  final double? deliveryCharge;
+  final String? pendingOrderId;
+  final Map<String, dynamic>? paymentDetails;
+  final bool orderPlaced;
 
   ShopMedicinesState({
     required this.shopMedicines,
@@ -17,6 +21,10 @@ class ShopMedicinesState {
     this.error,
     required this.prescriptionUploaded,
     this.selectedDeliveryAddress,
+    this.deliveryCharge,
+    this.pendingOrderId,
+    this.paymentDetails,
+    required this.orderPlaced,
   });
 
   factory ShopMedicinesState.initial() {
@@ -28,6 +36,10 @@ class ShopMedicinesState {
       error: null,
       prescriptionUploaded: false,
       selectedDeliveryAddress: null,
+      deliveryCharge: null,
+      pendingOrderId: null,
+      paymentDetails: null,
+      orderPlaced: false,
     );
   }
 
@@ -39,16 +51,24 @@ class ShopMedicinesState {
     String? error,
     bool? prescriptionUploaded,
     DeliveryAddress? selectedDeliveryAddress,
+    double? deliveryCharge,
+    String? pendingOrderId,
+    Map<String, dynamic>? paymentDetails,
+    bool? orderPlaced,
   }) {
     return ShopMedicinesState(
       shopMedicines: shopMedicines ?? this.shopMedicines,
       categories: categories ?? this.categories,
       cart: cart ?? this.cart,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: error,
       prescriptionUploaded: prescriptionUploaded ?? this.prescriptionUploaded,
       selectedDeliveryAddress:
           selectedDeliveryAddress ?? this.selectedDeliveryAddress,
+      deliveryCharge: deliveryCharge ?? this.deliveryCharge,
+      pendingOrderId: pendingOrderId ?? this.pendingOrderId,
+      paymentDetails: paymentDetails ?? this.paymentDetails,
+      orderPlaced: orderPlaced ?? this.orderPlaced,
     );
   }
 }

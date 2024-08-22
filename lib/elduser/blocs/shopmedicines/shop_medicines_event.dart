@@ -35,15 +35,18 @@ class SelectDeliveryAddress extends ShopMedicinesEvent {
 class PlaceOrder extends ShopMedicinesEvent {
   final String userId;
   final String shopId;
-  final File? prescriptionFile;
   final DeliveryAddress deliveryAddress;
   final String phoneNumber;
+  final File? prescriptionFile;
+  final String paymentId;
+
   PlaceOrder({
     required this.userId,
     required this.shopId,
-    this.prescriptionFile,
     required this.deliveryAddress,
     required this.phoneNumber,
+    this.prescriptionFile,
+    required this.paymentId,
   });
 }
 
@@ -51,4 +54,26 @@ class UpdateShopMedicines extends ShopMedicinesEvent {
   final List<ShopMedicine> medicines;
 
   UpdateShopMedicines(this.medicines);
+}
+
+class CalculateDeliveryCharge extends ShopMedicinesEvent {
+  final String shopId;
+  final DeliveryAddress deliveryAddress;
+
+  CalculateDeliveryCharge(
+      {required this.shopId, required this.deliveryAddress});
+}
+
+class InitiatePayment extends ShopMedicinesEvent {}
+
+class UpdateOrderPaymentStatus extends ShopMedicinesEvent {
+  final String orderId;
+  final String paymentId;
+  final String status;
+
+  UpdateOrderPaymentStatus({
+    required this.orderId,
+    required this.paymentId,
+    required this.status,
+  });
 }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:eldcare/admin/repository/delivery_repo.dart';
 import 'package:eldcare/elduser/models/delivary_address.dart';
 import 'package:eldcare/elduser/models/order.dart';
 import 'package:eldcare/elduser/models/shop_medicine.dart';
@@ -7,6 +8,7 @@ import 'package:eldcare/elduser/repository/shop_medicine_repo.dart';
 import 'package:eldcare/pharmacy/model/category.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:rxdart/rxdart.dart';
 
 part 'shop_medicines_event.dart';
@@ -15,10 +17,12 @@ part 'shop_medicines_state.dart';
 class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
   final ShopMedicineRepository shopMedicineRepository;
   final OrderRepository orderRepository;
+  final DeliveryChargesRepository deliveryChargesRepository;
 
   ShopMedicinesBloc({
     required this.shopMedicineRepository,
     required this.orderRepository,
+    required this.deliveryChargesRepository,
   }) : super(ShopMedicinesState.initial()) {
     on<LoadShopMedicines>(_onLoadShopMedicines);
     on<SearchShopMedicines>(_onSearchShopMedicines);
@@ -27,6 +31,9 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
     on<PlaceOrder>(_onPlaceOrder);
     on<UpdateShopMedicines>(_onUpdateShopMedicines);
     on<SelectDeliveryAddress>(_onSelectDeliveryAddress);
+    on<CalculateDeliveryCharge>(_onCalculateDeliveryCharge);
+    on<InitiatePayment>(_onInitiatePayment);
+    on<UpdateOrderPaymentStatus>(_onUpdateOrderPaymentStatus);
   }
 
   Future<void> _onLoadShopMedicines(
@@ -138,22 +145,108 @@ class ShopMedicinesBloc extends Bloc<ShopMedicinesEvent, ShopMedicinesState> {
         shopId: event.shopId,
         items: state.cart,
         totalAmount: state.cart
-            .fold(0, (sum, item) => sum + (item.price * item.quantity)),
-        status: 'pending',
+                .fold(0.0, (sum, item) => sum + (item.price * item.quantity)) +
+            (state.deliveryCharge ?? 0),
+        status: 'paid',
         createdAt: DateTime.now(),
         prescriptionUrl: prescriptionUrl,
         deliveryAddress: event.deliveryAddress,
         phoneNumber: event.phoneNumber,
+        deliveryCharge: state.deliveryCharge,
+        paymentId: event.paymentId,
       );
 
-      await orderRepository.createOrder(order);
+      final orderId = await orderRepository.createOrder(order);
       emit(state.copyWith(
-          isLoading: false,
-          cart: [],
-          prescriptionUploaded: prescriptionUrl != null,
-          selectedDeliveryAddress: null));
+        isLoading: false,
+        pendingOrderId: orderId,
+        prescriptionUploaded: prescriptionUrl != null,
+        cart: [], // Clear the cart after successful order placement
+        orderPlaced: true,
+      ));
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
+    }
+  }
+
+  void _onInitiatePayment(
+      InitiatePayment event, Emitter<ShopMedicinesState> emit) async {
+    try {
+      final paymentDetails =
+          await orderRepository.getPaymentDetails(state.pendingOrderId!);
+      emit(state.copyWith(paymentDetails: paymentDetails));
+    } catch (e) {
+      emit(state.copyWith(error: 'Failed to initiate payment: $e'));
+    }
+  }
+
+  void _onUpdateOrderPaymentStatus(
+      UpdateOrderPaymentStatus event, Emitter<ShopMedicinesState> emit) async {
+    try {
+      await orderRepository.updateOrderPaymentStatus(
+        orderId: event.orderId,
+        paymentId: event.paymentId,
+        status: event.status,
+      );
+
+      if (event.status == 'success') {
+        emit(state.copyWith(
+          cart: [],
+          pendingOrderId: null,
+          paymentDetails: null,
+          orderPlaced: true,
+        ));
+      } else {
+        emit(state.copyWith(
+          error: 'Payment failed',
+          pendingOrderId: null,
+          paymentDetails: null,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(error: 'Failed to update order status: $e'));
+    }
+  }
+
+  void _onCalculateDeliveryCharge(
+    CalculateDeliveryCharge event,
+    Emitter<ShopMedicinesState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isLoading: true));
+
+      final charges = await deliveryChargesRepository.getDeliveryCharges();
+      final shopLocation =
+          await shopMedicineRepository.getShopLocation(event.shopId);
+
+      final distance = Geolocator.distanceBetween(
+            shopLocation.latitude,
+            shopLocation.longitude,
+            event.deliveryAddress.address.location!.latitude,
+            event.deliveryAddress.address.location!.longitude,
+          ) /
+          1000; // Convert meters to kilometers
+
+      double deliveryCharge =
+          charges.baseCharge + (charges.perKmCharge * distance);
+
+      double cartTotal = state.cart
+          .fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+
+      if (cartTotal >= charges.minimumOrderValue) {
+        deliveryCharge = 0;
+      }
+
+      emit(state.copyWith(
+        deliveryCharge: deliveryCharge,
+        isLoading: false,
+        selectedDeliveryAddress: event.deliveryAddress,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        error: 'Failed to calculate delivery charge: $e',
+        isLoading: false,
+      ));
     }
   }
 }

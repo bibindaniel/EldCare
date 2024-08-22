@@ -12,6 +12,7 @@ class MedicineOrder {
   final String? prescriptionUrl;
   final DeliveryAddress deliveryAddress;
   final String phoneNumber;
+  final String paymentId;
 
   MedicineOrder({
     required this.id,
@@ -24,6 +25,8 @@ class MedicineOrder {
     this.prescriptionUrl,
     required this.deliveryAddress,
     required this.phoneNumber,
+    double? deliveryCharge,
+    required this.paymentId,
   });
 
   factory MedicineOrder.fromFirestore(DocumentSnapshot doc) {
@@ -42,6 +45,7 @@ class MedicineOrder {
       deliveryAddress: DeliveryAddress.fromMap(data['deliveryAddress'] ?? {},
           id: data['deliveryAddress']?['id']),
       phoneNumber: data['phoneNumber'] ?? '',
+      paymentId: data['paymentId'] ?? '',
     );
   }
 
@@ -56,6 +60,7 @@ class MedicineOrder {
       'prescriptionUrl': prescriptionUrl,
       'deliveryAddress': deliveryAddress.toMap(),
       'phoneNumber': phoneNumber,
+      'paymentId': paymentId,
     };
   }
 }

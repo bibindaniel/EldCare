@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eldcare/elduser/models/address.dart';
+import 'package:eldcare/elduser/presentation/shop/edit_delivery_address.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/elduser/models/delivary_address.dart';
 import 'package:eldcare/elduser/repository/delivery_adress_repo.dart';
@@ -21,7 +22,7 @@ class DeliveryDetailsScreen extends StatefulWidget {
   final Function(DeliveryAddress) onAddressSelected;
 
   const DeliveryDetailsScreen({
-    Key? key,
+    super.key,
     required this.shopId,
     required this.shopName,
     required this.totalAmount,
@@ -29,7 +30,7 @@ class DeliveryDetailsScreen extends StatefulWidget {
     this.prescriptionFile,
     required this.cart,
     required this.onAddressSelected,
-  }) : super(key: key);
+  });
 
   @override
   DeliveryDetailsScreenState createState() => DeliveryDetailsScreenState();
@@ -63,7 +64,7 @@ class DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Delivery Details', style: AppFonts.headline2),
+        title: Text('Delivery Details', style: AppFonts.headline2Light),
         backgroundColor: kPrimaryColor,
       ),
       body: Column(
@@ -90,6 +91,19 @@ class DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
                       _selectedAddress = value;
                     });
                   },
+                  secondary: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => _editAddress(context, address),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () => _removeAddress(address),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -103,10 +117,10 @@ class DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
                       Navigator.pop(context);
                     }
                   : null,
-              child: const Text('Confirm Address'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
               ),
+              child: const Text('Confirm Address'),
             ),
           ),
         ],
@@ -130,6 +144,63 @@ class DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
       ),
     );
   }
+
+  void _editAddress(BuildContext context, DeliveryAddress address) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditAddressScreen(
+          userId: widget.userId,
+          address: address,
+          onAddressUpdated: (updatedAddress) {
+            setState(() {
+              final index =
+                  _addresses.indexWhere((a) => a.id == updatedAddress.id);
+              if (index != -1) {
+                _addresses[index] = updatedAddress;
+                if (_selectedAddress?.id == updatedAddress.id) {
+                  _selectedAddress = updatedAddress;
+                }
+              }
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _removeAddress(DeliveryAddress address) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Remove Address'),
+          content: const Text('Are you sure you want to remove this address?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Remove'),
+              onPressed: () async {
+                await _addressRepository.removeDeliveryAddress(
+                    widget.userId, address.id);
+                setState(() {
+                  _addresses.removeWhere((a) => a.id == address.id);
+                  if (_selectedAddress?.id == address.id) {
+                    _selectedAddress =
+                        _addresses.isNotEmpty ? _addresses.first : null;
+                  }
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class AddNewAddressScreen extends StatefulWidget {
@@ -137,10 +208,10 @@ class AddNewAddressScreen extends StatefulWidget {
   final Function(DeliveryAddress) onAddressAdded;
 
   const AddNewAddressScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.onAddressAdded,
-  }) : super(key: key);
+  });
 
   @override
   _AddNewAddressScreenState createState() => _AddNewAddressScreenState();

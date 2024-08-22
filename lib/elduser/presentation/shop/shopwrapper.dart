@@ -1,3 +1,4 @@
+import 'package:eldcare/admin/repository/delivery_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
@@ -10,8 +11,7 @@ class ShopWrapper extends StatelessWidget {
   final String shopId;
   final String shopName;
 
-  const ShopWrapper({Key? key, required this.shopId, required this.shopName})
-      : super(key: key);
+  const ShopWrapper({super.key, required this.shopId, required this.shopName});
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +23,15 @@ class ShopWrapper extends StatelessWidget {
         RepositoryProvider<OrderRepository>(
           create: (context) => OrderRepository(),
         ),
+        RepositoryProvider<DeliveryChargesRepository>(
+          create: (context) => DeliveryChargesRepository(),
+        ),
       ],
       child: BlocProvider<ShopMedicinesBloc>(
         create: (context) => ShopMedicinesBloc(
           shopMedicineRepository: context.read<ShopMedicineRepository>(),
-          orderRepository: context.read<OrderRepository>(),
+          deliveryChargesRepository: context.read<DeliveryChargesRepository>(),
+          orderRepository: OrderRepository(),
         )..add(LoadShopMedicines(shopId)),
         child: MaterialApp(
           debugShowCheckedModeBanner: false,

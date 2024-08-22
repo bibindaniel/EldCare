@@ -11,6 +11,7 @@ class Medicine {
   final String color;
   final List<DateTime> scheduleTimes;
   final bool isBeforeFood;
+  final double? deliveryCharge;
 
   Medicine({
     this.id = '',
@@ -23,6 +24,7 @@ class Medicine {
     required this.color,
     required this.scheduleTimes,
     required this.isBeforeFood,
+    this.deliveryCharge,
   });
 
   Map<String, dynamic> toMap() {
@@ -36,6 +38,7 @@ class Medicine {
       'color': color,
       'scheduleTimes': scheduleTimes.map((t) => Timestamp.fromDate(t)).toList(),
       'isBeforeFood': isBeforeFood,
+      'deliveryCharge': deliveryCharge,
     };
   }
 
@@ -54,6 +57,7 @@ class Medicine {
               .toList() ??
           [],
       isBeforeFood: map['isBeforeFood'] ?? false,
+      deliveryCharge: map['deliveryCharge'],
     );
   }
 
@@ -68,6 +72,7 @@ class Medicine {
     String? color,
     List<DateTime>? scheduleTimes,
     bool? isBeforeFood,
+    double? deliveryCharge,
   }) {
     return Medicine(
       id: id ?? this.id,
@@ -80,6 +85,7 @@ class Medicine {
       color: color ?? this.color,
       scheduleTimes: scheduleTimes ?? this.scheduleTimes,
       isBeforeFood: isBeforeFood ?? this.isBeforeFood,
+      deliveryCharge: deliveryCharge ?? this.deliveryCharge,
     );
   }
 }

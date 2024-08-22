@@ -134,4 +134,15 @@ class ShopMedicineRepository {
         .map((snapshot) =>
             snapshot.docs.map((doc) => Category.fromSnapshot(doc)).toList());
   }
+
+  Future<GeoPoint> getShopLocation(String shopId) async {
+    final shopDoc = await _firestore.collection('shops').doc(shopId).get();
+    if (shopDoc.exists) {
+      final data = shopDoc.data();
+      if (data != null && data['location'] is GeoPoint) {
+        return data['location'] as GeoPoint;
+      }
+    }
+    throw Exception('Shop location not found');
+  }
 }

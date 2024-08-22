@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:eldcare/config.dart';
 import 'package:eldcare/elduser/models/delivary_address.dart';
 import 'package:eldcare/elduser/presentation/shop/delivary_deatils_screen.dart';
 import 'package:eldcare/elduser/repository/delivery_adress_repo.dart';
@@ -10,6 +11,7 @@ import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class CartScreen extends StatefulWidget {
   final String shopId;
@@ -29,14 +31,71 @@ class CartScreenState extends State<CartScreen> {
       DeliveryAddressRepository();
   String? _phoneNumber;
   String? _userId;
+  late Razorpay _razorpay;
 
   @override
   void initState() {
     super.initState();
     _loadUserId();
-
     _loadDefaultAddress();
     _loadPhoneNumber();
+    _initializeRazorpay();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  void _initializeRazorpay() {
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Handle successful payment
+    context.read<ShopMedicinesBloc>().add(PlaceOrder(
+          userId: _userId!,
+          shopId: widget.shopId,
+          deliveryAddress: _selectedAddress!,
+          phoneNumber: _phoneNumber!,
+          prescriptionFile: _prescriptionFile,
+          paymentId: response.paymentId!,
+        ));
+
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Payment successful! Order is being processed.'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // Show order success dialog immediately
+    _showOrderSuccessDialog(context);
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Handle payment failure
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Payment failed: ${response.message}')),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    // Handle external wallet
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text('External wallet selected: ${response.walletName}')),
+    );
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
   }
 
   Future<void> _loadUserId() async {
@@ -45,6 +104,8 @@ class CartScreenState extends State<CartScreen> {
       setState(() {
         _userId = user.uid;
       });
+      await _loadDefaultAddress();
+      await _loadPhoneNumber();
     }
   }
 
@@ -52,10 +113,16 @@ class CartScreenState extends State<CartScreen> {
     if (_userId == null) return;
     final addresses = await _addressRepository.getDeliveryAddresses(_userId!);
     if (addresses.isNotEmpty) {
+      final defaultAddress = addresses.firstWhere((addr) => addr.isDefault,
+          orElse: () => addresses.first);
       setState(() {
-        _selectedAddress = addresses.firstWhere((addr) => addr.isDefault,
-            orElse: () => addresses.first);
+        _selectedAddress = defaultAddress;
       });
+      // Calculate delivery charge for the default address
+      context.read<ShopMedicinesBloc>().add(CalculateDeliveryCharge(
+            shopId: widget.shopId,
+            deliveryAddress: defaultAddress,
+          ));
     }
   }
 
@@ -157,9 +224,6 @@ class CartScreenState extends State<CartScreen> {
               backgroundColor: kSuccessColor,
             ),
           );
-        }
-        if (state.cart.isEmpty && !state.isLoading && state.error == null) {
-          _showOrderSuccessDialog(context);
         }
       },
       builder: (context, state) {
@@ -264,16 +328,80 @@ class CartScreenState extends State<CartScreen> {
                                 ),
                               ),
                             const SizedBox(height: 16),
+                            const SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Total:', style: AppFonts.headline3),
-                                Text(
-                                  '₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}',
-                                  style: AppFonts.headline1,
+                                const Expanded(
+                                  flex: 3,
+                                  child: Text('Subtotal:',
+                                      style: AppFonts.headline3),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      '₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}',
+                                      style: AppFonts.headline1,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
+                            if (state.deliveryCharge != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Expanded(
+                                    flex: 3,
+                                    child: Text('Delivery Charge:',
+                                        style: AppFonts.headline3),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerRight,
+                                      child: Text(
+                                        state.deliveryCharge! > 0
+                                            ? '₹${state.deliveryCharge!.toStringAsFixed(2)}'
+                                            : 'Free',
+                                        style: AppFonts.headline1,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Expanded(
+                                    flex: 3,
+                                    child: Text('Total:',
+                                        style: AppFonts.headline3),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerRight,
+                                      child: Text(
+                                        '₹${(state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)) + state.deliveryCharge!).toStringAsFixed(2)}',
+                                        style: AppFonts.headline1.copyWith(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () =>
@@ -321,7 +449,6 @@ class CartScreenState extends State<CartScreen> {
   void _navigateToDeliveryDetails(
       BuildContext context, ShopMedicinesState state) {
     if (_userId == null) {
-      // Handle the case where the user ID is not available
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User not authenticated')),
       );
@@ -342,6 +469,10 @@ class CartScreenState extends State<CartScreen> {
             setState(() {
               _selectedAddress = address;
             });
+            context.read<ShopMedicinesBloc>().add(CalculateDeliveryCharge(
+                  shopId: widget.shopId,
+                  deliveryAddress: address,
+                ));
           },
         ),
       ),
@@ -404,23 +535,50 @@ class CartScreenState extends State<CartScreen> {
       return;
     }
 
-    context.read<ShopMedicinesBloc>().add(PlaceOrder(
-          userId: _userId!,
-          shopId: widget.shopId,
-          prescriptionFile: _prescriptionFile,
-          deliveryAddress: _selectedAddress!,
-          phoneNumber: _phoneNumber!,
-        ));
+    final totalAmount = state.cart
+            .fold(0.0, (sum, item) => sum + (item.price * item.quantity)) +
+        (state.deliveryCharge ?? 0);
+
+    var options = {
+      'key': Config.razorpayKey,
+      'amount': (totalAmount * 100).toInt(),
+      'name': 'EldCare Medicines',
+      'description': 'Medicine Order',
+      'prefill': {'contact': _phoneNumber, 'email': 'customer@example.com'},
+    };
+
+    Future.delayed(Duration.zero, () {
+      try {
+        _razorpay.open(options);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    });
   }
 
   void _showOrderSuccessDialog(BuildContext context) {
+    final state = context.read<ShopMedicinesBloc>().state;
     showDialog(
       context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Order Placed Successfully'),
-          content:
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               const Text('Your order has been placed and is being processed.'),
+              const SizedBox(height: 16),
+              Text('Order ID: ${state.pendingOrderId ?? 'N/A'}'),
+              const SizedBox(height: 8),
+              Text(
+                'Total Amount: ₹${(state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)) + (state.deliveryCharge ?? 0)).toStringAsFixed(2)}',
+              ),
+            ],
+          ),
           actions: [
             ElevatedButton(
               child: const Text('OK'),
@@ -434,60 +592,4 @@ class CartScreenState extends State<CartScreen> {
       },
     );
   }
-
-  // void _showOrderConfirmationDialog(
-  //     BuildContext context, ShopMedicinesState state) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext dialogContext) {
-  //       return AlertDialog(
-  //         title: const Text('Confirm Order'),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Text('Total Items: ${state.cart.length}'),
-  //             Text(
-  //                 'Total Amount: ₹${state.cart.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}'),
-  //             const SizedBox(height: 16),
-  //             ElevatedButton(
-  //               onPressed: _uploadPrescription,
-  //               child: const Text('Upload Prescription'),
-  //             ),
-  //             const SizedBox(height: 16),
-  //             const Text(
-  //               'Note: Some medicines may require a prescription. The pharmacist may reject the order if a prescription is not provided when necessary.',
-  //               style: TextStyle(color: Colors.red, fontSize: 12),
-  //             ),
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             child: const Text('Cancel'),
-  //             onPressed: () => Navigator.of(dialogContext).pop(),
-  //           ),
-  //           ElevatedButton(
-  //             child: const Text('Proceed to Delivery Details'),
-  //             onPressed: () {
-  //               Navigator.of(dialogContext).pop();
-  //               Navigator.push(
-  //                 context,
-  //                 MaterialPageRoute(
-  //                   builder: (context) => DeliveryDetailsScreen(
-  //                     shopId: widget.shopId,
-  //                     shopName: widget.shopName,
-  //                     totalAmount: state.cart.fold(0.0,
-  //                         (sum, item) => sum + (item.price * item.quantity)),
-  //                     userId: 'user_id',
-  //                     prescriptionFile: _prescriptionFile,
-  //                     cart: state.cart,
-  //                   ),
-  //                 ),
-  //               );
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 }
