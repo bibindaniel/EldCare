@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eldcare/elduser/models/order.dart';
 
 enum OrderStatus {
   pending,
@@ -109,6 +110,48 @@ class PharmacistOrderModel {
       'deliveryAddress': deliveryAddress,
       'deliveryInstructions': deliveryInstructions,
     };
+  }
+
+  static PharmacistOrderModel fromMedicineOrder(MedicineOrder order) {
+    return PharmacistOrderModel(
+      id: order.id,
+      customerId: order.userId,
+      shopId: order.shopId,
+      items: order.items
+          .map((item) => PharmacistOrderItem(
+                medicineId: item.medicineId,
+                medicineName: item.medicineName,
+                quantity: item.quantity,
+                price: item.price,
+              ))
+          .toList(),
+      totalAmount: order.totalAmount,
+      status: _convertStatus(order.status),
+      createdAt: order.createdAt,
+      deliveryAddress: order.deliveryAddress.toString(),
+      deliveryInstructions: '', // Add this field to MedicineOrder if needed
+    );
+  }
+
+  static OrderStatus _convertStatus(String status) {
+    switch (status) {
+      case 'pending':
+        return OrderStatus.pending;
+      case 'confirmed':
+        return OrderStatus.confirmed;
+      case 'readyForPickup':
+        return OrderStatus.readyForPickup;
+      case 'assignedToDelivery':
+        return OrderStatus.assignedToDelivery;
+      case 'inTransit':
+        return OrderStatus.inTransit;
+      case 'completed':
+        return OrderStatus.completed;
+      case 'cancelled':
+        return OrderStatus.cancelled;
+      default:
+        return OrderStatus.pending;
+    }
   }
 }
 

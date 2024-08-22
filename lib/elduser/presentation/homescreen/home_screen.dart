@@ -9,6 +9,7 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/auth/presentation/screens/login%20&%20singup/rolesection/roleselection_screen.dart';
 import 'package:eldcare/elduser/presentation/medcine_schedule/add_schedule.dart';
+import 'package:eldcare/elduser/presentation/order/orderscreen.dart';
 import 'package:eldcare/elduser/presentation/shop/shop_screen.dart';
 import 'package:eldcare/elduser/presentation/userprofile/profilecheck.dart';
 import 'package:eldcare/elduser/repository/shoplisting_repo.dart';
@@ -272,6 +273,28 @@ class HomeScreen extends StatelessWidget {
                         ProfileCheckPage(userId: authState.user.uid),
                   ),
                 );
+              }
+            },
+          ),
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              if (state is Authenticated) {
+                return ListTile(
+                  leading: const Icon(Icons.shopping_bag),
+                  title: const Text('My Orders'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            OrdersScreen(userId: state.user.uid),
+                      ),
+                    );
+                  },
+                );
+              } else {
+                return const SizedBox.shrink();
               }
             },
           ),

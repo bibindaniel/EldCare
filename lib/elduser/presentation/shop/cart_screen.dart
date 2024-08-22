@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:eldcare/config.dart';
 import 'package:eldcare/elduser/models/delivary_address.dart';
+import 'package:eldcare/elduser/models/order.dart';
+import 'package:eldcare/elduser/presentation/order/order_details.dart';
 import 'package:eldcare/elduser/presentation/shop/delivary_deatils_screen.dart';
 import 'package:eldcare/elduser/repository/delivery_adress_repo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -54,7 +56,6 @@ class CartScreenState extends State<CartScreen> {
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    // Handle successful payment
     context.read<ShopMedicinesBloc>().add(PlaceOrder(
           userId: _userId!,
           shopId: widget.shopId,
@@ -64,7 +65,6 @@ class CartScreenState extends State<CartScreen> {
           paymentId: response.paymentId!,
         ));
 
-    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Payment successful! Order is being processed.'),
@@ -73,8 +73,29 @@ class CartScreenState extends State<CartScreen> {
       ),
     );
 
-    // Show order success dialog immediately
-    _showOrderSuccessDialog(context);
+    // Navigate to the OrderDetailsScreen
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => OrderDetailsScreen(
+          order: MedicineOrder(
+            id: context.read<ShopMedicinesBloc>().state.pendingOrderId ?? '',
+            userId: _userId!,
+            shopId: widget.shopId,
+            items: context.read<ShopMedicinesBloc>().state.cart,
+            totalAmount: context.read<ShopMedicinesBloc>().state.cart.fold(
+                      0.0,
+                      (sum, item) => sum + (item.price * item.quantity),
+                    ) +
+                (context.read<ShopMedicinesBloc>().state.deliveryCharge ?? 0),
+            status: 'Order Placed',
+            createdAt: DateTime.now(),
+            deliveryAddress: _selectedAddress!,
+            phoneNumber: _phoneNumber!,
+            paymentId: response.paymentId!,
+          ),
+        ),
+      ),
+    );
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
