@@ -177,7 +177,10 @@ class PharmacistOrdersScreenState extends State<PharmacistOrdersScreen> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => OrderDetailsScreen(order: order),
+                  builder: (context) => BlocProvider.value(
+                    value: BlocProvider.of<PharmacistOrderBloc>(context),
+                    child: OrderDetailsScreen(order: order),
+                  ),
                 ),
               );
             },

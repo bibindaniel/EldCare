@@ -29,3 +29,7 @@ class DeliveryOrderError extends DeliveryOrderState {
 
   DeliveryOrderError(this.message);
 }
+
+class DeliveryCodeVerificationSuccess extends DeliveryOrderState {}
+
+class DeliveryCodeVerificationFailure extends DeliveryOrderState {}

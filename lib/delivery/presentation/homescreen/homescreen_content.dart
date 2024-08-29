@@ -35,7 +35,7 @@ class DeliveryPersonnelHomeContentState
     if (authState is Authenticated) {
       context
           .read<DeliveryOrderBloc>()
-          .add(FetchCurrentDelivery(authState.user.uid));
+          .add(FetchCurrentDelivery(deliveryPersonId: authState.user.uid));
     }
   }
 
@@ -54,8 +54,9 @@ class DeliveryPersonnelHomeContentState
       print(
           'Fetched location: ${position.latitude}, ${position.longitude}'); // Debug print
       context.read<DeliveryOrderBloc>().add(FetchAvailableOrders(
-            GeoPoint(position.latitude, position.longitude),
-            10.0,
+            deliveryBoyLocation:
+                GeoPoint(position.latitude, position.longitude),
+            maxDistance: 10.0,
           ));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,16 +94,32 @@ class DeliveryPersonnelHomeContentState
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        color: kPrimaryColor,
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            _buildTopSection(),
-            const SizedBox(height: 30),
-            _buildBottomSection(),
-          ],
+    return BlocListener<DeliveryOrderBloc, DeliveryOrderState>(
+      listener: (context, state) {
+        if (state is DeliveryCodeVerificationSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Order marked as delivered successfully')),
+          );
+          _fetchCurrentDelivery();
+          _fetchDeliverySummary();
+        } else if (state is DeliveryCodeVerificationFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid verification code')),
+          );
+        }
+      },
+      child: SingleChildScrollView(
+        child: Container(
+          color: kPrimaryColor,
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              _buildTopSection(),
+              const SizedBox(height: 30),
+              _buildBottomSection(),
+            ],
+          ),
         ),
       ),
     );
@@ -290,9 +307,7 @@ class DeliveryPersonnelHomeContentState
                   icon: const Icon(Icons.check, color: kWhiteColor),
                   label: const Text('Mark Delivered',
                       style: TextStyle(color: kWhiteColor)),
-                  onPressed: () {
-                    // Implement mark as delivered logic
-                  },
+                  onPressed: () => _showVerificationCodeDialog(currentDelivery),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kSuccessColor,
                     shape: RoundedRectangleBorder(
@@ -304,6 +319,46 @@ class DeliveryPersonnelHomeContentState
           ],
         ),
       ),
+    );
+  }
+
+  void _showVerificationCodeDialog(DeliveryOrderModel currentDelivery) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String enteredCode = '';
+        return AlertDialog(
+          title: const Text('Enter Verification Code'),
+          content: TextField(
+            onChanged: (value) => enteredCode = value,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: "Enter 6-digit code"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Verify'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                final authState = context.read<AuthBloc>().state;
+                if (authState is Authenticated) {
+                  context.read<DeliveryOrderBloc>().add(VerifyDeliveryCode(
+                      currentDelivery.id, enteredCode, authState.user.uid));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content:
+                            Text('You need to be logged in to verify orders')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

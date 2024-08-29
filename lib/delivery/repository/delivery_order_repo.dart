@@ -1,10 +1,23 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eldcare/delivery/model/delivery_order_model.dart';
 import 'package:eldcare/pharmacy/model/pharmacist_order.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:mailer/mailer.dart' as mailer;
+import 'package:mailer/smtp_server/gmail.dart';
+import 'package:mailer/smtp_server.dart';
 
 class DeliveryOrderRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String _emailUsername;
+  final String _emailPassword;
+
+  DeliveryOrderRepository()
+      : _emailUsername = Platform.environment['EMAIL_USERNAME'] ?? '',
+        _emailPassword = Platform.environment['EMAIL_PASSWORD'] ?? '';
+
   Future<List<DeliveryOrderModel>> getAvailableOrders(
       GeoPoint deliveryBoyLocation, double maxDistance) async {
     try {
@@ -111,19 +124,69 @@ class DeliveryOrderRepository {
   Future<DeliveryOrderModel> acceptOrder(
       String orderId, String deliveryPersonId) async {
     try {
+      final verificationCode = _generateVerificationCode();
       await _firestore.collection('orders').doc(orderId).update({
         'status': OrderStatus.inTransit.toString().split('.').last,
         'deliveryPersonId': deliveryPersonId,
+        'verificationCode': verificationCode,
       });
 
-      // Fetch and return the updated order
+      // Fetch the updated order
       DocumentSnapshot updatedDoc =
           await _firestore.collection('orders').doc(orderId).get();
-      return DeliveryOrderModel.fromFirestore(updatedDoc);
+      DeliveryOrderModel updatedOrder =
+          DeliveryOrderModel.fromFirestore(updatedDoc);
+
+      // Send verification code to customer
+      await _sendVerificationCode(updatedOrder, verificationCode);
+
+      return updatedOrder;
     } catch (e) {
       print('Error accepting order: $e');
       rethrow;
     }
+  }
+
+  String _generateVerificationCode() {
+    return (100000 + Random().nextInt(900000)).toString(); // 6-digit code
+  }
+
+  Future<void> _sendVerificationCode(
+      DeliveryOrderModel order, String code) async {
+    final customerEmail = await _getCustomerEmail(order.customerId);
+
+    final smtpServer = gmail(_emailUsername, _emailPassword);
+
+    final message = mailer.Message()
+      ..from = mailer.Address(_emailUsername, 'EldCare Delivery')
+      ..recipients.add(customerEmail)
+      ..subject = 'Your EldCare Delivery Verification Code'
+      ..text = 'Your delivery verification code is: $code';
+
+    try {
+      final sendReport = await mailer.send(message, smtpServer);
+      print('Verification code sent: ${sendReport.toString()}');
+    } on mailer.MailerException catch (e) {
+      print('Error sending verification code: ${e.toString()}');
+    }
+  }
+
+  Future<String> _getCustomerEmail(String customerId) async {
+    DocumentSnapshot userDoc =
+        await _firestore.collection('users').doc(customerId).get();
+    return userDoc.get('email') as String;
+  }
+
+  Future<bool> verifyDeliveryCode(String orderId, String enteredCode) async {
+    DocumentSnapshot orderDoc =
+        await _firestore.collection('orders').doc(orderId).get();
+    return orderDoc.get('verificationCode') == enteredCode;
+  }
+
+  Future<void> markOrderAsDelivered(String orderId) async {
+    await _firestore.collection('orders').doc(orderId).update({
+      'status': OrderStatus.completed.toString().split('.').last,
+    });
   }
 
   Future<DeliveryOrderModel?> getCurrentDelivery(

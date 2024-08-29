@@ -247,12 +247,10 @@ class OrderDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Update Status', style: AppFonts.headline4),
+            const Text('Update Status', style: AppFonts.headline4),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => _updateOrderStatus(context, nextStatus),
-              child: Text('Mark as ${nextStatus.toString().split('.').last}',
-                  style: AppFonts.button),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _getStatusColor(nextStatus),
                 foregroundColor: Colors.white,
@@ -261,6 +259,8 @@ class OrderDetailsScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
+              child: Text('Mark as ${nextStatus.toString().split('.').last}',
+                  style: AppFonts.button),
             ),
           ],
         ),
@@ -271,7 +271,7 @@ class OrderDetailsScreen extends StatelessWidget {
   void _updateOrderStatus(BuildContext context, OrderStatus newStatus) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('Confirm Status Update', style: AppFonts.headline4),
           content: Text(
@@ -282,15 +282,15 @@ class OrderDetailsScreen extends StatelessWidget {
             TextButton(
               child: Text('Cancel',
                   style: AppFonts.button.copyWith(color: kSecondaryTextColor)),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(
               child: Text('Update', style: AppFonts.button),
               onPressed: () {
-                context
-                    .read<PharmacistOrderBloc>()
+                // Use BlocProvider.of to access the bloc
+                BlocProvider.of<PharmacistOrderBloc>(context)
                     .add(UpdatePharmacistOrderStatus(order.id, newStatus));
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
                 Navigator.of(context).pop(); // Return to the order list
               },
               style: ElevatedButton.styleFrom(

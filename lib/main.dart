@@ -18,12 +18,14 @@ import 'package:eldcare/auth/presentation/screens/splashscreen.dart';
 import 'package:eldcare/pharmacy/blocs/category/category_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/inventory/inventory_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/medicine_name/medicine_name_bloc.dart';
+import 'package:eldcare/pharmacy/blocs/pharmacist_order/pharmacist_order_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/pharmacists/pharmacists_profile_bloc.dart';
 import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
 import 'package:eldcare/pharmacy/repository/category_repo.dart';
 import 'package:eldcare/pharmacy/repository/inventory_repository.dart';
 import 'package:eldcare/pharmacy/repository/medicine_repositry.dart';
 import 'package:eldcare/pharmacy/repository/pharmacist_profile_repository.dart';
+import 'package:eldcare/pharmacy/repository/pharmacistorderrepositry.dart';
 import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -104,6 +106,9 @@ class MyApp extends StatelessWidget {
               repository: DeliveryChargesRepository(),
             )..add(LoadDeliveryCharges()),
           ),
+          BlocProvider<PharmacistOrderBloc>(
+              create: (context) => PharmacistOrderBloc(
+                  pharmacistOrderRepository: PharmacistOrderRepository())),
         ],
         child: MaterialApp(
           navigatorKey: NotificationService.navigatorKey,

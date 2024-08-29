@@ -2,6 +2,7 @@ import 'package:eldcare/delivery/model/delivery_order_model.dart';
 import 'package:eldcare/delivery/repository/delivery_order_repo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 
 part 'delivery_order_event.dart';
 part 'delivery_order_state.dart';
@@ -17,6 +18,7 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
     on<AcceptOrder>(_onAcceptOrder);
     on<FetchCurrentDelivery>(_onFetchCurrentDelivery);
     on<FetchDeliverySummary>(_onFetchDeliverySummary);
+    on<VerifyDeliveryCode>(_onVerifyDeliveryCode); // Add this line
   }
 
   void _onFetchAvailableOrders(
@@ -74,6 +76,36 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
       }
     } catch (e) {
       emit(DeliveryOrderError('Failed to fetch delivery summary: $e'));
+    }
+  }
+
+  void _onVerifyDeliveryCode(
+      VerifyDeliveryCode event, Emitter<DeliveryOrderState> emit) async {
+    emit(DeliveryOrderLoading());
+    try {
+      bool isValid =
+          await repository.verifyDeliveryCode(event.orderId, event.enteredCode);
+      if (isValid) {
+        await repository.markOrderAsDelivered(event.orderId);
+        _currentDelivery = null;
+        emit(DeliveryCodeVerificationSuccess());
+
+        // Get the current location
+        Position position = await Geolocator.getCurrentPosition();
+        GeoPoint currentLocation =
+            GeoPoint(position.latitude, position.longitude);
+
+        // After successful verification, fetch updated orders and current delivery
+        add(FetchAvailableOrders(
+            deliveryBoyLocation: currentLocation,
+            maxDistance: 10.0 // You can adjust this value as needed
+            ));
+        add(FetchCurrentDelivery(deliveryPersonId: event.deliveryPersonId));
+      } else {
+        emit(DeliveryCodeVerificationFailure());
+      }
+    } catch (e) {
+      emit(DeliveryOrderError('Failed to verify delivery code: $e'));
     }
   }
 }

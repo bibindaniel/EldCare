@@ -13,6 +13,7 @@ class DeliveryOrderModel {
   final double totalAmount;
   double? distanceToCustomer;
   final String? deliveryPersonId;
+  final String? verificationCode;
 
   DeliveryOrderModel({
     required this.id,
@@ -26,6 +27,7 @@ class DeliveryOrderModel {
     required this.totalAmount,
     this.distanceToCustomer,
     this.deliveryPersonId,
+    this.verificationCode,
   });
 
   factory DeliveryOrderModel.fromFirestore(DocumentSnapshot doc) {
@@ -44,6 +46,7 @@ class DeliveryOrderModel {
       shopLocation: _parseGeoPoint(data['shopLocation']),
       totalAmount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
       deliveryPersonId: data['deliveryPersonId'] as String?,
+      verificationCode: data['verificationCode'] as String?,
     );
   }
 
@@ -97,6 +100,7 @@ class DeliveryOrderModel {
     double? totalAmount,
     double? distanceToCustomer,
     String? deliveryPersonId,
+    String? verificationCode,
   }) {
     return DeliveryOrderModel(
       id: id ?? this.id,
@@ -110,6 +114,7 @@ class DeliveryOrderModel {
       totalAmount: totalAmount ?? this.totalAmount,
       distanceToCustomer: distanceToCustomer ?? this.distanceToCustomer,
       deliveryPersonId: deliveryPersonId ?? this.deliveryPersonId,
+      verificationCode: verificationCode ?? this.verificationCode,
     );
   }
 }

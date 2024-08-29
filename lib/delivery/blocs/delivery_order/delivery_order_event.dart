@@ -6,7 +6,8 @@ class FetchAvailableOrders extends DeliveryOrderEvent {
   final GeoPoint deliveryBoyLocation;
   final double maxDistance;
 
-  FetchAvailableOrders(this.deliveryBoyLocation, this.maxDistance);
+  FetchAvailableOrders(
+      {required this.deliveryBoyLocation, required this.maxDistance});
 }
 
 class AcceptOrder extends DeliveryOrderEvent {
@@ -19,11 +20,19 @@ class AcceptOrder extends DeliveryOrderEvent {
 class FetchCurrentDelivery extends DeliveryOrderEvent {
   final String deliveryPersonId;
 
-  FetchCurrentDelivery(this.deliveryPersonId);
+  FetchCurrentDelivery({required this.deliveryPersonId});
 }
 
 class FetchDeliverySummary extends DeliveryOrderEvent {
   final String deliveryPersonId;
 
   FetchDeliverySummary(this.deliveryPersonId);
+}
+
+class VerifyDeliveryCode extends DeliveryOrderEvent {
+  final String orderId;
+  final String enteredCode;
+  final String deliveryPersonId;
+
+  VerifyDeliveryCode(this.orderId, this.enteredCode, this.deliveryPersonId);
 }
