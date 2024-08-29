@@ -35,3 +35,5 @@ class DeliveryCodeVerificationSuccess extends DeliveryOrderState {}
 class DeliveryCodeVerificationFailure extends DeliveryOrderState {}
 
 class DeliveryCanceled extends DeliveryOrderState {}
+
+class TestEmailSent extends DeliveryOrderState {}

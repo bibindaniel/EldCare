@@ -3,6 +3,8 @@ import 'package:eldcare/admin/blocs/users/users_bloc.dart';
 import 'package:eldcare/admin/repository/delivery_repo.dart';
 import 'package:eldcare/admin/repository/users.dart';
 import 'package:eldcare/core/theme/routes/myroutes.dart';
+import 'package:eldcare/delivery/blocs/delivery_order/delivery_order_bloc.dart';
+import 'package:eldcare/delivery/repository/delivery_order_repo.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
 import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
@@ -109,6 +111,11 @@ class MyApp extends StatelessWidget {
           BlocProvider<PharmacistOrderBloc>(
               create: (context) => PharmacistOrderBloc(
                   pharmacistOrderRepository: PharmacistOrderRepository())),
+          BlocProvider(
+            create: (context) => DeliveryOrderBloc(
+              repository: DeliveryOrderRepository(),
+            ),
+          ),
         ],
         child: MaterialApp(
           navigatorKey: NotificationService.navigatorKey,

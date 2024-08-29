@@ -1,11 +1,11 @@
-import 'dart:io';
 import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eldcare/delivery/model/delivery_order_model.dart';
 import 'package:eldcare/pharmacy/model/pharmacist_order.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mailer/mailer.dart' as mailer;
+import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server/gmail.dart';
 import 'package:mailer/smtp_server.dart';
 
@@ -15,8 +15,8 @@ class DeliveryOrderRepository {
   final String _emailPassword;
 
   DeliveryOrderRepository()
-      : _emailUsername = Platform.environment['EMAIL_USERNAME'] ?? '',
-        _emailPassword = Platform.environment['EMAIL_PASSWORD'] ?? '' {
+      : _emailUsername = dotenv.env['EMAIL_USERNAME'] ?? '',
+        _emailPassword = dotenv.env['EMAIL_PASSWORD'] ?? '' {
     print('Email Username: $_emailUsername');
     print(
         'Email Password: ${_emailPassword.isNotEmpty ? '[SET]' : '[NOT SET]'}');
@@ -260,6 +260,35 @@ class DeliveryOrderRepository {
     } catch (e) {
       print('Error canceling delivery: $e');
       rethrow;
+    }
+  }
+
+  Future<void> sendTestEmail() async {
+    if (_emailUsername.isEmpty || _emailPassword.isEmpty) {
+      print('Email credentials are not set. Please check your .env file.');
+      throw Exception('Email credentials are not set');
+    }
+
+    final smtpServer = gmail(_emailUsername, _emailPassword);
+
+    final message = Message()
+      ..from = Address(_emailUsername, 'EldCare Delivery')
+      ..recipients.add(_emailUsername) // Sending to yourself for testing
+      ..subject = 'Test Email from EldCare Delivery App'
+      ..text = 'This is a test email sent from the EldCare Delivery app.';
+
+    try {
+      final sendReport = await send(message, smtpServer);
+      print('Test email sent: ${sendReport.toString()}');
+    } on MailerException catch (e) {
+      print('Error sending test email:');
+      for (var p in e.problems) {
+        print('Problem: ${p.code}: ${p.msg}');
+      }
+      throw Exception('Failed to send test email: ${e.toString()}');
+    } catch (e) {
+      print('Unexpected error sending test email: $e');
+      throw Exception('Unexpected error sending test email: $e');
     }
   }
 }

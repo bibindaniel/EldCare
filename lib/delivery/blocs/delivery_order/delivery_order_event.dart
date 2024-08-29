@@ -43,3 +43,5 @@ class CancelDelivery extends DeliveryOrderEvent {
 
   CancelDelivery(this.orderId, this.deliveryPersonId);
 }
+
+class SendTestEmail extends DeliveryOrderEvent {}

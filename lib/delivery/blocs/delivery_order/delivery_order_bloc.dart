@@ -20,6 +20,7 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
     on<FetchDeliverySummary>(_onFetchDeliverySummary);
     on<VerifyDeliveryCode>(_onVerifyDeliveryCode);
     on<CancelDelivery>(_onCancelDelivery);
+    on<SendTestEmail>(_onSendTestEmail);
   }
 
   void _onFetchAvailableOrders(
@@ -128,6 +129,17 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
       add(FetchCurrentDelivery(deliveryPersonId: event.deliveryPersonId));
     } catch (e) {
       emit(DeliveryOrderError('Failed to cancel delivery: $e'));
+    }
+  }
+
+  void _onSendTestEmail(
+      SendTestEmail event, Emitter<DeliveryOrderState> emit) async {
+    emit(DeliveryOrderLoading());
+    try {
+      await repository.sendTestEmail();
+      emit(TestEmailSent());
+    } catch (e) {
+      emit(DeliveryOrderError('Failed to send test email: $e'));
     }
   }
 }

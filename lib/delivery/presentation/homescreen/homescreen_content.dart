@@ -105,13 +105,18 @@ class DeliveryPersonnelHomeContentState
         if (state is DeliveryCodeVerificationSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Order marked as delivered successfully')),
+              content: Text('Order marked as delivered successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
           _fetchCurrentDelivery();
           _fetchDeliverySummary();
         } else if (state is DeliveryCodeVerificationFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid verification code')),
+            const SnackBar(
+              content: Text('Invalid verification code. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       },
@@ -285,70 +290,93 @@ class DeliveryPersonnelHomeContentState
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Order #${currentDelivery.id.substring(0, 8)}...',
-                style: AppFonts.headline4.copyWith(color: kPrimaryColor)),
-            const SizedBox(height: 10),
-            _buildAddressDetails(currentDelivery.deliveryAddress),
-            const SizedBox(height: 10),
-            Text('Total: ₹${currentDelivery.totalAmount.toStringAsFixed(2)}',
-                style: AppFonts.bodyText2.copyWith(color: kSecondaryTextColor)),
-            const SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: kPrimaryColor.withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.navigation, color: kWhiteColor),
-                    label: const Text('Navigate',
-                        style: TextStyle(color: kWhiteColor)),
-                    onPressed: () => _handleNavigation(currentDelivery),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+                Text(
+                  'Order #${currentDelivery.id.substring(0, 8)}...',
+                  style: AppFonts.headline5.copyWith(color: kPrimaryColor),
                 ),
-                SizedBox(width: 8), // Add some spacing between buttons
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.check, color: kWhiteColor),
-                    label: const Text('Mark Delivered',
-                        style: TextStyle(color: kWhiteColor)),
-                    onPressed: () =>
-                        _showVerificationCodeDialog(currentDelivery),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kSuccessColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8), // Add some spacing between buttons
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.cancel, color: kWhiteColor),
-                    label: const Text('Cancel',
-                        style: TextStyle(color: kWhiteColor)),
-                    onPressed: () => _showCancelDeliveryDialog(currentDelivery),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kErrorColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+                Text(
+                  '₹${currentDelivery.totalAmount.toStringAsFixed(2)}',
+                  style: AppFonts.headline5.copyWith(color: kSecondaryColor),
                 ),
               ],
-            )
-          ],
-        ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Delivery Address', style: AppFonts.cardSubtitle),
+                const SizedBox(height: 8),
+                _buildAddressDetails(currentDelivery.deliveryAddress),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.navigation,
+                      label: 'Navigate',
+                      color: kPrimaryColor,
+                      onPressed: () => _handleNavigation(currentDelivery),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.check_circle,
+                      label: 'Deliver',
+                      color: kSuccessColor,
+                      onPressed: () =>
+                          _showVerificationCodeDialog(currentDelivery),
+                    ),
+                    _buildActionButton(
+                      icon: Icons.cancel,
+                      label: 'Cancel',
+                      color: kErrorColor,
+                      onPressed: () =>
+                          _showCancelDeliveryDialog(currentDelivery),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      children: [
+        IconButton(
+          icon: Icon(icon, color: color),
+          onPressed: onPressed,
+          iconSize: 32,
+        ),
+        Text(
+          label,
+          style: AppFonts.caption.copyWith(color: color),
+        ),
+      ],
     );
   }
 
@@ -390,38 +418,48 @@ class DeliveryPersonnelHomeContentState
   void _showVerificationCodeDialog(DeliveryOrderModel currentDelivery) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         String enteredCode = '';
-        return AlertDialog(
-          title: const Text('Enter Verification Code'),
-          content: TextField(
-            onChanged: (value) => enteredCode = value,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: "Enter 6-digit code"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
+        return BlocListener<DeliveryOrderBloc, DeliveryOrderState>(
+          listener: (context, state) {
+            if (state is DeliveryCodeVerificationSuccess) {
+              Navigator.of(dialogContext).pop(); // Close the dialog on success
+            }
+            // Don't close the dialog for failure case
+          },
+          child: AlertDialog(
+            title: const Text('Enter Verification Code'),
+            content: TextField(
+              onChanged: (value) => enteredCode = value,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(hintText: "Enter 6-digit code"),
             ),
-            TextButton(
-              child: const Text('Verify'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                final authState = context.read<AuthBloc>().state;
-                if (authState is Authenticated) {
-                  context.read<DeliveryOrderBloc>().add(VerifyDeliveryCode(
-                      currentDelivery.id, enteredCode, authState.user.uid));
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.of(dialogContext).pop(),
+              ),
+              TextButton(
+                child: const Text('Verify'),
+                onPressed: () {
+                  final authState = context.read<AuthBloc>().state;
+                  if (authState is Authenticated) {
+                    context.read<DeliveryOrderBloc>().add(VerifyDeliveryCode(
+                        currentDelivery.id, enteredCode, authState.user.uid));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
                         content:
-                            Text('You need to be logged in to verify orders')),
-                  );
-                }
-              },
-            ),
-          ],
+                            Text('You need to be logged in to verify orders'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    Navigator.of(dialogContext).pop();
+                  }
+                },
+              ),
+            ],
+          ),
         );
       },
     );
