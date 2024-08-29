@@ -18,7 +18,8 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
     on<AcceptOrder>(_onAcceptOrder);
     on<FetchCurrentDelivery>(_onFetchCurrentDelivery);
     on<FetchDeliverySummary>(_onFetchDeliverySummary);
-    on<VerifyDeliveryCode>(_onVerifyDeliveryCode); // Add this line
+    on<VerifyDeliveryCode>(_onVerifyDeliveryCode);
+    on<CancelDelivery>(_onCancelDelivery);
   }
 
   void _onFetchAvailableOrders(
@@ -106,6 +107,27 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
       }
     } catch (e) {
       emit(DeliveryOrderError('Failed to verify delivery code: $e'));
+    }
+  }
+
+  void _onCancelDelivery(
+      CancelDelivery event, Emitter<DeliveryOrderState> emit) async {
+    emit(DeliveryOrderLoading());
+    try {
+      await repository.cancelDelivery(event.orderId);
+      _currentDelivery = null;
+      emit(DeliveryCanceled());
+
+      // Fetch updated orders and current delivery
+      Position position = await Geolocator.getCurrentPosition();
+      GeoPoint currentLocation =
+          GeoPoint(position.latitude, position.longitude);
+
+      add(FetchAvailableOrders(
+          deliveryBoyLocation: currentLocation, maxDistance: 10.0));
+      add(FetchCurrentDelivery(deliveryPersonId: event.deliveryPersonId));
+    } catch (e) {
+      emit(DeliveryOrderError('Failed to cancel delivery: $e'));
     }
   }
 }

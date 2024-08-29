@@ -33,3 +33,5 @@ class DeliveryOrderError extends DeliveryOrderState {
 class DeliveryCodeVerificationSuccess extends DeliveryOrderState {}
 
 class DeliveryCodeVerificationFailure extends DeliveryOrderState {}
+
+class DeliveryCanceled extends DeliveryOrderState {}

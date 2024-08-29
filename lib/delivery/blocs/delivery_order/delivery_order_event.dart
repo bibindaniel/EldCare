@@ -36,3 +36,10 @@ class VerifyDeliveryCode extends DeliveryOrderEvent {
 
   VerifyDeliveryCode(this.orderId, this.enteredCode, this.deliveryPersonId);
 }
+
+class CancelDelivery extends DeliveryOrderEvent {
+  final String orderId;
+  final String deliveryPersonId;
+
+  CancelDelivery(this.orderId, this.deliveryPersonId);
+}

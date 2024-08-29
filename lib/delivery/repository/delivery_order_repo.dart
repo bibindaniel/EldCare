@@ -16,7 +16,11 @@ class DeliveryOrderRepository {
 
   DeliveryOrderRepository()
       : _emailUsername = Platform.environment['EMAIL_USERNAME'] ?? '',
-        _emailPassword = Platform.environment['EMAIL_PASSWORD'] ?? '';
+        _emailPassword = Platform.environment['EMAIL_PASSWORD'] ?? '' {
+    print('Email Username: $_emailUsername');
+    print(
+        'Email Password: ${_emailPassword.isNotEmpty ? '[SET]' : '[NOT SET]'}');
+  }
 
   Future<List<DeliveryOrderModel>> getAvailableOrders(
       GeoPoint deliveryBoyLocation, double maxDistance) async {
@@ -154,6 +158,13 @@ class DeliveryOrderRepository {
   Future<void> _sendVerificationCode(
       DeliveryOrderModel order, String code) async {
     final customerEmail = await _getCustomerEmail(order.customerId);
+    print('Attempting to send email to: $customerEmail');
+
+    if (_emailUsername.isEmpty || _emailPassword.isEmpty) {
+      print(
+          'Email credentials are not set. Please check your environment variables.');
+      return;
+    }
 
     final smtpServer = gmail(_emailUsername, _emailPassword);
 
@@ -168,6 +179,7 @@ class DeliveryOrderRepository {
       print('Verification code sent: ${sendReport.toString()}');
     } on mailer.MailerException catch (e) {
       print('Error sending verification code: ${e.toString()}');
+      // You might want to handle this error more gracefully, e.g., by showing a message to the user
     }
   }
 
@@ -234,6 +246,20 @@ class DeliveryOrderRepository {
     } catch (e) {
       print('Error fetching delivery summary: $e');
       return {'total': 0, 'completed': 0, 'pending': 0};
+    }
+  }
+
+  Future<void> cancelDelivery(String orderId) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': OrderStatus.readyForPickup.toString().split('.').last,
+        'deliveryPersonId': null,
+        'verificationCode': null,
+      });
+      print('Delivery canceled successfully');
+    } catch (e) {
+      print('Error canceling delivery: $e');
+      rethrow;
     }
   }
 }

@@ -30,7 +30,30 @@ class DeliveryPersonnelHomeContentState
     _fetchDeliverySummary();
   }
 
-  void _fetchCurrentDelivery() {
+  Future<void> _handleRefresh() async {
+    await _fetchLocationAndOrders();
+    await _fetchCurrentDelivery();
+    await _fetchDeliverySummary();
+  }
+
+  Future<void> _fetchLocationAndOrders() async {
+    try {
+      Position position = await _determinePosition();
+      print('Fetched location: ${position.latitude}, ${position.longitude}');
+      context.read<DeliveryOrderBloc>().add(FetchAvailableOrders(
+            deliveryBoyLocation:
+                GeoPoint(position.latitude, position.longitude),
+            maxDistance: 10.0,
+          ));
+    } catch (e) {
+      print('Error in _fetchLocationAndOrders: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching location: $e')),
+      );
+    }
+  }
+
+  Future<void> _fetchCurrentDelivery() async {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       context
@@ -39,29 +62,12 @@ class DeliveryPersonnelHomeContentState
     }
   }
 
-  void _fetchDeliverySummary() {
+  Future<void> _fetchDeliverySummary() async {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       context
           .read<DeliveryOrderBloc>()
           .add(FetchDeliverySummary(authState.user.uid));
-    }
-  }
-
-  Future<void> _fetchLocationAndOrders() async {
-    try {
-      Position position = await _determinePosition();
-      print(
-          'Fetched location: ${position.latitude}, ${position.longitude}'); // Debug print
-      context.read<DeliveryOrderBloc>().add(FetchAvailableOrders(
-            deliveryBoyLocation:
-                GeoPoint(position.latitude, position.longitude),
-            maxDistance: 10.0,
-          ));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching location: $e')),
-      );
     }
   }
 
@@ -109,16 +115,20 @@ class DeliveryPersonnelHomeContentState
           );
         }
       },
-      child: SingleChildScrollView(
-        child: Container(
-          color: kPrimaryColor,
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              _buildTopSection(),
-              const SizedBox(height: 30),
-              _buildBottomSection(),
-            ],
+      child: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Container(
+            color: kPrimaryColor,
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                _buildTopSection(),
+                const SizedBox(height: 30),
+                _buildBottomSection(),
+              ],
+            ),
           ),
         ),
       ),
@@ -292,33 +302,88 @@ class DeliveryPersonnelHomeContentState
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.navigation, color: kWhiteColor),
-                  label: const Text('Navigate',
-                      style: TextStyle(color: kWhiteColor)),
-                  onPressed: () => _handleNavigation(currentDelivery),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.navigation, color: kWhiteColor),
+                    label: const Text('Navigate',
+                        style: TextStyle(color: kWhiteColor)),
+                    onPressed: () => _handleNavigation(currentDelivery),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
                 ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.check, color: kWhiteColor),
-                  label: const Text('Mark Delivered',
-                      style: TextStyle(color: kWhiteColor)),
-                  onPressed: () => _showVerificationCodeDialog(currentDelivery),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kSuccessColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                SizedBox(width: 8), // Add some spacing between buttons
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.check, color: kWhiteColor),
+                    label: const Text('Mark Delivered',
+                        style: TextStyle(color: kWhiteColor)),
+                    onPressed: () =>
+                        _showVerificationCodeDialog(currentDelivery),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kSuccessColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8), // Add some spacing between buttons
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.cancel, color: kWhiteColor),
+                    label: const Text('Cancel',
+                        style: TextStyle(color: kWhiteColor)),
+                    onPressed: () => _showCancelDeliveryDialog(currentDelivery),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kErrorColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
                 ),
               ],
-            ),
+            )
           ],
         ),
       ),
+    );
+  }
+
+  void _showCancelDeliveryDialog(DeliveryOrderModel currentDelivery) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Cancel Delivery'),
+          content: const Text('Are you sure you want to cancel this delivery?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('No'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Yes'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                final authState = context.read<AuthBloc>().state;
+                if (authState is Authenticated) {
+                  context.read<DeliveryOrderBloc>().add(
+                      CancelDelivery(currentDelivery.id, authState.user.uid));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            'You need to be logged in to cancel deliveries')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
