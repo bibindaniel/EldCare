@@ -35,7 +35,7 @@ class InventoryPage extends StatelessWidget {
       children: [
         Column(
           children: [
-            const Text('Manage Inventory', style: AppFonts.headline3),
+            Text('Manage Inventory', style: AppFonts.headline3Light),
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(

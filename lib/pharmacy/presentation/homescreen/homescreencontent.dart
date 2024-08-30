@@ -1,7 +1,11 @@
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
+import 'package:eldcare/pharmacy/presentation/inventory/inventorypage.dart';
+import 'package:eldcare/pharmacy/presentation/order/pharmacist_order_screen.dart';
+import 'package:eldcare/pharmacy/presentation/shop/add_shop.dart';
 import 'package:eldcare/pharmacy/presentation/shop/widgets/shopcard.dart';
+import 'package:eldcare/pharmacy/repository/shop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
@@ -17,7 +21,7 @@ class PharmacistHomeContent extends StatelessWidget {
         children: [
           _buildHeader(),
           const SizedBox(height: 24),
-          _buildQuickActions(),
+          _buildQuickActions(context),
           const SizedBox(height: 24),
           _buildShopsSection(),
           const SizedBox(height: 24),
@@ -54,7 +58,7 @@ class PharmacistHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildQuickActions(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -66,11 +70,26 @@ class PharmacistHomeContent extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildActionButton(
-                  Icons.add_business, 'Add Shop', kSecondaryColor),
+                context,
+                Icons.add_business,
+                'Add Shop',
+                kSecondaryColor,
+                () => _navigateToAddShop(context),
+              ),
               _buildActionButton(
-                  Icons.inventory_2, 'Manage Inventory', kAccentColor),
+                context,
+                Icons.inventory_2,
+                'Manage Inventory',
+                kAccentColor,
+                () => _navigateToInventory(context),
+              ),
               _buildActionButton(
-                  Icons.receipt_long, 'View Orders', kSuccessColor),
+                context,
+                Icons.receipt_long,
+                'View Orders',
+                kSuccessColor,
+                () => _navigateToOrders(context),
+              ),
             ],
           ),
         ],
@@ -78,21 +97,43 @@ class PharmacistHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
+  Widget _buildActionButton(BuildContext context, IconData icon, String label,
+      Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 32),
           ),
-          child: Icon(icon, color: color, size: 32),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: AppFonts.bodyText2),
-      ],
+          const SizedBox(height: 8),
+          Text(label, style: AppFonts.bodyText2),
+        ],
+      ),
     );
+  }
+
+  void _navigateToAddShop(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => AddShopPage(shopRepository: ShopRepository()),
+    ));
+  }
+
+  void _navigateToInventory(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => const InventoryPage(),
+    ));
+  }
+
+  void _navigateToOrders(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => const PharmacistOrdersScreen(),
+    ));
   }
 
   Widget _buildShopsSection() {
