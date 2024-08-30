@@ -237,7 +237,7 @@ class OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildStatusUpdateSection(BuildContext context) {
     final nextStatus = _getNextStatus(order.status);
-    if (nextStatus == null) return const SizedBox.shrink();
+    final canCancel = _canCancelOrder(order.status);
 
     return Card(
       elevation: 2,
@@ -247,25 +247,83 @@ class OrderDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Update Status', style: AppFonts.headline4),
+            const Text('Order Actions', style: AppFonts.headline4),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _updateOrderStatus(context, nextStatus),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _getStatusColor(nextStatus),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            if (nextStatus != null)
+              ElevatedButton(
+                onPressed: () => _updateOrderStatus(context, nextStatus),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _getStatusColor(nextStatus),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: Text('Mark as ${nextStatus.toString().split('.').last}',
+                    style: AppFonts.button),
               ),
-              child: Text('Mark as ${nextStatus.toString().split('.').last}',
-                  style: AppFonts.button),
-            ),
+            if (canCancel) ...[
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => _cancelOrder(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kErrorColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: Text('Cancel Order', style: AppFonts.button),
+              ),
+            ],
+            if (nextStatus == null && !canCancel) ...[
+              const SizedBox(height: 12),
+              Text(
+                _getNoActionMessage(order.status),
+                style: AppFonts.bodyText1.copyWith(color: kSecondaryTextColor),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  String _getNoActionMessage(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.readyForPickup:
+        return 'Order is ready for pickup. Waiting for delivery assignment.';
+      case OrderStatus.assignedToDelivery:
+        return 'Order has been assigned to a delivery person.';
+      case OrderStatus.inTransit:
+        return 'Order is in transit. No further actions required.';
+      case OrderStatus.completed:
+        return 'Order has been completed. No further actions available.';
+      case OrderStatus.cancelled:
+        return 'Order has been cancelled. No further actions available.';
+      default:
+        return 'No actions available for the current order status.';
+    }
+  }
+
+  OrderStatus? _getNextStatus(OrderStatus currentStatus) {
+    switch (currentStatus) {
+      case OrderStatus.pending:
+        return OrderStatus.confirmed;
+      case OrderStatus.confirmed:
+        return OrderStatus.readyForPickup;
+      default:
+        return null;
+    }
+  }
+
+  bool _canCancelOrder(OrderStatus currentStatus) {
+    return currentStatus != OrderStatus.inTransit &&
+        currentStatus != OrderStatus.completed &&
+        currentStatus != OrderStatus.cancelled;
   }
 
   void _updateOrderStatus(BuildContext context, OrderStatus newStatus) {
@@ -287,7 +345,6 @@ class OrderDetailsScreen extends StatelessWidget {
             ElevatedButton(
               child: Text('Update', style: AppFonts.button),
               onPressed: () {
-                // Use BlocProvider.of to access the bloc
                 BlocProvider.of<PharmacistOrderBloc>(context)
                     .add(UpdatePharmacistOrderStatus(order.id, newStatus));
                 Navigator.of(dialogContext).pop();
@@ -304,20 +361,40 @@ class OrderDetailsScreen extends StatelessWidget {
     );
   }
 
-  OrderStatus? _getNextStatus(OrderStatus currentStatus) {
-    final statuses = [
-      OrderStatus.pending,
-      OrderStatus.confirmed,
-      OrderStatus.readyForPickup,
-      OrderStatus.assignedToDelivery,
-      OrderStatus.inTransit,
-      OrderStatus.completed,
-    ];
-    final currentIndex = statuses.indexOf(currentStatus);
-    if (currentIndex < statuses.length - 1) {
-      return statuses[currentIndex + 1];
-    }
-    return null;
+  void _cancelOrder(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Confirm Cancellation', style: AppFonts.headline4),
+          content: Text(
+            'Are you sure you want to cancel this order?',
+            style: AppFonts.bodyText1,
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('No',
+                  style: AppFonts.button.copyWith(color: kSecondaryTextColor)),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            ElevatedButton(
+              child: Text('Yes', style: AppFonts.button),
+              onPressed: () {
+                BlocProvider.of<PharmacistOrderBloc>(context).add(
+                    UpdatePharmacistOrderStatus(
+                        order.id, OrderStatus.cancelled));
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).pop(); // Return to the order list
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kErrorColor,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Color _getStatusColor(OrderStatus status) {
