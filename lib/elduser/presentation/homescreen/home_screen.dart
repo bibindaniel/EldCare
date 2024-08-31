@@ -125,7 +125,7 @@ class HomeScreen extends StatelessWidget {
       case NavigationItem.schedule:
         return const ScheduleScreen();
       case NavigationItem.shop:
-        return const ShopScreen(); // You'll need to create this screen
+        return const ShopScreen();
       case NavigationItem.appointment:
         return const AppointmentScreen();
     }

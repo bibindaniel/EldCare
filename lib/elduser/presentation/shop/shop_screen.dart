@@ -32,6 +32,7 @@ class ShopScreenView extends StatefulWidget {
 
 class ShopScreenViewState extends State<ShopScreenView> {
   final TextEditingController _searchController = TextEditingController();
+  bool _isLoadingNearbyShops = false;
 
   @override
   Widget build(BuildContext context) {
@@ -77,34 +78,45 @@ class ShopScreenViewState extends State<ShopScreenView> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: ElevatedButton.icon(
-        onPressed: () => _findNearbyShops(),
-        icon: const Icon(
-          Icons.location_on,
-          color: kWhiteColor, // Changed to white for better contrast
-          size: 24, // Explicitly set icon size
-        ),
+        onPressed: _isLoadingNearbyShops ? null : _findNearbyShops,
+        icon: _isLoadingNearbyShops
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(kWhiteColor),
+                ),
+              )
+            : const Icon(
+                Icons.location_on,
+                color: kWhiteColor,
+                size: 24,
+              ),
         label: Text(
-          'Find Nearby Shops',
+          _isLoadingNearbyShops ? 'Loading...' : 'Find Nearby Shops',
           style: AppFonts.button.copyWith(
-            fontSize: 16, // Slightly larger font size
-            fontWeight: FontWeight.w600, // Semi-bold weight
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: kPrimaryColor,
-          foregroundColor: kWhiteColor, // Ensure text and icon are white
+          foregroundColor: kWhiteColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          padding: const EdgeInsets.symmetric(
-              vertical: 16, horizontal: 24), // Increased padding
-          elevation: 3, // Add a slight shadow
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          elevation: 3,
         ),
       ),
     );
   }
 
   Future<void> _findNearbyShops() async {
+    setState(() {
+      _isLoadingNearbyShops = true;
+    });
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -112,6 +124,9 @@ class ShopScreenViewState extends State<ShopScreenView> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location permissions are denied')),
         );
+        setState(() {
+          _isLoadingNearbyShops = false;
+        });
         return;
       }
     }
@@ -123,6 +138,9 @@ class ShopScreenViewState extends State<ShopScreenView> {
               'Location permissions are permanently denied, we cannot request permissions.'),
         ),
       );
+      setState(() {
+        _isLoadingNearbyShops = false;
+      });
       return;
     }
 
@@ -136,6 +154,10 @@ class ShopScreenViewState extends State<ShopScreenView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error getting location: $e')),
       );
+    } finally {
+      setState(() {
+        _isLoadingNearbyShops = false;
+      });
     }
   }
 
@@ -181,7 +203,7 @@ class ShopScreenViewState extends State<ShopScreenView> {
                     color: kPrimaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.local_pharmacy,
+                  child: const Icon(Icons.local_pharmacy,
                       color: kPrimaryColor, size: 30),
                 ),
                 const SizedBox(width: 16),
