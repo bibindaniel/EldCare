@@ -1,4 +1,6 @@
+import 'package:eldcare/pharmacy/presentation/inventory/capitakletter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -24,6 +26,8 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   Category? _selectedCategory;
   bool _requiresPrescription = false;
+  static const int maxMedicineNameLength = 50;
+  static const int maxDosageLength = 20;
 
   @override
   void initState() {
@@ -198,24 +202,26 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                       controller: _medicineNameController,
                       decoration: const InputDecoration(
                           hintText: "Enter medicine name"),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a medicine name';
-                        }
-                        return null;
-                      },
+                      validator: _validateMedicineName,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      textCapitalization: TextCapitalization.words,
+                      maxLength: maxMedicineNameLength,
+                      inputFormatters: [
+                        FirstLetterUppercaseFormatter(),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _dosageController,
                       decoration:
                           const InputDecoration(hintText: "Enter dosage"),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a dosage';
-                        }
-                        return null;
-                      },
+                      validator: _validateDosage,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      maxLength: maxDosageLength,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9\s]')),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     BlocBuilder<CategoryBloc, CategoryState>(
@@ -320,24 +326,26 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                       controller: _medicineNameController,
                       decoration: const InputDecoration(
                           hintText: "Enter medicine name"),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a medicine name';
-                        }
-                        return null;
-                      },
+                      validator: _validateMedicineName,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      textCapitalization: TextCapitalization.words,
+                      maxLength: maxMedicineNameLength,
+                      inputFormatters: [
+                        FirstLetterUppercaseFormatter(),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _dosageController,
                       decoration:
                           const InputDecoration(hintText: "Enter dosage"),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a dosage';
-                        }
-                        return null;
-                      },
+                      validator: _validateDosage,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      maxLength: maxDosageLength,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9\s]')),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     BlocBuilder<CategoryBloc, CategoryState>(
@@ -415,6 +423,32 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
         );
       },
     );
+  }
+
+  String? _validateMedicineName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a medicine name';
+    }
+    if (value.length > maxMedicineNameLength) {
+      return 'Medicine name must be $maxMedicineNameLength characters or less';
+    }
+    if (!RegExp(r'^[A-Z][a-zA-Z\s]*$').hasMatch(value)) {
+      return 'Medicine name should  contain only letters and spaces';
+    }
+    return null;
+  }
+
+  String? _validateDosage(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a dosage';
+    }
+    if (value.length > maxDosageLength) {
+      return 'Dosage must be $maxDosageLength characters or less';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9\s]+$').hasMatch(value)) {
+      return 'Dosage should contain only letters, numbers, and spaces';
+    }
+    return null;
   }
 
   void _showDeleteConfirmationDialog(BuildContext context, Medicine medicine) {

@@ -37,20 +37,6 @@ class InventoryPage extends StatelessWidget {
           children: [
             Text('Manage Inventory', style: AppFonts.headline3Light),
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: kPrimaryColor,
-                backgroundColor: kWhiteColor,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30)),
-              ),
-              onPressed: () {
-                // This button's functionality might need to change based on your new structure
-              },
-              child: const Text('Add Item', style: TextStyle(fontSize: 18)),
-            ),
           ],
         ),
         Lottie.asset('assets/animations/pharmacy2.json',

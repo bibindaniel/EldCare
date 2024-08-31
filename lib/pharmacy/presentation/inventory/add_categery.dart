@@ -1,3 +1,4 @@
+import 'package:eldcare/pharmacy/presentation/inventory/capitakletter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -19,6 +20,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  static const int maxCategoryLength = 20;
 
   @override
   void initState() {
@@ -184,12 +186,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               controller: _categoryController,
               decoration:
                   const InputDecoration(hintText: "Enter category name"),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a category name';
-                }
-                return null;
-              },
+              validator: _validateCategory,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: maxCategoryLength,
+              inputFormatters: [
+                FirstLetterUppercaseFormatter(),
+              ],
             ),
           ),
           actions: [
@@ -203,8 +206,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               child: const Text('Add'),
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  context.read<CategoryBloc>().add(
-                      AddCategory(_categoryController.text, widget.shopId));
+                  context.read<CategoryBloc>().add(AddCategory(
+                      _categoryController.text.trim(), widget.shopId));
                   Navigator.of(context).pop();
                   _categoryController.clear();
                 }
@@ -229,12 +232,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               controller: _categoryController,
               decoration:
                   const InputDecoration(hintText: "Enter category name"),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a category name';
-                }
-                return null;
-              },
+              validator: _validateCategory,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: maxCategoryLength,
+              inputFormatters: [
+                FirstLetterUppercaseFormatter(),
+              ],
             ),
           ),
           actions: [
@@ -251,7 +255,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                   context.read<CategoryBloc>().add(UpdateCategory(
                         Category(
                             id: category.id,
-                            name: _categoryController.text,
+                            name: _categoryController.text.trim(),
                             shopId: widget.shopId),
                       ));
                   Navigator.of(context).pop();
@@ -263,6 +267,22 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         );
       },
     );
+  }
+
+  String? _validateCategory(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a category name';
+    }
+    if (value.length > maxCategoryLength) {
+      return 'Category name must be $maxCategoryLength characters or less';
+    }
+    if (value.trim().contains(' ')) {
+      return 'Category name should be a single word';
+    }
+    if (!RegExp(r'^[A-Z][a-zA-Z]*$').hasMatch(value)) {
+      return 'Category name should contain only letters';
+    }
+    return null;
   }
 
   void _showDeleteConfirmationDialog(BuildContext context, Category category) {
