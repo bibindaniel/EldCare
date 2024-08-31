@@ -291,4 +291,22 @@ class DeliveryOrderRepository {
       throw Exception('Unexpected error sending test email: $e');
     }
   }
+
+  Future<List<DeliveryOrderModel>> getOrderHistory(
+      String deliveryPersonId) async {
+    try {
+      final QuerySnapshot orderSnapshot = await _firestore
+          .collection('orders')
+          .where('deliveryPersonId', isEqualTo: deliveryPersonId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return orderSnapshot.docs
+          .map((doc) => DeliveryOrderModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      print('Error fetching order history: $e');
+      rethrow;
+    }
+  }
 }

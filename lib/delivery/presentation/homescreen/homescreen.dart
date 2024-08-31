@@ -4,7 +4,9 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/delivery/blocs/delivery_order/delivery_order_bloc.dart';
+import 'package:eldcare/delivery/presentation/analytics/analytics_screen.dart';
 import 'package:eldcare/delivery/presentation/homescreen/homescreen_content.dart';
+import 'package:eldcare/delivery/presentation/order/order_screen.dart';
 import 'package:eldcare/delivery/repository/delivery_order_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -103,65 +105,10 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
       case DeliveryNavigationItem.home:
         return const DeliveryPersonnelHomeContent();
       case DeliveryNavigationItem.orders:
-        return _buildStaticOrdersScreen();
+        return const OrderScreen();
       case DeliveryNavigationItem.profile:
-        return _buildStaticProfileScreen();
+        return const AnalyticsScreen();
     }
-  }
-
-  Widget _buildStaticOrdersScreen() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.list_alt, size: 80, color: kPrimaryColor),
-          const SizedBox(height: 20),
-          Text('Orders', style: AppFonts.headline2),
-          const SizedBox(height: 20),
-          Text('You have 5 pending orders', style: AppFonts.bodyText1),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {},
-            child: Text('View Orders'),
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStaticProfileScreen() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage:
-                AssetImage('assets/images/delivery/default_avatar.jpg'),
-          ),
-          SizedBox(height: 20),
-          Text('John Doe', style: AppFonts.headline2),
-          SizedBox(height: 10),
-          Text('Delivery Partner', style: AppFonts.bodyText1),
-          SizedBox(height: 20),
-          ListTile(
-            leading: Icon(Icons.email),
-            title: Text('john.doe@example.com'),
-          ),
-          ListTile(
-            leading: Icon(Icons.phone),
-            title: Text('+1 234 567 8900'),
-          ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {},
-            child: Text('Edit Profile'),
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildBottomNavigationBar(
@@ -184,8 +131,8 @@ class DeliveryPersonnelHomeScreen extends StatelessWidget {
           label: 'Orders',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
+          icon: Icon(Icons.analytics),
+          label: 'analytics',
         ),
       ],
       selectedItemColor: kPrimaryColor,

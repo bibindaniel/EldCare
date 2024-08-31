@@ -21,6 +21,7 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
     on<VerifyDeliveryCode>(_onVerifyDeliveryCode);
     on<CancelDelivery>(_onCancelDelivery);
     on<SendTestEmail>(_onSendTestEmail);
+    on<FetchOrderHistory>(_onFetchOrderHistory);
   }
 
   void _onFetchAvailableOrders(
@@ -140,6 +141,25 @@ class DeliveryOrderBloc extends Bloc<DeliveryOrderEvent, DeliveryOrderState> {
       emit(TestEmailSent());
     } catch (e) {
       emit(DeliveryOrderError('Failed to send test email: $e'));
+    }
+  }
+
+  void _onFetchOrderHistory(
+      FetchOrderHistory event, Emitter<DeliveryOrderState> emit) async {
+    try {
+      final orderHistory =
+          await repository.getOrderHistory(event.deliveryPersonId);
+      if (state is DeliveryOrderLoaded) {
+        final currentState = state as DeliveryOrderLoaded;
+        emit(DeliveryOrderLoaded(
+          orders: currentState.orders,
+          currentDelivery: currentState.currentDelivery,
+          summary: currentState.summary,
+          orderHistory: orderHistory,
+        ));
+      }
+    } catch (e) {
+      emit(DeliveryOrderError('Failed to fetch order history: $e'));
     }
   }
 }

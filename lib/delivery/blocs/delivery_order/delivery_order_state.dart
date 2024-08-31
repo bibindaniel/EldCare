@@ -10,11 +10,13 @@ class DeliveryOrderLoaded extends DeliveryOrderState {
   final List<DeliveryOrderModel> orders;
   final DeliveryOrderModel? currentDelivery;
   final Map<String, int> summary;
+  final List<DeliveryOrderModel> orderHistory;
 
   DeliveryOrderLoaded({
     required this.orders,
     this.currentDelivery,
     this.summary = const {'total': 0, 'completed': 0, 'pending': 0},
+    this.orderHistory = const [],
   });
 }
 

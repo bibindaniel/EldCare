@@ -45,3 +45,9 @@ class CancelDelivery extends DeliveryOrderEvent {
 }
 
 class SendTestEmail extends DeliveryOrderEvent {}
+
+class FetchOrderHistory extends DeliveryOrderEvent {
+  final String deliveryPersonId;
+
+  FetchOrderHistory(this.deliveryPersonId);
+}
