@@ -62,6 +62,44 @@ class MedicineCard extends StatelessWidget {
     }
   }
 
+  String _getDosageDisplay() {
+    MedicineSchedule? nextSchedule = _getNextSchedule();
+    return nextSchedule?.dosage ?? 'No upcoming dose';
+  }
+
+  String _getNextDoseTime() {
+    MedicineSchedule? nextSchedule = _getNextSchedule();
+    return nextSchedule != null
+        ? DateFormat('HH:mm').format(nextSchedule.time)
+        : 'No upcoming dose';
+  }
+
+  MedicineSchedule? _getNextSchedule() {
+    if (medicine.schedules.isEmpty) {
+      return null;
+    }
+
+    DateTime now = DateTime.now();
+    for (MedicineSchedule schedule in medicine.schedules) {
+      if (schedule.time.isAfter(now)) {
+        return schedule;
+      }
+    }
+
+    // If all schedules are in the past, return a new schedule for the next day
+    DateTime nextDay = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+      medicine.schedules.first.time.hour,
+      medicine.schedules.first.time.minute,
+    );
+    return MedicineSchedule(
+      time: nextDay,
+      dosage: medicine.schedules.first.dosage,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -120,16 +158,18 @@ class MedicineCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Dosage: ${medicine.dosage}",
+                        "Dosage: ${_getDosageDisplay()}",
                         style: AppFonts.cardSubtitle.copyWith(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: kWhiteColor,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Time: ${DateFormat('HH:mm').format(medicine.scheduleTimes.isNotEmpty ? medicine.scheduleTimes[0] : DateTime.now())}",
+                        "Next dose: ${_getNextDoseTime()}",
                         style: AppFonts.cardSubtitle.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

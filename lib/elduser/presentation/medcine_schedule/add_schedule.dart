@@ -16,7 +16,7 @@ class AddMedicinePage extends StatefulWidget {
 class AddMedicinePageState extends State<AddMedicinePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _dosageController = TextEditingController();
+  // final _dosageController = TextEditingController();
   final _quantityController = TextEditingController();
   late TextEditingController frequencyController;
   DateTime _startDate = DateTime.now();
@@ -24,9 +24,13 @@ class AddMedicinePageState extends State<AddMedicinePage> {
   String _selectedShape = '';
   String _selectedColorName = 'White';
   int _frequency = 1;
-  List<TimeOfDay> _scheduleTimes = [TimeOfDay.now()];
   bool _isBeforeFood = true;
   int _currentStep = 0;
+  bool _sameDosageForAll = true;
+  String _commonDosage = '';
+  List<MedicineSchedule> _schedules = [
+    MedicineSchedule(time: DateTime.now(), dosage: '')
+  ];
 
   final List<Map<String, dynamic>> medicineColors = [
     {'name': 'White', 'color': Colors.white},
@@ -53,7 +57,6 @@ class AddMedicinePageState extends State<AddMedicinePage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _dosageController.dispose();
     _quantityController.dispose();
     frequencyController.dispose();
     super.dispose();
@@ -189,8 +192,8 @@ class AddMedicinePageState extends State<AddMedicinePage> {
           children: [
             _buildTextField('Medicine Name', _nameController, _validateName),
             const SizedBox(height: 20),
-            _buildTextField('Dosage', _dosageController, _validateDosage),
-            const SizedBox(height: 20),
+            // _buildTextField('Dosage', _dosageController, _validateDosage),
+            // const SizedBox(height: 20),
             _buildTextField('Quantity', _quantityController, _validateQuantity),
             const SizedBox(height: 20),
             const Text('Duration',
@@ -252,8 +255,13 @@ class AddMedicinePageState extends State<AddMedicinePage> {
               int frequency = int.tryParse(value) ?? 1;
               if (frequency > 0 && frequency <= 5) {
                 _frequency = frequency;
-                _scheduleTimes =
-                    List.generate(_frequency, (index) => TimeOfDay.now());
+                _schedules = List.generate(
+                  _frequency,
+                  (index) => MedicineSchedule(
+                    time: DateTime.now(),
+                    dosage: _sameDosageForAll ? _commonDosage : '',
+                  ),
+                );
                 frequencyController.text = value;
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -268,48 +276,123 @@ class AddMedicinePageState extends State<AddMedicinePage> {
           },
         ),
         const SizedBox(height: 20),
-        const Text('Set times:'),
-        ..._scheduleTimes.asMap().entries.map((entry) {
-          int idx = entry.key;
-          TimeOfDay time = entry.value;
-          TextEditingController timeController = TextEditingController(
-            text: time.format(context),
-          );
-          return ListTile(
-            title: TextFormField(
-              controller: timeController,
-              decoration: InputDecoration(
-                labelText: 'Dose ${idx + 1}',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.access_time),
-                  onPressed: () async {
-                    TimeOfDay? picked = await showTimePicker(
-                      context: context,
-                      initialTime: time,
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _scheduleTimes[idx] = picked;
-                        timeController.text = picked.format(context);
-                      });
-                    }
-                  },
-                ),
-              ),
-              readOnly: true,
-              onTap: () async {
-                TimeOfDay? picked = await showTimePicker(
-                  context: context,
-                  initialTime: time,
-                );
-                if (picked != null) {
-                  setState(() {
-                    _scheduleTimes[idx] = picked;
-                    timeController.text = picked.format(context);
-                  });
-                }
+        Row(
+          children: [
+            const Text('Same dosage for all times?'),
+            const Spacer(),
+            Switch(
+              value: _sameDosageForAll,
+              onChanged: (value) {
+                setState(() {
+                  _sameDosageForAll = value;
+                  if (value) {
+                    _commonDosage = _schedules.first.dosage;
+                    _schedules = _schedules
+                        .map((schedule) => MedicineSchedule(
+                            time: schedule.time, dosage: _commonDosage))
+                        .toList();
+                  }
+                });
               },
             ),
+          ],
+        ),
+        if (_sameDosageForAll)
+          TextFormField(
+            initialValue: _commonDosage,
+            decoration: InputDecoration(
+              labelText: 'Common Dosage',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the dosage';
+              }
+              return null;
+            },
+            onChanged: (value) {
+              setState(() {
+                _commonDosage = value;
+                _schedules = _schedules
+                    .map((schedule) => MedicineSchedule(
+                        time: schedule.time, dosage: _commonDosage))
+                    .toList();
+              });
+            },
+          ),
+        const SizedBox(height: 20),
+        const Text('Set times and dosages:'),
+        ..._schedules.asMap().entries.map((entry) {
+          int idx = entry.key;
+          MedicineSchedule schedule = entry.value;
+          TextEditingController timeController = TextEditingController(
+            text: DateFormat.jm().format(schedule.time),
+          );
+          TextEditingController dosageController = TextEditingController(
+            text: schedule.dosage,
+          );
+          return Column(
+            children: [
+              ListTile(
+                title: TextFormField(
+                  controller: timeController,
+                  decoration: InputDecoration(
+                    labelText: 'Time ${idx + 1}',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.access_time),
+                      onPressed: () async {
+                        TimeOfDay? picked = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(schedule.time),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _schedules[idx] = MedicineSchedule(
+                              time: DateTime(
+                                schedule.time.year,
+                                schedule.time.month,
+                                schedule.time.day,
+                                picked.hour,
+                                picked.minute,
+                              ),
+                              dosage: schedule.dosage,
+                            );
+                            timeController.text =
+                                DateFormat.jm().format(_schedules[idx].time);
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  readOnly: true,
+                ),
+              ),
+              if (!_sameDosageForAll)
+                ListTile(
+                  title: TextFormField(
+                    controller: dosageController,
+                    decoration: InputDecoration(
+                      labelText: 'Dosage ${idx + 1}',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the dosage';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      setState(() {
+                        _schedules[idx] = MedicineSchedule(
+                          time: schedule.time,
+                          dosage: value,
+                        );
+                      });
+                    },
+                  ),
+                ),
+            ],
           );
         }),
         const SizedBox(height: 20),
@@ -358,20 +441,15 @@ class AddMedicinePageState extends State<AddMedicinePage> {
         );
         return;
       }
-      List<DateTime> scheduleTimes = _scheduleTimes.map((time) {
-        final now = DateTime.now();
-        return DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      }).toList();
 
       final medicine = Medicine(
         name: _nameController.text,
-        dosage: _dosageController.text,
         quantity: int.parse(_quantityController.text),
         startDate: _startDate,
         endDate: _endDate,
         shape: _selectedShape,
         color: _selectedColorName,
-        scheduleTimes: scheduleTimes,
+        schedules: _schedules,
         isBeforeFood: _isBeforeFood,
       );
 

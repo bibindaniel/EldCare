@@ -83,6 +83,7 @@ class ScheduleScreenState extends State<ScheduleScreen>
       onDaySelected: (selectedDay, focusedDay) {
         setState(() {
           _selectedDate = selectedDay;
+          _tabController.index = 0; // Switch to the "Ongoing" tab
         });
         context.read<MedicineBloc>().add(FetchMedicinesForDate(selectedDay));
       },
@@ -177,11 +178,18 @@ class ScheduleScreenState extends State<ScheduleScreen>
   Widget _buildOngoingMedicineList() {
     return BlocBuilder<MedicineBloc, MedicineState>(
       builder: (context, state) {
-        if (state is MedicineLoading) {
+        if (state is MedicineInitial) {
+          context
+              .read<MedicineBloc>()
+              .add(FetchMedicinesForDate(_selectedDate));
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is MedicineLoading) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is MedicinesLoaded) {
           if (state.medicines.isEmpty) {
-            return const Center(child: Text('No medicines scheduled'));
+            return Center(
+                child: Text(
+                    'No medicines scheduled for ${DateFormat('yyyy-MM-dd').format(_selectedDate)}'));
           }
           return ListView.builder(
             itemCount: state.medicines.length,

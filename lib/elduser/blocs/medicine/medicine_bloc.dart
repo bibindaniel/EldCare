@@ -37,7 +37,6 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
       FetchMedicinesForDate event, Emitter<MedicineState> emit) async {
     emit(MedicineLoading());
     try {
-      // Create a date range for the entire day
       final startOfDay =
           DateTime(event.date.year, event.date.month, event.date.day);
       final endOfDay = startOfDay
@@ -104,19 +103,19 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
   }
 
   Future<void> _scheduleNotifications(Medicine medicine) async {
-    // Cancel existing notifications for this medicine
     await _notificationService.cancelNotifications(medicine.id.hashCode);
 
-    for (var scheduleTime in medicine.scheduleTimes) {
-      int notificationId = medicine.id.hashCode + scheduleTime.hashCode;
+    for (var schedule in medicine.schedules) {
+      int notificationId = medicine.id.hashCode + schedule.time.hashCode;
       String notificationTitle = 'Medicine Reminder';
-      String notificationBody = 'Time to take ${medicine.name}';
+      String notificationBody =
+          'Time to take ${medicine.name} - ${schedule.dosage}';
 
       await _notificationService.scheduleNotification(
         notificationId,
         notificationTitle,
         notificationBody,
-        TimeOfDay(hour: scheduleTime.hour, minute: scheduleTime.minute),
+        TimeOfDay(hour: schedule.time.hour, minute: schedule.time.minute),
       );
     }
   }

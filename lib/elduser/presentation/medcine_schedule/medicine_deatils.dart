@@ -120,8 +120,6 @@ class MedicineDetailPage extends StatelessWidget {
                                       _buildInfoCard(
                                           'Pill Name', medicine.name),
                                       _buildInfoCard(
-                                          'Pill Dosage', medicine.dosage),
-                                      _buildInfoCard(
                                           'Next Dose', _getNextDoseTime()),
                                     ],
                                   ),
@@ -248,7 +246,7 @@ class MedicineDetailPage extends StatelessWidget {
       children: [
         const Text('Dose', style: AppFonts.cardTitle),
         Text(
-          '${medicine.scheduleTimes.length} times | ${medicine.scheduleTimes.map((t) => DateFormat('h:mm a').format(t)).join(', ')}',
+          '${medicine.schedules.length} times | ${medicine.schedules.map((s) => '${DateFormat('h:mm a').format(s.time)} - ${s.dosage}').join(', ')}',
           style: AppFonts.cardSubtitle,
         ),
       ],
@@ -287,12 +285,12 @@ class MedicineDetailPage extends StatelessWidget {
 
   String _getNextDoseTime() {
     DateTime now = DateTime.now();
-    for (DateTime time in medicine.scheduleTimes) {
-      if (time.isAfter(now)) {
-        return DateFormat('h:mm a').format(time);
+    for (MedicineSchedule schedule in medicine.schedules) {
+      if (schedule.time.isAfter(now)) {
+        return '${DateFormat('h:mm a').format(schedule.time)} - ${schedule.dosage}';
       }
     }
-    return DateFormat('h:mm a').format(medicine.scheduleTimes.first);
+    return '${DateFormat('h:mm a').format(medicine.schedules.first.time)} - ${medicine.schedules.first.dosage}';
   }
 
   void _showEditDialog(BuildContext context) {

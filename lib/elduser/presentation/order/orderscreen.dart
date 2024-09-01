@@ -207,7 +207,7 @@ class OrdersScreen extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: chipColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -217,7 +217,7 @@ class OrdersScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(iconData, size: 16, color: chipColor),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
             status,
             style: TextStyle(
