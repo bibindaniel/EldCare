@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:eldcare/elduser/presentation/homescreen/notification_service.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationTestButton extends StatelessWidget {
   final NotificationService notificationService;
 
-  const NotificationTestButton({Key? key, required this.notificationService})
-      : super(key: key);
+  const NotificationTestButton({super.key, required this.notificationService});
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +31,13 @@ class NotificationTestButton extends StatelessWidget {
               );
               return;
             }
-            final now = TimeOfDay.now();
-            final scheduleTime = TimeOfDay(
-              hour: now.hour,
-              minute: now.minute + 1,
-            );
+            final now = tz.TZDateTime.now(tz.local);
+            final scheduleTime = now.add(const Duration(minutes: 1));
+
+            debugPrint('Current time: $now');
+            debugPrint('Scheduled time: $scheduleTime');
+            debugPrint('Time zone: ${tz.local}');
+
             await notificationService.scheduleNotification(
               999,
               'Test Scheduled Notification',
@@ -45,7 +47,7 @@ class NotificationTestButton extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content: Text(
-                      'Notification scheduled for ${scheduleTime.format(context)}')),
+                      'Notification scheduled for ${scheduleTime.toLocal()}')),
             );
           },
           child: const Text('Test Scheduled Notification (1 min)'),

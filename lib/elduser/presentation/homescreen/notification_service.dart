@@ -39,6 +39,8 @@ class NotificationService {
     );
 
     tz.initializeTimeZones();
+    tz.setLocalLocation(
+        tz.getLocation('Asia/Kolkata')); // Set to Indian Standard Time
 
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
@@ -69,41 +71,32 @@ class NotificationService {
 
   Future<void> scheduleNotification(
     int id,
-    String medicineName,
-    String dosage,
-    TimeOfDay scheduleTime,
+    String title,
+    String body,
+    DateTime scheduleTime,
   ) async {
-    tz.initializeTimeZones(); // Ensure this is called
-    final String timeZoneName = tz.local.name;
-    debugPrint('Local time zone: $timeZoneName');
+    final tz.TZDateTime scheduledDate =
+        tz.TZDateTime.from(scheduleTime, tz.local);
 
-    final now = tz.TZDateTime.now(tz.getLocation(timeZoneName));
-    var scheduledDate = tz.TZDateTime(
-      tz.getLocation(timeZoneName),
-      now.year,
-      now.month,
-      now.day,
-      scheduleTime.hour,
-      scheduleTime.minute,
-    );
+    debugPrint('Current time: ${tz.TZDateTime.now(tz.local)}');
+    debugPrint('Scheduled time: $scheduledDate');
+    debugPrint('Time zone: ${tz.local}');
 
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    // Ensure the scheduled time is in the future
+    tz.TZDateTime effectiveScheduledDate = scheduledDate;
+    if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
+      effectiveScheduledDate = scheduledDate.add(const Duration(days: 1));
     }
-    final String formattedTime =
-        '${scheduleTime.hour.toString().padLeft(2, '0')}:${scheduleTime.minute.toString().padLeft(2, '0')}';
-    final String title = 'Time to take $medicineName';
-    final String body = 'Take $dosage at $formattedTime';
 
     debugPrint(
-        'Scheduling notification: id=$id, title=$title, body=$body, scheduledDate=$scheduledDate, localTime=${scheduledDate.toLocal()}');
+        'Scheduling notification: id=$id, title=$title, body=$body, scheduledDate=$effectiveScheduledDate');
 
     try {
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
         body,
-        scheduledDate,
+        effectiveScheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'medicine_notification_channel',

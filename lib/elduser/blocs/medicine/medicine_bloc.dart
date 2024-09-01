@@ -1,7 +1,6 @@
 import 'package:eldcare/elduser/models/medicine.dart';
 import 'package:eldcare/elduser/presentation/homescreen/notification_service.dart';
 import 'package:eldcare/elduser/repository/medicine_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'medicine_event.dart';
@@ -111,11 +110,21 @@ class MedicineBloc extends Bloc<MedicineEvent, MedicineState> {
       String notificationBody =
           'Time to take ${medicine.name} - ${schedule.dosage}';
 
+      // Create a DateTime object for today with the scheduled time
+      final now = DateTime.now();
+      final scheduleTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        schedule.time.hour,
+        schedule.time.minute,
+      );
+
       await _notificationService.scheduleNotification(
         notificationId,
         notificationTitle,
         notificationBody,
-        TimeOfDay(hour: schedule.time.hour, minute: schedule.time.minute),
+        scheduleTime,
       );
     }
   }
