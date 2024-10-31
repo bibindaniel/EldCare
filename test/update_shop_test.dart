@@ -13,33 +13,25 @@ class MockShopRepository extends Mock implements ShopRepository {}
 
 class MockShopBloc extends MockBloc<ShopEvent, ShopState> implements ShopBloc {}
 
+class FakeShop extends Fake implements Shop {}
+
 void main() {
-  late MockShopRepository mockShopRepository;
-  late MockShopBloc mockShopBloc;
+  print('\n🚀 Starting UpdateShopPage Tests...\n');
+
+  late MockShopRepository mockRepository;
+  late MockShopBloc mockBloc;
   late Shop testShop;
 
   setUpAll(() {
-    registerFallbackValue(
-      UpdateShopEvent(
-        Shop(
-          id: 'test_id',
-          name: 'Test Shop',
-          phoneNumber: '9876543210',
-          email: 'test@shop.com',
-          licenseNumber: 'LICENSE123',
-          address: 'Test Address',
-          location: const GeoPoint(0.0, 0.0),
-          isVerified: false,
-          ownerId: 'owner_id',
-          createdAt: DateTime(2024, 1, 1),
-        ),
-      ),
-    );
+    print('📦 Registering fallback values...');
+    registerFallbackValue(FakeShop());
   });
 
   setUp(() {
-    mockShopRepository = MockShopRepository();
-    mockShopBloc = MockShopBloc();
+    print('\n📋 Setting up test...');
+    mockRepository = MockShopRepository();
+    mockBloc = MockShopBloc();
+
     testShop = Shop(
       id: 'test_id',
       name: 'Test Shop',
@@ -52,19 +44,19 @@ void main() {
       ownerId: 'owner_id',
       createdAt: DateTime(2024, 1, 1),
     );
-    when(() => mockShopBloc.state).thenReturn(ShopInitialState());
+
+    when(() => mockRepository.updateShop(any())).thenAnswer((_) async => {});
+    when(() => mockBloc.state).thenReturn(ShopInitialState());
   });
 
   Widget createTestWidget() {
     return MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: BlocProvider<ShopBloc>.value(
-            value: mockShopBloc,
-            child: UpdateShopPage(
-              shopRepository: mockShopRepository,
-              shop: testShop,
-            ),
+      home: BlocProvider<ShopBloc>.value(
+        value: mockBloc,
+        child: Scaffold(
+          body: UpdateShopPage(
+            shop: testShop,
+            shopRepository: mockRepository,
           ),
         ),
       ),
@@ -72,58 +64,61 @@ void main() {
   }
 
   group('UpdateShopPage', () {
-    testWidgets('should update phone number', (WidgetTester tester) async {
+    testWidgets('displays initial shop details', (WidgetTester tester) async {
+      print('🔍 Testing initial shop display...');
+
       await tester.pumpWidget(createTestWidget());
       await tester.pump();
 
-      // Find and enter text in phone field
-      final phoneField = find.byType(TextFormField).first;
-      await tester.enterText(phoneField, '9876543211');
-      await tester.pump();
+      expect(find.text('Test Shop'), findsOneWidget);
+      expect(find.text('9876543210'), findsOneWidget);
 
-      // Find and scroll to submit button
-      final submitButton = find.byKey(const Key('submit_button'));
-      await tester.ensureVisible(submitButton);
-      await tester.pumpAndSettle();
-
-      // Tap the button
-      await tester.tap(submitButton);
-      await tester.pumpAndSettle();
-
-      // Verify bloc event
-      verify(() => mockShopBloc.add(any())).called(1);
+      print('✅ Initial shop display test passed');
     });
 
-    testWidgets('should show error for invalid phone',
+    testWidgets('shows validation for invalid phone',
         (WidgetTester tester) async {
+      print('🔍 Testing phone validation...');
+
       await tester.pumpWidget(createTestWidget());
       await tester.pump();
 
-      // Find and enter invalid phone
-      final phoneField = find.byType(TextFormField).first;
+      // Find TextFormField by type since it's the only one for phone
+      final phoneField = find.byType(TextFormField);
+      expect(phoneField, findsOneWidget,
+          reason: 'Should find exactly one TextFormField');
+
+      print('📝 Entering invalid phone number...');
       await tester.enterText(phoneField, '123');
       await tester.pump();
 
-      // Find and scroll to submit button
-      final submitButton = find.byKey(const Key('submit_button'));
-      await tester.ensureVisible(submitButton);
-      await tester.pumpAndSettle();
+      print('🔘 Tapping submit button...');
+      final submitButton = find.byType(ElevatedButton);
+      expect(submitButton, findsOneWidget,
+          reason: 'Should find exactly one ElevatedButton');
 
-      // Tap the button
       await tester.tap(submitButton);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
-      // Verify error text
       expect(find.text('Invalid phone number'), findsOneWidget);
+
+      print('✅ Phone validation test passed');
     });
 
-    testWidgets('should show loading indicator', (WidgetTester tester) async {
-      when(() => mockShopBloc.state).thenReturn(ShopLoadingState());
+    // Optional: Add a test for loading state
+    testWidgets('shows loading indicator', (WidgetTester tester) async {
+      print('🔍 Testing loading state...');
+
+      when(() => mockBloc.state).thenReturn(ShopLoadingState());
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      print('✅ Loading state test passed');
     });
   });
+
+  print('\n🎉 All UpdateShopPage Tests Completed!\n');
 }

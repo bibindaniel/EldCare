@@ -77,6 +77,8 @@ dev_dependencies:
     sdk: flutter
   mocktail: ^1.0.0
   bloc_test: ^9.1.5
+  build_runner: ^2.4.8
+  mockito: ^5.4.4
   flutter_driver:
     sdk: flutter
   test:  
