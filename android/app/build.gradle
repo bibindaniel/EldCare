@@ -1,0 +1,81 @@
+plugins {
+    id "com.android.application"
+    // START: FlutterFire Configuration
+    id 'com.google.gms.google-services'
+    // END: FlutterFire Configuration
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader("UTF-8") { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty("flutter.versionCode")
+if (flutterVersionCode == null) {
+    flutterVersionCode = "1"
+}
+
+def flutterVersionName = localProperties.getProperty("flutter.versionName")
+if (flutterVersionName == null) {
+    flutterVersionName = "1.0"
+}
+def apikeyPropertiesFile = rootProject.file("apikey.properties")
+def apikeyProperties = new Properties()
+apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
+android {
+    namespace = "com.example.eldcare"
+    compileSdk = 33 
+    compileSdkVersion 34
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "com.example.eldcare"
+        minSdk = 21 // Explicitly set minSdkVersion
+        targetSdk = 33 // Explicitly set targetSdkVersion
+        versionCode = flutterVersionCode.toInteger()
+        versionName = flutterVersionName
+        minSdkVersion 26    
+        // Ensure multiDex is enabled if needed
+        multiDexEnabled true
+                // applicationId = "com.example.eldcare"
+        manifestPlaceholders = [
+            "googleMapsApiKey": "${apikeyProperties['GOOGLE_MAPS_API_KEY']}",
+            "applicationName": "eldcare"
+        ]
+
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+dependencies {
+    implementation 'com.razorpay:checkout:1.6.26'
+}
+flutter {
+    source = "../.."
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "androidx.work:work-runtime:2.8.1"
+        force "androidx.work:work-runtime-ktx:2.8.1"
+        eachDependency {
+            if ((requested.group == "org.jetbrains.kotlin") && (requested.name.startsWith("kotlin-stdlib"))) {
+                useVersion("1.8.0")
+            }
+        }
+    }
+}
