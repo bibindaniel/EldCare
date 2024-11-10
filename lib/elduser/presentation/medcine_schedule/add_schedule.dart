@@ -148,7 +148,9 @@ class AddMedicinePageState extends State<AddMedicinePage> {
                         currentStep: _currentStep,
                         onStepContinue: () {
                           if (_currentStep < 1) {
-                            setState(() => _currentStep += 1);
+                            if (_validateFirstStep(context)) {
+                              setState(() => _currentStep += 1);
+                            }
                           } else {
                             _submitForm(context);
                           }
@@ -428,26 +430,19 @@ class AddMedicinePageState extends State<AddMedicinePage> {
   }
 
   void _submitForm(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedShape.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a medicine shape'),
-            backgroundColor: kErrorColor,
-          ),
-        );
-        return;
-      }
-      if (_selectedColorName.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a medicine color'),
-            backgroundColor: kErrorColor,
-          ),
-        );
-        return;
-      }
+    // First validate the medicine details form
+    bool isFirstStepValid = _validateFirstStep(context);
 
+    if (!isFirstStepValid) {
+      // If first step is not valid, move back to it
+      setState(() {
+        _currentStep = 0;
+      });
+      return;
+    }
+
+    // Then validate the schedule form
+    if (_formKey.currentState!.validate()) {
       final medicine = Medicine(
         name: _nameController.text,
         quantity: int.parse(_quantityController.text),
@@ -462,9 +457,70 @@ class AddMedicinePageState extends State<AddMedicinePage> {
       context.read<MedicineBloc>().add(AddAndScheduleMedicine(
             medicine: medicine,
           ));
-    } else {
-      print("Form validation failed");
     }
+  }
+
+  bool _validateFirstStep(BuildContext context) {
+    bool isValid = true;
+
+    // Validate medicine name
+    if (_nameController.text.isEmpty) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the medicine name'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    }
+
+    // Validate quantity
+    else if (_quantityController.text.isEmpty ||
+        int.tryParse(_quantityController.text) == null ||
+        int.parse(_quantityController.text) <= 0) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid quantity'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    }
+
+    // Validate shape selection
+    else if (_selectedShape.isEmpty) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a medicine shape'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    }
+
+    // Validate color selection
+    else if (_selectedColorName.isEmpty) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a medicine color'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    }
+
+    // Validate date range
+    else if (_endDate.isBefore(_startDate)) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('End date must be after start date'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    }
+
+    return isValid;
   }
 
   Widget _buildTextField(String label, TextEditingController controller,

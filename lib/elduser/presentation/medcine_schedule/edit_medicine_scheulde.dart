@@ -9,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class EditMedicinePage extends StatefulWidget {
   final Medicine medicine;
 
-  const EditMedicinePage({Key? key, required this.medicine}) : super(key: key);
+  const EditMedicinePage({super.key, required this.medicine});
 
   @override
   EditMedicinePageState createState() => EditMedicinePageState();
@@ -30,7 +30,7 @@ class EditMedicinePageState extends State<EditMedicinePage> {
   late List<MedicineSchedule> _schedules;
   bool _sameDosageForAll = true;
   late TextEditingController _commonDosageController;
-
+  final Map<int, Map<String, TextEditingController>> _scheduleControllers = {};
   final List<Map<String, dynamic>> medicineColors = [
     {'name': 'White', 'color': Colors.white},
     {'name': 'Cream', 'color': const Color(0xFFFFFDD0)},
@@ -161,7 +161,9 @@ class EditMedicinePageState extends State<EditMedicinePage> {
                         currentStep: _currentStep,
                         onStepContinue: () {
                           if (_currentStep < 1) {
-                            setState(() => _currentStep += 1);
+                            if (_validateFirstStep(context)) {
+                              setState(() => _currentStep += 1);
+                            }
                           } else {
                             _submitForm(context);
                           }
@@ -321,6 +323,12 @@ class EditMedicinePageState extends State<EditMedicinePage> {
                 borderRadius: BorderRadius.circular(15),
               ),
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the dosage';
+              }
+              return null;
+            },
             onChanged: (value) {
               setState(() {
                 _schedules = _schedules
@@ -337,12 +345,27 @@ class EditMedicinePageState extends State<EditMedicinePage> {
         ..._schedules.asMap().entries.map((entry) {
           int idx = entry.key;
           MedicineSchedule schedule = entry.value;
-          TextEditingController timeController = TextEditingController(
-            text: DateFormat.jm().format(schedule.time),
+
+          // Create persistent controllers for each schedule
+          if (!_scheduleControllers.containsKey(idx)) {
+            _scheduleControllers[idx] = {
+              'time': TextEditingController(
+                text: DateFormat.jm().format(schedule.time),
+              ),
+              'dosage': TextEditingController(
+                text: schedule.dosage,
+              ),
+            };
+          }
+
+          final timeController = _scheduleControllers[idx]!['time']!;
+          final dosageController = _scheduleControllers[idx]!['dosage']!;
+
+          // Maintain cursor position
+          dosageController.selection = TextSelection.fromPosition(
+            TextPosition(offset: schedule.dosage.length),
           );
-          TextEditingController dosageController = TextEditingController(
-            text: schedule.dosage,
-          );
+
           return Column(
             children: [
               ListTile(
@@ -386,11 +409,21 @@ class EditMedicinePageState extends State<EditMedicinePage> {
                     decoration: InputDecoration(
                       labelText: 'Dosage ${idx + 1}',
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the dosage';
+                      }
+                      return null;
+                    },
                     onChanged: (value) {
                       setState(() {
                         _schedules[idx] = MedicineSchedule(
                           time: schedule.time,
                           dosage: value,
+                        );
+                        // Maintain cursor position
+                        dosageController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: value.length),
                         );
                       });
                     },
@@ -426,26 +459,16 @@ class EditMedicinePageState extends State<EditMedicinePage> {
   }
 
   void _submitForm(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedShape.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a medicine shape'),
-            backgroundColor: kErrorColor,
-          ),
-        );
-        return;
-      }
-      if (_selectedColorName.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a medicine color'),
-            backgroundColor: kErrorColor,
-          ),
-        );
-        return;
-      }
+    bool isFirstStepValid = _validateFirstStep(context);
 
+    if (!isFirstStepValid) {
+      setState(() {
+        _currentStep = 0;
+      });
+      return;
+    }
+
+    if (_formKey.currentState!.validate()) {
       final updatedMedicine = Medicine(
         id: widget.medicine.id,
         name: _nameController.text,
@@ -461,9 +484,57 @@ class EditMedicinePageState extends State<EditMedicinePage> {
       context
           .read<MedicineBloc>()
           .add(UpdateMedicine(medicine: updatedMedicine));
-    } else {
-      print("Form validation failed");
     }
+  }
+
+  bool _validateFirstStep(BuildContext context) {
+    bool isValid = true;
+
+    if (_nameController.text.isEmpty) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the medicine name'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    } else if (_quantityController.text.isEmpty ||
+        int.tryParse(_quantityController.text) == null ||
+        int.parse(_quantityController.text) <= 0) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid quantity'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    } else if (_selectedShape.isEmpty) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a medicine shape'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    } else if (_selectedColorName.isEmpty) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a medicine color'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    } else if (_endDate.isBefore(_startDate)) {
+      isValid = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('End date must be after start date'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    }
+
+    return isValid;
   }
 
   Widget _buildTextField(String label, TextEditingController controller,
