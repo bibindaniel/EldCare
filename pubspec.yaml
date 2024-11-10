@@ -73,15 +73,15 @@ dependencies:
 
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  mocktail: ^1.0.0
-  bloc_test: ^9.1.5
-  build_runner: ^2.4.8
-  mockito: ^5.4.4
-  flutter_driver:
-    sdk: flutter
-  test:  
+  # flutter_test:
+  #   sdk: flutter
+  # mocktail: ^1.0.0
+  # bloc_test: ^9.1.5
+  # build_runner: ^2.4.8
+  # mockito: ^5.4.4
+  # flutter_driver:
+  #   sdk: flutter
+  # test:  
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

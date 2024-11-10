@@ -35,7 +35,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:workmanager/workmanager.dart';
-import 'package:flutter_driver/driver_extension.dart';
+// import 'package:flutter_driver/driver_extension.dart';
 
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
@@ -57,7 +57,7 @@ void callbackDispatcher() {
 }
 
 void main() async {
-  enableFlutterDriverExtension();
+  // enableFlutterDriverExtension();
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   tz.initializeTimeZones();
