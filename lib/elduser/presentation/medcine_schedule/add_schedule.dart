@@ -333,6 +333,9 @@ class AddMedicinePageState extends State<AddMedicinePage> {
           TextEditingController dosageController = TextEditingController(
             text: schedule.dosage,
           );
+          dosageController.selection = TextSelection.fromPosition(
+            TextPosition(offset: schedule.dosage.length),
+          );
           return Column(
             children: [
               ListTile(
@@ -387,6 +390,9 @@ class AddMedicinePageState extends State<AddMedicinePage> {
                         _schedules[idx] = MedicineSchedule(
                           time: schedule.time,
                           dosage: value,
+                        );
+                        dosageController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: value.length),
                         );
                       });
                     },
