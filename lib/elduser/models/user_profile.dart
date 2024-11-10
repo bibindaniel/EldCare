@@ -13,6 +13,7 @@ class UserProfile {
   final String? profileImageUrl;
   final bool isVerified;
   final bool isProfileComplete;
+  final bool isBlocked;
 
   UserProfile({
     required this.id,
@@ -29,6 +30,7 @@ class UserProfile {
     this.profileImageUrl,
     this.isVerified = false,
     this.isProfileComplete = false,
+    this.isBlocked = false,
   });
 
   factory UserProfile.fromMap(Map<String, dynamic> map, String documentId) {
@@ -47,6 +49,7 @@ class UserProfile {
       profileImageUrl: map['profileImageUrl'],
       isVerified: map['isVerified'] ?? false,
       isProfileComplete: map['isProfileComplete'] ?? false,
+      isBlocked: map['isBlocked'] ?? false,
     );
   }
 
@@ -65,6 +68,7 @@ class UserProfile {
       'profileImageUrl': profileImageUrl,
       'isVerified': isVerified,
       'isProfileComplete': isProfileComplete,
+      'isBlocked': isBlocked,
     };
   }
 
@@ -82,6 +86,7 @@ class UserProfile {
     String? profileImageUrl,
     bool? isVerified,
     bool? isProfileComplete,
+    bool? isBlocked,
   }) {
     return UserProfile(
       id: this.id,
@@ -98,6 +103,7 @@ class UserProfile {
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isVerified: isVerified ?? this.isVerified,
       isProfileComplete: isProfileComplete ?? this.isProfileComplete,
+      isBlocked: isBlocked ?? this.isBlocked,
     );
   }
 }

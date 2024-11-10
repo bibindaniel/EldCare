@@ -63,7 +63,7 @@ class AdminPanelState extends State<AdminPanel> {
       case 1:
         return BlocProvider<UserBloc>(
           create: (context) => UserBloc(UserRepository())..add(FetchUsers()),
-          child: const UsersPage(),
+          child: const UserManagementPage(),
         );
       case 2:
         return MultiBlocProvider(

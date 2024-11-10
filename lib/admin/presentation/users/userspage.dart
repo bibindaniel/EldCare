@@ -1,226 +1,321 @@
-import 'package:eldcare/admin/blocs/users/users_bloc.dart';
-import 'package:eldcare/admin/presentation/users/datatables.dart';
 import 'package:flutter/material.dart';
-import 'package:eldcare/admin/presentation/adminstyles/adminstyles.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:eldcare/admin/repository/users.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server/gmail.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-class UsersPage extends StatelessWidget {
-  const UsersPage({super.key});
+class UserManagementPage extends StatelessWidget {
+  const UserManagementPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserBloc, UserState>(
-      builder: (context, state) {
-        if (state is UserLoading) {
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('User Management'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Elderly Users'),
+              Tab(text: 'Pharmacists'),
+              Tab(text: 'Delivery Guys'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _UserListView(userType: 'elderly'),
+            _UserListView(userType: 'pharmacist'),
+            _UserListView(userType: 'delivery'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UserListView extends StatelessWidget {
+  final String userType;
+  final UserRepository _repository = UserRepository();
+
+  _UserListView({required this.userType});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: _getUsersByType(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        } else if (state is UserError) {
-          return Center(child: Text('Error: ${state.message}'));
-        } else if (state is UserLoaded) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Users Management', style: AdminStyles.headerStyle),
-                const SizedBox(height: 20),
-                // _buildSearchAndFilter(),
-                const SizedBox(height: 20),
-                UsersTableWidget(
-                  elderlyUsers: state.elderlyUsers,
-                  pharmacists: state.pharmacists,
-                ),
-                const SizedBox(height: 20),
-                _buildPendingApprovals(),
-                const SizedBox(height: 20),
-                _buildUserStatistics(),
-                const SizedBox(height: 20),
-                _buildRecentUserActivity(),
-              ],
-            ),
-          );
-        } else {
-          return const Center(child: Text('No data available'));
         }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        final users = snapshot.data ?? [];
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return _UserCard(
+              user: user,
+              userType: userType,
+            );
+          },
+        );
       },
     );
   }
 
-//   Widget _buildUsersTable(
-//     List<UserProfile> elderlyUsers, List<PharmacistProfile> pharmacists) {
-//   return Column(
-//     children: [
-//       const Text('Elderly Users', style: AdminStyles.subHeaderStyle),
-//       Card(
-//         elevation: 4,
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-//         child: PaginatedDataTable(
-//           header: const Text('Elderly Users', style: AdminStyles.subHeaderStyle),
-//           columns: const [
-//             DataColumn(label: Text('Name', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('Email', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('Phone', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('Address', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('Verified', style: AdminStyles.subHeaderStyle)),
-//           ],
-//           source: UserDataTableSource(elderlyUsers),
-//           rowsPerPage: PaginatedDataTable.defaultRowsPerPage,
-//           onRowsPerPageChanged: (rowsPerPage) {
-//             setState(() {
-//               _rowsPerPage = rowsPerPage!;
-//             });
-//           },
-//         ),
-//       ),
-//       const SizedBox(height: 20),
-//       const Text('Pharmacists', style: AdminStyles.subHeaderStyle),
-//       Card(
-//         elevation: 4,
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-//         child: PaginatedDataTable(
-//           header: const Text('Pharmacists', style: AdminStyles.subHeaderStyle),
-//           columns: const [
-//             DataColumn(label: Text('Name', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('Email', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('Phone', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('License Number', style: AdminStyles.subHeaderStyle)),
-//             DataColumn(label: Text('Verified', style: AdminStyles.subHeaderStyle)),
-//           ],
-//           source: PharmacistDataTableSource(pharmacists),
-//           rowsPerPage: PaginatedDataTable.defaultRowsPerPage,
-//           onRowsPerPageChanged: (rowsPerPage) {
-//             setState(() {
-//               _rowsPerPagePharmacist = rowsPerPage!;
-//             });
-//           },
-//         ),
-//       ),
-//     ],
-//   );
-// }
-
-  DataRow _buildDataRow(
-      String name, String contact, String address, String caregiver) {
-    return DataRow(
-      cells: [
-        DataCell(Text(name, style: AdminStyles.bodyStyle)),
-        DataCell(Text(contact, style: AdminStyles.bodyStyle)),
-        DataCell(Text(address, style: AdminStyles.bodyStyle)),
-        DataCell(Text(caregiver, style: AdminStyles.bodyStyle)),
-        DataCell(Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.visibility, color: Colors.blue),
-              onPressed: () {},
-              tooltip: 'View',
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit, color: Colors.green),
-              onPressed: () {},
-              tooltip: 'Edit',
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () {},
-              tooltip: 'Delete',
-            ),
-          ],
-        )),
-      ],
-    );
+  Future<List<dynamic>> _getUsersByType() {
+    switch (userType) {
+      case 'elderly':
+        return _repository.getElderlyUsers();
+      case 'pharmacist':
+        return _repository.getPharmacists();
+      case 'delivery':
+        return _repository.getDeliveryGuys();
+      default:
+        throw Exception('Invalid user type');
+    }
   }
+}
 
-  Widget _buildUserStatistics() {
+class _UserCard extends StatelessWidget {
+  final dynamic user;
+  final String userType;
+
+  const _UserCard({required this.user, required this.userType});
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('User Statistics', style: AdminStyles.subHeaderStyle),
-            const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildOverviewCard(
-                    'Total Users', '1,234', Icons.people, Colors.blue),
-                _buildOverviewCard(
-                    'Active Users', '567', Icons.check_circle, Colors.green),
-                _buildOverviewCard(
-                    'Inactive Users', '89', Icons.cancel, Colors.orange),
-                _buildOverviewCard(
-                    'New Users', '45', Icons.person_add, Colors.red),
-              ],
-            ),
-          ],
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: InkWell(
+        onTap: () => _showUserDetailsDialog(context),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              _buildUserAvatar(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            user.name ?? 'Unknown',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (user.isVerified)
+                          const Icon(Icons.verified,
+                              color: Colors.blue, size: 20),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email ?? 'No email',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.phone, size: 16, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          user.phone ?? 'No phone',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildOverviewCard(
-      String title, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: color),
-            const SizedBox(height: 8),
-            Text(value,
-                style: AdminStyles.subHeaderStyle.copyWith(color: color)),
-            const SizedBox(height: 4),
-            Text(title, style: AdminStyles.captionStyle),
-          ],
+  Widget _buildUserAvatar() {
+    return CircleAvatar(
+      radius: 30,
+      backgroundColor: Colors.grey[200],
+      child: user.profileImageUrl != null
+          ? ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: user.profileImageUrl!,
+                fit: BoxFit.cover,
+                width: 60,
+                height: 60,
+                placeholder: (context, url) =>
+                    const CircularProgressIndicator(),
+                errorWidget: (context, url, error) => const Icon(Icons.person),
+              ),
+            )
+          : const Icon(Icons.person, size: 40),
+    );
+  }
+
+  void _showUserDetailsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _buildUserAvatar(),
+                    const SizedBox(height: 16),
+                    Text(
+                      user.name ?? 'Unknown',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    if (user.isVerified)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.verified, color: Colors.white, size: 20),
+                            SizedBox(width: 4),
+                            Text(
+                              'Verified User',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildDetailItem('Email', user.email, Icons.email),
+                    _buildDetailItem('Phone', user.phone, Icons.phone),
+                    _buildDetailItem(
+                        'Age', user.age?.toString(), Icons.calendar_today),
+                    if (userType == 'elderly') ...[
+                      _buildDetailItem(
+                          'Blood Type', user.bloodType, Icons.bloodtype),
+                    ] else if (userType == 'pharmacist') ...[
+                      // _buildDetailItem(
+                      //     'License Number', user.licenseNumber, Icons.badge),
+                    ],
+                    const Divider(),
+                    _buildDetailItem(
+                        'House', user.houseName, Icons.house_outlined),
+                    _buildDetailItem('Street', user.street, Icons.route),
+                    _buildDetailItem('City', user.city, Icons.location_city),
+                    _buildDetailItem('State', user.state, Icons.map),
+                    _buildDetailItem('Postal Code', user.postalCode,
+                        Icons.local_post_office),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    if (userType != 'blocked')
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _showBlockDialog(context, user);
+                        },
+                        icon: const Icon(Icons.block),
+                        label: const Text('Block User'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                      ),
+                    if (userType == 'blocked')
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _unblockUser(context, user.id);
+                        },
+                        icon: const Icon(Icons.check),
+                        label: const Text('Unblock User'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
+                      ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.close),
+                      label: const Text('Close'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRecentUserActivity() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Recent User Activity',
-                style: AdminStyles.subHeaderStyle),
-            const SizedBox(height: 16),
-            _buildActivityItem(Icons.login, 'John Doe logged in', '2m ago'),
-            _buildActivityItem(
-                Icons.person_add, 'Alice Johnson registered', '15m ago'),
-            _buildActivityItem(
-                Icons.edit, 'David Lee updated profile', '1h ago'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(IconData icon, String title, String time) {
+  Widget _buildDetailItem(String label, String? value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 24, color: AdminStyles.primaryColor),
-          const SizedBox(width: 12),
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AdminStyles.bodyStyle),
-                Text(time, style: AdminStyles.captionStyle),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                Text(
+                  value ?? 'Not provided',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
@@ -229,58 +324,102 @@ class UsersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPendingApprovals() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Pending Approvals', style: AdminStyles.subHeaderStyle),
-            const SizedBox(height: 16),
-            _buildApprovalItem('John Doe', 'john.doe@example.com', 'Admin'),
-            _buildApprovalItem(
-                'Alice Johnson', 'alice.johnson@example.com', 'Caregiver'),
-            _buildApprovalItem('David Lee', 'david.lee@example.com', 'Elderly'),
+  void _showBlockDialog(BuildContext context, dynamic user) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final TextEditingController reasonController = TextEditingController();
+        return AlertDialog(
+          title: const Text('Block User'),
+          content: TextField(
+            controller: reasonController,
+            decoration: const InputDecoration(hintText: 'Reason for blocking'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _blockUser(context, user, reasonController.text);
+              },
+              child: const Text('Block'),
+            ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildApprovalItem(String name, String email, String role) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: AdminStyles.bodyStyle),
-                Text(email, style: AdminStyles.captionStyle),
-                Text('Role: $role', style: AdminStyles.captionStyle),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.check_circle, color: Colors.green),
-            onPressed: () {
-              // Approve user logic
-            },
-            tooltip: 'Approve',
-          ),
-          IconButton(
-            icon: const Icon(Icons.cancel, color: Colors.red),
-            onPressed: () {
-              // Reject user logic
-            },
-            tooltip: 'Reject',
-          ),
-        ],
-      ),
-    );
+  void _blockUser(BuildContext context, dynamic user, String reason) async {
+    try {
+      // Update user status in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.id)
+          .update({'isBlocked': true, 'blockReason': reason});
+
+      // Send email to user with the reason
+      await _sendBlockEmail(user.email, reason);
+
+      // Show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User blocked successfully')),
+      );
+    } catch (e) {
+      // Show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error blocking user: $e')),
+      );
+    } finally {
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _sendBlockEmail(String email, String reason) async {
+    final String emailUsername = dotenv.env['EMAIL_USERNAME'] ?? '';
+    final String emailPassword = dotenv.env['EMAIL_PASSWORD'] ?? '';
+
+    if (emailUsername.isEmpty || emailPassword.isEmpty) {
+      print('Email credentials are not set. Please check your .env file.');
+      return;
+    }
+
+    final smtpServer = gmail(emailUsername, emailPassword);
+
+    final message = Message()
+      ..from = Address(emailUsername, 'EldCare Admin')
+      ..recipients.add(email)
+      ..subject = 'Account Blocked'
+      ..text =
+          'Your account has been blocked for the following reason: $reason';
+
+    try {
+      final sendReport = await send(message, smtpServer);
+      print('Block email sent: ${sendReport.toString()}');
+    } on MailerException catch (e) {
+      print('Error sending block email: ${e.toString()}');
+    }
+  }
+
+  void _unblockUser(BuildContext context, String userId) async {
+    try {
+      // Update user status in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({'isBlocked': false, 'blockReason': FieldValue.delete()});
+
+      // Show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User unblocked successfully')),
+      );
+    } catch (e) {
+      // Show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error unblocking user: $e')),
+      );
+    }
   }
 }
