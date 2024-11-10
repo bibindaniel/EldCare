@@ -65,7 +65,7 @@ class _ProfileCompletionPageState extends State<ProfileCompletionPage> {
                 ),
               );
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                MaterialPageRoute(builder: (context) => HomeScreen()),
                 (Route<dynamic> route) => false,
               );
             }

@@ -20,9 +20,11 @@ import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_event.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_state.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
+  final googleSignIn = GoogleSignIn();
 
   @override
   Widget build(BuildContext context) {
@@ -323,6 +325,7 @@ class HomeScreen extends StatelessWidget {
             title: const Text('Logout'),
             onTap: () {
               Navigator.pop(context);
+              googleSignIn.signOut();
               context.read<AuthBloc>().add(LogoutEvent());
             },
           ),
