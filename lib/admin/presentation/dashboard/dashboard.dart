@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:eldcare/admin/presentation/adminstyles/adminstyles.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -19,8 +22,6 @@ class Dashboard extends StatelessWidget {
           const SizedBox(height: 20),
           _buildRecentActivity(),
           const SizedBox(height: 20),
-          _buildQuickActions(),
-          const SizedBox(height: 20),
           _buildNotifications(),
         ],
       ),
@@ -28,20 +29,58 @@ class Dashboard extends StatelessWidget {
   }
 
   Widget _buildOverviewCards() {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
-        _buildOverviewCard('Total Users', '1,234', Icons.people, Colors.blue),
-        _buildOverviewCard(
-            'Total Medicines', '567', Icons.medication, Colors.green),
-        _buildOverviewCard(
-            'Schedules', '89', Icons.calendar_today, Colors.orange),
-        _buildOverviewCard('Reminders', '45', Icons.alarm, Colors.red),
-      ],
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      builder: (context, userSnapshot) {
+        int totalUsers =
+            userSnapshot.hasData ? userSnapshot.data!.docs.length : 0;
+
+        return StreamBuilder<QuerySnapshot>(
+          stream:
+              FirebaseFirestore.instance.collection('medicines').snapshots(),
+          builder: (context, medicineSnapshot) {
+            int totalMedicines = medicineSnapshot.hasData
+                ? medicineSnapshot.data!.docs.length
+                : 0;
+
+            return StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('orders').snapshots(),
+              builder: (context, orderSnapshot) {
+                int totalOrders =
+                    orderSnapshot.hasData ? orderSnapshot.data!.docs.length : 0;
+
+                int pendingOrders = orderSnapshot.hasData
+                    ? orderSnapshot.data!.docs
+                        .where((doc) => doc['status'] == 'pending')
+                        .length
+                    : 0;
+
+                return GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildOverviewCard('Total Users', totalUsers.toString(),
+                        Icons.people, Colors.blue),
+                    _buildOverviewCard(
+                        'Total Medicines',
+                        totalMedicines.toString(),
+                        Icons.medication,
+                        Colors.green),
+                    _buildOverviewCard('Total Orders', totalOrders.toString(),
+                        Icons.shopping_cart, Colors.orange),
+                    _buildOverviewCard('Pending Orders',
+                        pendingOrders.toString(), Icons.pending, Colors.red),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
@@ -78,14 +117,92 @@ class Dashboard extends StatelessWidget {
           children: [
             const Text('Analytics', style: AdminStyles.subHeaderStyle),
             const SizedBox(height: 16),
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                color: Colors.grey[200],
-                child: const Center(
-                    child: Text('User Growth Chart',
-                        style: AdminStyles.bodyStyle)),
-              ),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('orders')
+                  .orderBy('createdAt', descending: false)
+                  .limitToLast(30)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text('No order data available'),
+                  );
+                }
+
+                Map<DateTime, double> revenueByDate = {};
+                for (var doc in snapshot.data!.docs) {
+                  final date = (doc['createdAt'] as Timestamp).toDate();
+                  final dateOnly = DateTime(date.year, date.month, date.day);
+                  final totalAmount = doc['totalAmount'] as double;
+                  revenueByDate[dateOnly] =
+                      (revenueByDate[dateOnly] ?? 0) + totalAmount;
+                }
+
+                List<BarChartGroupData> barGroups =
+                    revenueByDate.entries.map((entry) {
+                  final date = entry.key;
+                  final revenue = entry.value;
+                  return BarChartGroupData(
+                    x: date.day,
+                    barRods: [
+                      BarChartRodData(
+                        toY: revenue,
+                        color: AdminStyles.primaryColor,
+                        width: 16,
+                      ),
+                    ],
+                  );
+                }).toList();
+
+                return SizedBox(
+                  height: 300,
+                  child: BarChart(
+                    BarChartData(
+                      barGroups: barGroups,
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              final date = DateTime.now()
+                                  .subtract(Duration(days: 30 - value.toInt()));
+                              return Text(
+                                '${date.day}/${date.month}',
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              return Text(
+                                NumberFormat.compactCurrency(
+                                  locale: 'en_IN',
+                                  symbol: '₹',
+                                  decimalDigits: 0,
+                                ).format(value),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      gridData: const FlGridData(show: true),
+                      borderData: FlBorderData(show: true),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -104,11 +221,41 @@ class Dashboard extends StatelessWidget {
           children: [
             const Text('Recent Activity', style: AdminStyles.subHeaderStyle),
             const SizedBox(height: 16),
-            _buildActivityItem(Icons.login, 'John Doe logged in', '2m ago'),
-            _buildActivityItem(
-                Icons.medication_liquid, 'New medicine: Aspirin', '15m ago'),
-            _buildActivityItem(
-                Icons.edit_calendar, 'Schedule updated for Jane', '1h ago'),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('orders')
+                  .orderBy('createdAt', descending: true)
+                  .limit(5)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return Column(
+                  children: snapshot.data!.docs.map((doc) {
+                    double totalAmount = doc['totalAmount'];
+                    DateTime createdAt =
+                        (doc['createdAt'] as Timestamp).toDate();
+                    String formattedTime =
+                        DateFormat.yMd().add_jm().format(createdAt);
+
+                    // Format the amount with Indian Rupee symbol
+                    String formattedAmount = NumberFormat.currency(
+                      locale: 'en_IN',
+                      symbol: '₹',
+                      decimalDigits: 2,
+                    ).format(totalAmount);
+
+                    return _buildActivityItem(
+                      Icons.shopping_cart,
+                      'Order Total: $formattedAmount',
+                      formattedTime,
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -136,42 +283,6 @@ class Dashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Quick Actions', style: AdminStyles.subHeaderStyle),
-            const SizedBox(height: 16),
-            _buildActionButton('Add New User', Icons.person_add),
-            const SizedBox(height: 8),
-            _buildActionButton('Add New Medicine', Icons.medical_services),
-            const SizedBox(height: 8),
-            _buildActionButton('Create New Schedule', Icons.schedule),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(String label, IconData icon) {
-    return ElevatedButton.icon(
-      onPressed: () {},
-      icon: Icon(icon),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: AdminStyles.primaryColor,
-        minimumSize: const Size(double.infinity, 40),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-
   Widget _buildNotifications() {
     return Card(
       elevation: 4,
@@ -183,11 +294,25 @@ class Dashboard extends StatelessWidget {
           children: [
             const Text('Notifications', style: AdminStyles.subHeaderStyle),
             const SizedBox(height: 16),
-            _buildNotificationItem(
-                '3 pending user approvals', Icons.person_add),
-            _buildNotificationItem('5 unread messages', Icons.mail),
-            _buildNotificationItem(
-                'System update available', Icons.system_update),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('notifications')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return Column(
+                  children: snapshot.data!.docs.map((doc) {
+                    return _buildNotificationItem(
+                      doc['message'],
+                      Icons.notifications,
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ],
         ),
       ),
