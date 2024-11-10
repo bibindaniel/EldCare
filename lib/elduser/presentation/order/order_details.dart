@@ -4,17 +4,76 @@ import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/elduser/models/order.dart';
 import 'package:lottie/lottie.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+import 'dart:io';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eldcare/pharmacy/model/shop.dart';
 
-class OrderDetailsScreen extends StatelessWidget {
+class OrderDetailsScreen extends StatefulWidget {
   final MedicineOrder order;
 
   const OrderDetailsScreen({super.key, required this.order});
 
   @override
+  State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
+}
+
+class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  Shop? shopDetails;
+  String userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchShopDetails();
+    _fetchUserDetails();
+  }
+
+  Future<void> _fetchShopDetails() async {
+    try {
+      final shopDoc = await FirebaseFirestore.instance
+          .collection('shops')
+          .doc(widget.order.shopId)
+          .get();
+
+      if (shopDoc.exists) {
+        final data = shopDoc.data() as Map<String, dynamic>;
+        data['id'] = shopDoc.id;
+        setState(() {
+          shopDetails = Shop.fromMap(data);
+        });
+      }
+    } catch (e) {
+      print('Error fetching shop details: $e');
+    }
+  }
+
+  Future<void> _fetchUserDetails() async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.order.userId)
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          userName = userDoc.data()?['name'] ?? '';
+        });
+      }
+    } catch (e) {
+      print('Error fetching user details: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Order #${order.id}', style: AppFonts.appBarTitle),
+        title: Text('Order #${widget.order.id}', style: AppFonts.appBarTitle),
         backgroundColor: kPrimaryColor,
       ),
       body: SingleChildScrollView(
@@ -25,7 +84,7 @@ class OrderDetailsScreen extends StatelessWidget {
             _buildOrderSummary(),
             _buildOrderItems(),
             // _buildDeliveryAddress(),
-            _buildTrackOrderButton(),
+            _buildDownloadBillButton(context),
             _buildBackToHomeButton(context),
           ],
         ),
@@ -86,17 +145,17 @@ class OrderDetailsScreen extends StatelessWidget {
           'assignedToDelivery',
           'inTransit',
           'completed'
-        ].contains(order.status),
+        ].contains(widget.order.status),
       },
       {
         'icon': Icons.local_shipping_outlined,
         'title': 'Out for Delivery',
-        'isCompleted': ['inTransit', 'completed'].contains(order.status),
+        'isCompleted': ['inTransit', 'completed'].contains(widget.order.status),
       },
       {
         'icon': Icons.done_all,
         'title': 'Delivered',
-        'isCompleted': order.status == 'completed',
+        'isCompleted': widget.order.status == 'completed',
       },
     ];
 
@@ -164,12 +223,25 @@ class OrderDetailsScreen extends StatelessWidget {
             Text('Order Summary',
                 style: AppFonts.headline5.copyWith(color: kPrimaryColor)),
             const Divider(height: 24, thickness: 1),
-            _buildSummaryItem('Order ID', '#${order.id}'),
-            _buildSummaryItem(
-                'Total Amount', '₹${order.totalAmount.toStringAsFixed(2)}'),
+            if (shopDetails != null) ...[
+              Text('Pharmacy Details',
+                  style: AppFonts.bodyText2.copyWith(color: kPrimaryColor)),
+              const SizedBox(height: 8),
+              _buildSummaryItem('Name', shopDetails!.name),
+              _buildSummaryItem('License No.', shopDetails!.licenseNumber),
+              _buildSummaryItem('Phone', shopDetails!.phoneNumber),
+              _buildSummaryItem('Email', shopDetails!.email),
+              const Divider(height: 16, thickness: 1),
+            ],
+            Text('Order Details',
+                style: AppFonts.bodyText2.copyWith(color: kPrimaryColor)),
+            const SizedBox(height: 8),
+            _buildSummaryItem('Order ID', '#${widget.order.id}'),
+            _buildSummaryItem('Total Amount',
+                '₹${widget.order.totalAmount.toStringAsFixed(2)}'),
             _buildSummaryItem('Status', _getStatusTitle()),
-            _buildSummaryItem('Placed on', _formatDate(order.createdAt)),
-            _buildSummaryItem('Payment ID', order.paymentId),
+            _buildSummaryItem('Placed on', _formatDate(widget.order.createdAt)),
+            _buildSummaryItem('Payment ID', widget.order.paymentId),
           ],
         ),
       ),
@@ -205,7 +277,7 @@ class OrderDetailsScreen extends StatelessWidget {
             Text('Order Items',
                 style: AppFonts.headline5.copyWith(color: kPrimaryColor)),
             const Divider(height: 24, thickness: 1),
-            ...order.items.map((item) => _buildOrderItemRow(item)),
+            ...widget.order.items.map((item) => _buildOrderItemRow(item)),
           ],
         ),
       ),
@@ -234,35 +306,15 @@ class OrderDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDeliveryAddress() {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Delivery Address',
-                style: AppFonts.headline5.copyWith(color: kPrimaryColor)),
-            const Divider(height: 24, thickness: 1),
-            Text(order.deliveryAddress.toString(), style: AppFonts.bodyText2),
-            const SizedBox(height: 8),
-            Text('Phone: ${order.phoneNumber}', style: AppFonts.bodyText2),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildDownloadBillButton(context) {
+    if (widget.order.status != 'completed') {
+      return const SizedBox.shrink();
+    }
 
-  Widget _buildTrackOrderButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ElevatedButton(
-        onPressed: () {
-          // TODO: Implement order tracking logic
-        },
+        onPressed: () => _generateAndDownloadBill(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: kAccentColor,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -272,13 +324,463 @@ class OrderDetailsScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.location_on, color: Colors.white),
+            const Icon(Icons.download, color: Colors.white),
             const SizedBox(width: 8),
-            Text('Track my order',
+            Text('Download Bill',
                 style: AppFonts.button.copyWith(fontSize: 16)),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _generateAndDownloadBill(BuildContext context) async {
+    try {
+      // Request storage permission for Android
+      if (Platform.isAndroid) {
+        // For Android 13 and above (SDK 33+)
+        if (await Permission.storage.isDenied) {
+          final status = await Permission.storage.request();
+          if (!status.isGranted) {
+            // Also try requesting manage external storage permission
+            final manageStatus =
+                await Permission.manageExternalStorage.request();
+            if (!manageStatus.isGranted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Storage permission is required to download the bill'),
+                  backgroundColor: kErrorColor,
+                ),
+              );
+              return;
+            }
+          }
+        }
+      }
+
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Generating bill...'),
+          backgroundColor: kPrimaryColor,
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      final pdf = pw.Document();
+
+      // Add pages to the PDF
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          build: (pw.Context context) {
+            return [
+              _buildHeader(),
+              pw.SizedBox(height: 20),
+              _buildOrderInfo(),
+              pw.SizedBox(height: 20),
+              _buildItemsTable(),
+              pw.SizedBox(height: 20),
+              _buildTotal(),
+              pw.SizedBox(height: 40),
+              _buildFooter(),
+            ];
+          },
+        ),
+      );
+
+      // Get the downloads directory
+      Directory? directory;
+      if (Platform.isAndroid) {
+        // For Android 11 (API level 30) and above
+        if (await Permission.manageExternalStorage.request().isGranted) {
+          directory = Directory('/storage/emulated/0/Download');
+        } else {
+          final dirs = await getExternalStorageDirectories();
+          directory = dirs?.first;
+        }
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (directory == null) {
+        throw Exception('Could not access storage directory');
+      }
+
+      final String filePath =
+          '${directory.path}/Order_${widget.order.id}_bill.pdf';
+
+      // Save the PDF file
+      final file = File(filePath);
+      await file.writeAsBytes(await pdf.save());
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bill downloaded to Downloads folder'),
+          backgroundColor: kSuccessColor,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      print('Error generating PDF: $e'); // For debugging
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error generating bill: ${e.toString()}'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+    }
+  }
+
+  pw.Widget _buildHeader() {
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+          border: pw.Border(
+              bottom: pw.BorderSide(width: 2, color: PdfColors.grey300))),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          if (shopDetails != null) ...[
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Shop Details (Left Side)
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        shopDetails!.name.toUpperCase(),
+                        style: pw.TextStyle(
+                          fontSize: 28,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.teal900,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.only(left: 2),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              shopDetails!.address,
+                              style: const pw.TextStyle(
+                                fontSize: 11,
+                                color: PdfColors.grey800,
+                              ),
+                            ),
+                            pw.SizedBox(height: 4),
+                            pw.Text(
+                              'Phone: ${shopDetails!.phoneNumber}',
+                              style: const pw.TextStyle(fontSize: 11),
+                            ),
+                            pw.Text(
+                              'Email: ${shopDetails!.email}',
+                              style: const pw.TextStyle(fontSize: 11),
+                            ),
+                            pw.Text(
+                              'License No: ${shopDetails!.licenseNumber}',
+                              style: const pw.TextStyle(fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Invoice Details (Right Side)
+                pw.Container(
+                  width: 200,
+                  padding: const pw.EdgeInsets.all(15),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.teal50,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'INVOICE',
+                        style: pw.TextStyle(
+                          fontSize: 24,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.teal900,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Text(
+                        'Invoice No:',
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        '#${widget.order.id}',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Date:',
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        DateFormat('dd MMMM yyyy, HH:mm')
+                            .format(widget.order.createdAt),
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+          pw.SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildOrderInfo() {
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        borderRadius: pw.BorderRadius.circular(8),
+        color: PdfColors.grey100,
+      ),
+      padding: const pw.EdgeInsets.all(15),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'BILLING DETAILS',
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.teal900,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Delivery Address
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Delivery Address:',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      '${widget.order.deliveryAddress.address.houseName}\n'
+                      '${widget.order.deliveryAddress.address.street}\n'
+                      '${widget.order.deliveryAddress.address.city}, '
+                      '${widget.order.deliveryAddress.address.state}\n'
+                      'PIN: ${widget.order.deliveryAddress.address.postalCode}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+              // Order Details
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Contact Details:',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Phone: ${widget.order.phoneNumber}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.SizedBox(height: 8),
+                    pw.Text(
+                      'Payment Details:',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Payment ID: ${widget.order.paymentId}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildItemsTable() {
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(3),
+        1: const pw.FlexColumnWidth(1),
+        2: const pw.FlexColumnWidth(2),
+        3: const pw.FlexColumnWidth(2),
+      },
+      children: [
+        // Header
+        pw.TableRow(
+          decoration: pw.BoxDecoration(
+            color: PdfColors.teal50,
+          ),
+          children: [
+            _buildTableHeader('Item Description'),
+            _buildTableHeader('Qty'),
+            _buildTableHeader('Price'),
+            _buildTableHeader('Amount'),
+          ],
+        ),
+        // Items
+        ...widget.order.items.map((item) => pw.TableRow(
+              children: [
+                _buildTableCell(item.medicineName),
+                _buildTableCell(item.quantity.toString(),
+                    align: pw.TextAlign.center),
+                _buildTableCell('₹${item.price.toStringAsFixed(2)}',
+                    align: pw.TextAlign.right),
+                _buildTableCell(
+                  '₹${(item.price * item.quantity).toStringAsFixed(2)}',
+                  align: pw.TextAlign.right,
+                ),
+              ],
+            )),
+      ],
+    );
+  }
+
+  pw.Widget _buildTableHeader(String text) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 12,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.teal900,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildTableCell(String text,
+      {pw.TextAlign align = pw.TextAlign.left}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: const pw.TextStyle(fontSize: 11),
+        textAlign: align,
+      ),
+    );
+  }
+
+  pw.Widget _buildTotal() {
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      child: pw.Container(
+        width: 200,
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Container(
+              padding:
+                  const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.teal50,
+                border: pw.Border.all(color: PdfColors.teal900),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Total Amount:',
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.teal900,
+                    ),
+                  ),
+                  pw.Text(
+                    '₹${widget.order.totalAmount.toStringAsFixed(2)}',
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.teal900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildFooter() {
+    return pw.Column(
+      children: [
+        pw.SizedBox(height: 20),
+        pw.Container(
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey300),
+            borderRadius: pw.BorderRadius.circular(8),
+          ),
+          padding: const pw.EdgeInsets.all(10),
+          child: pw.Column(
+            children: [
+              pw.Text(
+                'Thank you for your purchase!',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.teal900,
+                ),
+              ),
+              pw.SizedBox(height: 6),
+              pw.Text(
+                'For any queries, please contact our support team.',
+                style: const pw.TextStyle(fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+        pw.SizedBox(height: 20),
+        pw.Text(
+          'This is a computer-generated invoice and does not require a signature.',
+          style: pw.TextStyle(
+            fontSize: 9,
+            color: PdfColors.grey600,
+            fontStyle: pw.FontStyle.italic,
+          ),
+        ),
+      ],
     );
   }
 
@@ -309,7 +811,7 @@ class OrderDetailsScreen extends StatelessWidget {
   }
 
   String _getStatusAnimation() {
-    switch (order.status) {
+    switch (widget.order.status) {
       case 'pending':
         return 'assets/animations/pending.json';
       case 'confirmed':
@@ -329,7 +831,7 @@ class OrderDetailsScreen extends StatelessWidget {
   }
 
   String _getStatusTitle() {
-    switch (order.status) {
+    switch (widget.order.status) {
       case 'pending':
         return 'Order Placed';
       case 'confirmed':
@@ -349,7 +851,7 @@ class OrderDetailsScreen extends StatelessWidget {
   }
 
   String _getStatusDescription() {
-    switch (order.status) {
+    switch (widget.order.status) {
       case 'pending':
         return 'Your order has been placed and is awaiting confirmation from the pharmacy.';
       case 'confirmed':
