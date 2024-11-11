@@ -12,15 +12,17 @@ class UserManagementPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('User Management'),
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: 'Elderly Users'),
               Tab(text: 'Pharmacists'),
               Tab(text: 'Delivery Guys'),
+              Tab(text: 'Blocked Users'),
             ],
           ),
         ),
@@ -29,6 +31,7 @@ class UserManagementPage extends StatelessWidget {
             _UserListView(userType: 'elderly'),
             _UserListView(userType: 'pharmacist'),
             _UserListView(userType: 'delivery'),
+            _BlockedUsersListView(),
           ],
         ),
       ),
@@ -420,6 +423,200 @@ class _UserCard extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error unblocking user: $e')),
       );
+    }
+  }
+}
+
+class _BlockedUsersListView extends StatelessWidget {
+  final UserRepository _repository = UserRepository();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('isBlocked', isEqualTo: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final blockedUsers = snapshot.data!.docs;
+
+        if (blockedUsers.isEmpty) {
+          return const Center(child: Text('No blocked users'));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: blockedUsers.length,
+          itemBuilder: (context, index) {
+            final userData = blockedUsers[index].data() as Map<String, dynamic>;
+            return _BlockedUserCard(
+              userId: blockedUsers[index].id,
+              userData: userData,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _BlockedUserCard extends StatelessWidget {
+  final String userId;
+  final Map<String, dynamic> userData;
+
+  const _BlockedUserCard({
+    required this.userId,
+    required this.userData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.grey[200],
+                  child: userData['profileImageUrl'] != null
+                      ? ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: userData['profileImageUrl'],
+                            fit: BoxFit.cover,
+                            width: 50,
+                            height: 50,
+                            placeholder: (context, url) =>
+                                const CircularProgressIndicator(),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.person),
+                          ),
+                        )
+                      : const Icon(Icons.person),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userData['name'] ?? 'Unknown',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        userData['email'] ?? 'No email',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Block Reason:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    userData['blockReason'] ?? 'No reason provided',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _unblockUser(context),
+                  icon: const Icon(Icons.lock_open),
+                  label: const Text('Unblock User'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _unblockUser(BuildContext context) async {
+    try {
+      // Show confirmation dialog
+      final bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Unblock'),
+          content: const Text('Are you sure you want to unblock this user?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Unblock'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+
+      // Update user status in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'isBlocked': false,
+        'blockReason': FieldValue.delete(),
+      });
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('User unblocked successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error unblocking user: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

@@ -31,7 +31,7 @@ class UserRepository {
   Future<List<DeliveryProfile>> getDeliveryGuys() async {
     final snapshot = await _firestore
         .collection('users')
-        .where('role', isEqualTo: 3)
+        .where('role', isEqualTo: 5)
         .where('isBlocked', isEqualTo: false)
         .get();
     return snapshot.docs
