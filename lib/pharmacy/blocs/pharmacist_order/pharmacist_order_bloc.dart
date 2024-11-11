@@ -14,6 +14,8 @@ class PharmacistOrderBloc
     on<LoadPharmacistOrders>(_onLoadPharmacistOrders);
     on<UpdatePharmacistOrderStatus>(_onUpdatePharmacistOrderStatus);
     on<OrdersUpdated>(_onOrdersUpdated);
+    on<OrdersError>(_onOrdersError);
+    on<LoadRecentOrders>(_onLoadRecentOrders);
   }
 
   void _onLoadPharmacistOrders(
@@ -36,6 +38,13 @@ class PharmacistOrderBloc
     emit(PharmacistOrderLoaded(event.orders));
   }
 
+  void _onOrdersError(
+    OrdersError event,
+    Emitter<PharmacistOrderState> emit,
+  ) {
+    emit(PharmacistOrderError(event.error));
+  }
+
   void _onUpdatePharmacistOrderStatus(
     UpdatePharmacistOrderStatus event,
     Emitter<PharmacistOrderState> emit,
@@ -47,6 +56,19 @@ class PharmacistOrderBloc
     } catch (e) {
       emit(PharmacistOrderError(e.toString()));
     }
+  }
+
+  void _onLoadRecentOrders(
+    LoadRecentOrders event,
+    Emitter<PharmacistOrderState> emit,
+  ) async {
+    emit(PharmacistOrderLoading());
+    await _ordersSubscription?.cancel();
+    _ordersSubscription =
+        pharmacistOrderRepository.getRecentOrders(event.shopId).listen(
+              (orders) => add(OrdersUpdated(orders)),
+              onError: (error) => add(OrdersError(error.toString())),
+            );
   }
 
   @override

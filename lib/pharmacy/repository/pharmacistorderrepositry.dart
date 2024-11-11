@@ -27,4 +27,19 @@ class PharmacistOrderRepository {
       rethrow;
     }
   }
+
+  Stream<List<PharmacistOrderModel>> getRecentOrders(String shopId,
+      {int limit = 5}) {
+    return _firestore
+        .collection('orders')
+        .where('shopId', isEqualTo: shopId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => PharmacistOrderModel.fromFirestore(doc))
+          .toList();
+    });
+  }
 }

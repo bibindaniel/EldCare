@@ -17,6 +17,15 @@ class LoadPharmacistOrders extends PharmacistOrderEvent {
   List<Object> get props => [shopId];
 }
 
+class LoadRecentOrders extends PharmacistOrderEvent {
+  final String shopId;
+
+  const LoadRecentOrders(this.shopId);
+
+  @override
+  List<Object> get props => [shopId];
+}
+
 class UpdatePharmacistOrderStatus extends PharmacistOrderEvent {
   final String orderId;
   final OrderStatus newStatus;
