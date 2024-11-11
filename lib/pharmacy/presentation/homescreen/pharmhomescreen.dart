@@ -18,6 +18,7 @@ import 'package:eldcare/pharmacy/blocs/shop/shop_bloc.dart';
 import 'package:eldcare/pharmacy/presentation/homescreen/homescreencontent.dart';
 import 'package:eldcare/pharmacy/presentation/inventory/inventorypage.dart';
 import 'package:eldcare/pharmacy/presentation/shop/add_shop.dart';
+import 'package:eldcare/pharmacy/presentation/analytics/pharmacy_analytics_page.dart';
 
 class PharmacistHomeScreen extends StatelessWidget {
   const PharmacistHomeScreen({super.key});
@@ -55,7 +56,7 @@ class PharmacistHomeScreen extends StatelessWidget {
           builder: (context, navigationState) {
             return Scaffold(
               appBar: _buildAppBar(context),
-              body: _getSelectedScreen(navigationState.currentItem),
+              body: _getSelectedScreen(navigationState.currentItem, context),
               bottomNavigationBar:
                   _buildBottomNavigationBar(context, navigationState),
               floatingActionButton: _buildFloatingActionButton(context),
@@ -100,7 +101,7 @@ class PharmacistHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _getSelectedScreen(NavigationItem item) {
+  Widget _getSelectedScreen(NavigationItem item, BuildContext context) {
     switch (item) {
       case NavigationItem.shops:
         return const PharmacistHomeContent();
@@ -114,7 +115,11 @@ class PharmacistHomeScreen extends StatelessWidget {
           child: const PharmacistOrdersScreen(),
         );
       case NavigationItem.analytics:
-        return const Center(child: Text('Analytics Screen'));
+        final authState = context.read<AuthBloc>().state;
+        if (authState is Authenticated) {
+          return PharmacyAnalyticsPage(shopId: authState.user.uid);
+        }
+        return const Center(child: Text('Please login to view analytics'));
       case NavigationItem.profile:
         return const Center(child: Text('Profile Screen'));
     }
@@ -292,7 +297,7 @@ class PharmacistHomeScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: <Widget>[
           DrawerHeader(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: kPrimaryColor,
             ),
             child: BlocBuilder<AuthBloc, AuthState>(

@@ -74,8 +74,8 @@ class OrderDetailsScreen extends StatelessWidget {
   Widget _buildDeliveryAddress(String addressString) {
     try {
       // Parse the string into a Map
-      final deliveryAddress = json.decode(addressString.replaceAll("'", '"'))
-          as Map<String, dynamic>;
+      final deliveryAddress =
+          json.decode(addressString) as Map<String, dynamic>;
       final address = deliveryAddress['address'] as Map<String, dynamic>?;
 
       if (address == null) {
@@ -86,38 +86,53 @@ class OrderDetailsScreen extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(address['houseName'] ?? '', style: AppFonts.bodyText2),
-          Text(address['street'] ?? '', style: AppFonts.bodyText2),
+          if (address['houseName']?.isNotEmpty ?? false)
+            Text(address['houseName'], style: AppFonts.bodyText2),
+          if (address['street']?.isNotEmpty ?? false)
+            Text(address['street'], style: AppFonts.bodyText2),
           Text(
-              '${address['city'] ?? ''}, ${address['state'] ?? ''} ${address['postalCode'] ?? ''}',
-              style: AppFonts.bodyText2),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.label_outline, size: 16, color: kPrimaryColor),
-              const SizedBox(width: 4),
-              Text('Label: ${deliveryAddress['label'] ?? ''}',
-                  style: AppFonts.bodyText2Colored
-                      .copyWith(fontStyle: FontStyle.italic)),
-            ],
+            '${address['city'] ?? ''}, ${address['state'] ?? ''} ${address['postalCode'] ?? ''}',
+            style: AppFonts.bodyText2,
           ),
-          if (deliveryAddress['isDefault'] == true) ...[
-            const SizedBox(height: 4),
+          if (address['location'] != null) ...[
+            const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.check_circle_outline,
-                    size: 16, color: kSuccessColor),
+                const Icon(Icons.location_on, size: 16, color: kPrimaryColor),
                 const SizedBox(width: 4),
-                Text('Default Address',
-                    style: AppFonts.bodyText2.copyWith(color: kSuccessColor)),
+                Expanded(
+                  child: Text(
+                    'Location: ${address['location']}',
+                    style:
+                        AppFonts.caption.copyWith(color: kSecondaryTextColor),
+                  ),
+                ),
               ],
             ),
           ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.home_outlined, size: 16, color: kPrimaryColor),
+              const SizedBox(width: 4),
+              Text(
+                deliveryAddress['isDefault'] == true
+                    ? 'Default Address'
+                    : 'Delivery Address',
+                style: AppFonts.bodyText2Colored.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: deliveryAddress['isDefault'] == true
+                      ? kPrimaryColor
+                      : kSecondaryTextColor,
+                ),
+              ),
+            ],
+          ),
         ],
       );
     } catch (e) {
-      // If parsing fails, display the raw string
-      return Text('Address: $addressString', style: AppFonts.bodyText2);
+      print('Error parsing delivery address: $e');
+      return const Text('Error displaying address', style: AppFonts.bodyText2);
     }
   }
 

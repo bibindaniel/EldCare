@@ -52,7 +52,7 @@ class PharmacistHomeContent extends StatelessWidget {
             ],
           ),
           Lottie.asset('assets/animations/pharmacy2.json',
-              width: 100, height: 100),
+              width: 80, height: 80),
         ],
       ),
     );
