@@ -428,8 +428,6 @@ class _UserCard extends StatelessWidget {
 }
 
 class _BlockedUsersListView extends StatelessWidget {
-  final UserRepository _repository = UserRepository();
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(

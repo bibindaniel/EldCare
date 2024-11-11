@@ -34,7 +34,11 @@ class DeliveryChargesPageState extends State<DeliveryChargesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Delivery Charges Setup'),
+        title: const Text('Delivery Charges Setup',
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
         backgroundColor: AdminStyles.primaryColor,
       ),
       body: BlocConsumer<DeliveryChargesBloc, DeliveryChargesState>(
@@ -109,7 +113,8 @@ class DeliveryChargesPageState extends State<DeliveryChargesPage> {
                             state is DeliveryChargesLoaded
                                 ? 'Update Charges'
                                 : 'Save Charges',
-                            style: const TextStyle(fontSize: 18),
+                            style: const TextStyle(
+                                fontSize: 18, color: Colors.white),
                           ),
                         ),
                       ),
