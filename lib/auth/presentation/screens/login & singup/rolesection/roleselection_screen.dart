@@ -5,6 +5,8 @@ import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_event.dart';
+import 'package:eldcare/doctor/presentation/screens/auth/doctor_registration_screen.dart';
+import 'package:eldcare/doctor/blocs/registration/doctor_registration_provider.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   final List<Map<String, dynamic>> roles = [
@@ -105,11 +107,22 @@ class RoleSelectionScreen extends StatelessWidget {
   }
 
   void _onRoleSelected(BuildContext context, int role) {
-    // Add the SetUserRole event to the AuthBloc
-    BlocProvider.of<AuthBloc>(context).add(SetUserRole(userId, role));
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const UserRedirection()),
-      (Route<dynamic> route) => false,
-    );
+    if (role == 3) {
+      // Doctor role
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => DoctorRegistrationProvider(
+            child: DoctorRegistrationScreen(userId: userId),
+          ),
+        ),
+      );
+    } else {
+      // Existing code for other roles
+      BlocProvider.of<AuthBloc>(context).add(SetUserRole(userId, role));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const UserRedirection()),
+        (Route<dynamic> route) => false,
+      );
+    }
   }
 }
