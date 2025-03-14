@@ -39,6 +39,8 @@ class Sidebar extends StatelessWidget {
             _buildNavItem(
                 context, Icons.medical_services, 'Shop Management', 2),
             _buildNavItem(context, Icons.local_shipping, 'Delivery Charges', 3),
+            _buildNavItem(
+                context, Icons.medical_services, 'Doctor Approval', 4),
             _buildNavItem(context, Icons.bar_chart, 'Reports & Analytics', 5),
             const Divider(color: Colors.white54),
             _buildLogoutButton(context),

@@ -1,5 +1,6 @@
 import 'package:eldcare/admin/blocs/users/users_bloc.dart';
 import 'package:eldcare/admin/presentation/delivery/delivery_charges.dart';
+import 'package:eldcare/admin/presentation/doctors/doctor_approval_screen.dart';
 import 'package:eldcare/admin/presentation/report/reports_page.dart';
 import 'package:eldcare/admin/presentation/sidebar.dart';
 import 'package:eldcare/admin/repository/users.dart';
@@ -12,6 +13,8 @@ import 'package:eldcare/admin/blocs/shop/shop_bloc.dart';
 import 'package:eldcare/admin/repository/shop_repositry.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
+import 'package:eldcare/admin/blocs/doctor_approval/doctor_approval_bloc.dart';
+import 'package:eldcare/admin/repository/doctor_approval_repository.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -82,6 +85,13 @@ class AdminPanelState extends State<AdminPanel> {
         );
       case 3:
         return const DeliveryChargesPage();
+      case 4:
+        return BlocProvider(
+          create: (context) => DoctorApprovalBloc(
+            repository: DoctorApprovalRepository(),
+          ),
+          child: const DoctorApprovalScreen(),
+        );
       case 5:
         return const ReportsAnalyticsPage();
       default:

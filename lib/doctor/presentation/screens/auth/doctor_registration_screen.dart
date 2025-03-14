@@ -50,26 +50,70 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        allowMultiple: false,
       );
 
-      if (result != null) {
-        File file = File(result.files.single.path!);
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        final String fileName = file.name.toLowerCase();
+
+        // Check if file extension is supported
+        if (!fileName.endsWith('.jpg') &&
+            !fileName.endsWith('.jpeg') &&
+            !fileName.endsWith('.png') &&
+            !fileName.endsWith('.pdf')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a JPG, JPEG, PNG, or PDF file'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        final File pickedFile = File(result.files.single.path!);
+
+        // Check file size (optional, adjust max size as needed)
+        final fileSize = await pickedFile.length();
+        if (fileSize > 5 * 1024 * 1024) {
+          // 5MB limit
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File size should be less than 5MB'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
         setState(() {
-          _documentFiles[documentType] = file;
+          _documentFiles[documentType] = pickedFile;
           _documentNames[documentType] = result.files.single.name;
         });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Successfully uploaded ${result.files.single.name}'),
+            backgroundColor: Colors.green,
+          ),
+        );
 
         context.read<DoctorRegistrationBloc>().add(
               UpdateDocumentFile(
                 documentType: documentType,
-                file: file,
+                file: pickedFile,
               ),
             );
       }
     } catch (e) {
+      print('Error picking document: $e'); // For debugging
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking document: $e')),
+        SnackBar(
+          content: Text('Error picking document: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }

@@ -17,6 +17,7 @@ class Doctor {
   final Map<String, String> documents; // URLs of uploaded documents
   final bool isVerified;
   final DateTime registrationDate;
+  final String? profileImageUrl;
 
   Doctor({
     required this.userId,
@@ -35,6 +36,7 @@ class Doctor {
     required this.documents,
     this.isVerified = false,
     DateTime? registrationDate,
+    this.profileImageUrl,
   }) : registrationDate = registrationDate ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -55,6 +57,7 @@ class Doctor {
       'documents': documents,
       'isVerified': isVerified,
       'registrationDate': Timestamp.fromDate(registrationDate),
+      'profileImageUrl': profileImageUrl,
     };
   }
 
@@ -76,6 +79,7 @@ class Doctor {
       documents: Map<String, String>.from(map['documents'] ?? {}),
       isVerified: map['isVerified'] ?? false,
       registrationDate: (map['registrationDate'] as Timestamp).toDate(),
+      profileImageUrl: map['profileImageUrl'],
     );
   }
 }
