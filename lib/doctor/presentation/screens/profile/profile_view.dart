@@ -4,9 +4,15 @@ import 'package:eldcare/core/theme/font.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_state.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
+import 'package:eldcare/doctor/presentation/screens/profile/edit_profile_screen.dart';
 
 class ProfileView extends StatelessWidget {
-  const ProfileView({super.key});
+  final String doctorId;
+
+  const ProfileView({
+    super.key,
+    required this.doctorId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +109,19 @@ class ProfileView extends StatelessWidget {
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
-                      onPressed: () {},
+                      onPressed: () {
+                        if (state is DoctorProfileLoaded) {
+                          final doctorState = state as DoctorProfileLoaded;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(
+                                doctor: doctorState.doctor,
+                              ),
+                            ),
+                          );
+                        }
+                      },
                     ),
                     IconButton(
                       icon: const Icon(Icons.settings, color: Colors.white),

@@ -1,5 +1,3 @@
-import 'package:eldcare/doctor/models/doctor.dart';
-
 abstract class DoctorProfileEvent {}
 
 class LoadDoctorProfile extends DoctorProfileEvent {
@@ -9,7 +7,11 @@ class LoadDoctorProfile extends DoctorProfileEvent {
 }
 
 class UpdateDoctorProfile extends DoctorProfileEvent {
-  final Doctor doctor;
+  final String doctorId;
+  final Map<String, dynamic> updates;
 
-  UpdateDoctorProfile(this.doctor);
+  UpdateDoctorProfile({
+    required this.doctorId,
+    required this.updates,
+  });
 }

@@ -45,6 +45,22 @@ class DoctorProfileBloc extends Bloc<DoctorProfileEvent, DoctorProfileState> {
     UpdateDoctorProfile event,
     Emitter<DoctorProfileState> emit,
   ) async {
-    // Implement profile update logic here
+    try {
+      emit(DoctorProfileLoading());
+      await _doctorRepository.updateDoctorProfile(
+        event.doctorId,
+        event.updates,
+      );
+      // Fetch the updated profile and emit it
+      final updatedDoctor =
+          await _doctorRepository.getDoctorStream(event.doctorId).first;
+      if (updatedDoctor != null) {
+        emit(DoctorProfileLoaded(updatedDoctor));
+      } else {
+        emit(DoctorProfileError('Failed to load updated profile'));
+      }
+    } catch (e) {
+      emit(DoctorProfileError(e.toString()));
+    }
   }
 }

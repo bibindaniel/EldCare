@@ -76,4 +76,15 @@ class DoctorRepository {
         .snapshots()
         .map((doc) => doc.exists ? Doctor.fromMap(doc.data()!) : null);
   }
+
+  Future<void> updateDoctorProfile(
+    String doctorId,
+    Map<String, dynamic> updates,
+  ) async {
+    try {
+      await _firestore.collection('doctors').doc(doctorId).update(updates);
+    } catch (e) {
+      throw Exception('Failed to update profile: $e');
+    }
+  }
 }
