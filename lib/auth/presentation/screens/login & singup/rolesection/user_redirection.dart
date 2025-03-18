@@ -8,6 +8,7 @@ import 'package:eldcare/pharmacy/presentation/homescreen/pharmhomescreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/doctor/presentation/screens/auth/doctor_waiting_approval_screen.dart';
+import 'package:eldcare/doctor/presentation/screens/home/doctor_home_screen.dart';
 
 class UserRedirection extends StatelessWidget {
   final String? userId; // Make userId optional
@@ -142,9 +143,7 @@ class _CaretakerHome extends StatelessWidget {
 class _DoctorHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Welcome, Doctor!', style: AppFonts.headline2),
-    );
+    return const DoctorHomeScreen();
   }
 }
 
