@@ -36,54 +36,52 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<DoctorProfileBloc>(
-          create: (context) => DoctorProfileBloc(
-            doctorRepository: DoctorRepository(),
-          ),
+          create: (context) {
+            final bloc = DoctorProfileBloc(
+              doctorRepository: DoctorRepository(),
+            );
+            // Load profile data immediately
+            bloc.add(LoadDoctorProfile(widget.doctorId));
+            return bloc;
+          },
         ),
       ],
-      child: Builder(builder: (context) {
-        if (_selectedIndex == 3) {
-          context
-              .read<DoctorProfileBloc>()
-              .add(LoadDoctorProfile(widget.doctorId));
-        }
-
-        return Scaffold(
-          body: _screens[_selectedIndex],
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-              if (index == 3) {
-                context
-                    .read<DoctorProfileBloc>()
-                    .add(LoadDoctorProfile(widget.doctorId));
-              }
-            },
-            type: BottomNavigationBarType.fixed,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.dashboard),
-                label: 'Dashboard',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_today),
-                label: 'Appointments',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.people),
-                label: 'Patients',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Profile',
-              ),
-            ],
-          ),
-        );
-      }),
+      child: Scaffold(
+        body: _screens[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+            // Refresh profile data when switching to profile tab
+            if (index == 3) {
+              context
+                  .read<DoctorProfileBloc>()
+                  .add(LoadDoctorProfile(widget.doctorId));
+            }
+          },
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: 'Appointments',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: 'Patients',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

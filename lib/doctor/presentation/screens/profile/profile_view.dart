@@ -1,3 +1,4 @@
+import 'package:eldcare/doctor/models/doctor.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -110,17 +111,15 @@ class ProfileView extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
                       onPressed: () {
-                        if (state is DoctorProfileLoaded) {
-                          final doctorState = state as DoctorProfileLoaded;
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditProfileScreen(
-                                doctor: doctorState.doctor,
-                              ),
+                        final doctorState = state;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProfileScreen(
+                              doctor: doctorState.doctor,
                             ),
-                          );
-                        }
+                          ),
+                        );
                       },
                     ),
                     IconButton(
@@ -139,7 +138,7 @@ class ProfileView extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildConsultationSettings(),
                       const SizedBox(height: 16),
-                      _buildProfessionalDetails(),
+                      _buildProfessionalDetails(doctor),
                       const SizedBox(height: 16),
                       _buildAccountSettings(),
                     ]),
@@ -288,31 +287,71 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildProfessionalDetails() {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Professional Details', style: AppFonts.headline4),
-            const SizedBox(height: 16),
-            _buildDetailItem('Specialization', 'Cardiology'),
-            _buildDetailItem('License No.', 'MD-12345'),
-            _buildDetailItem('Hospital', 'City General Hospital'),
-            _buildDetailItem('Languages', 'English, Spanish'),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.verified),
-              label: const Text('View Credentials'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 45),
+  Widget _buildProfessionalDetails(Doctor doctor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.work, color: kPrimaryColor),
+              const SizedBox(width: 8),
+              Text(
+                'Professional Details',
+                style: AppFonts.headline3,
+              ),
+            ],
+          ),
+          const Divider(),
+          const SizedBox(height: 8),
+          _buildDetailItem('Specialization', doctor.specialization),
+          _buildDetailItem('Hospital Name', doctor.hospitalName),
+          _buildDetailItem('Hospital Address', doctor.hospitalAddress),
+          _buildDetailItem('Work Contact', doctor.workContact),
+          _buildDetailItem('Work Email', doctor.workEmail),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? 'Not provided' : value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -369,20 +408,6 @@ class ProfileView extends StatelessWidget {
             icon: const Icon(Icons.edit, size: 20),
             onPressed: () {},
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppFonts.bodyText2),
-          Text(value,
-              style: AppFonts.bodyText1.copyWith(fontWeight: FontWeight.bold)),
         ],
       ),
     );
