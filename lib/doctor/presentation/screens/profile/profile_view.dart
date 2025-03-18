@@ -1,105 +1,143 @@
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:eldcare/doctor/blocs/profile/doctor_profile_state.dart';
+import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            expandedHeight: 180,
-            collapsedHeight: 100,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      kPrimaryColor,
-                      kPrimaryColor.withOpacity(0.8),
-                    ],
-                  ),
-                ),
-              ),
-              title: Padding(
-                padding: const EdgeInsets.only(bottom: 18.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+    return BlocBuilder<DoctorProfileBloc, DoctorProfileState>(
+      builder: (context, state) {
+        if (state is DoctorProfileLoading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (state is DoctorProfileError) {
+          return Scaffold(
+            body: Center(
+              child: Text('Error: ${state.message}'),
+            ),
+          );
+        }
+
+        if (state is DoctorProfileLoaded) {
+          final doctor = state.doctor;
+          return Scaffold(
+            body: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  floating: true,
+                  pinned: true,
+                  expandedHeight: 160,
+                  collapsedHeight: 100,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            kPrimaryColor,
+                            kPrimaryColor.withOpacity(0.8),
+                          ],
+                        ),
+                      ),
+                    ),
+                    title: Padding(
+                      padding: const EdgeInsets.only(bottom: 18.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const CircleAvatar(
-                            radius: 25,
-                            backgroundColor: Colors.white,
-                            child: Icon(Icons.person,
-                                size: 25, color: kPrimaryColor),
-                          ),
-                          const SizedBox(height: 4),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'Dr. Sarah Johnson',
-                              style: AppFonts.bodyText1.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'Cardiologist',
-                              style: AppFonts.bodyText2
-                                  .copyWith(color: Colors.white70),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: doctor.profileImageUrl !=
+                                          null
+                                      ? NetworkImage(doctor.profileImageUrl!)
+                                      : null,
+                                  child: doctor.profileImageUrl == null
+                                      ? const Icon(Icons.person,
+                                          size: 25, color: kPrimaryColor)
+                                      : null,
+                                ),
+                                const SizedBox(height: 4),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Dr. ${doctor.fullName}',
+                                    style: AppFonts.bodyText1.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    doctor.specialization,
+                                    style: AppFonts.bodyText2
+                                        .copyWith(color: Colors.white70),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
+                    centerTitle: true,
+                    expandedTitleScale: 1.0,
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.settings, color: Colors.white),
+                      onPressed: () {},
+                    ),
                   ],
                 ),
-              ),
-              centerTitle: true,
-              expandedTitleScale: 1.0,
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _buildProfileStats(),
+                      const SizedBox(height: 16),
+                      _buildAvailabilitySection(),
+                      const SizedBox(height: 16),
+                      _buildConsultationSettings(),
+                      const SizedBox(height: 16),
+                      _buildProfessionalDetails(),
+                      const SizedBox(height: 16),
+                      _buildAccountSettings(),
+                    ]),
+                  ),
+                ),
+              ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.white),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings, color: Colors.white),
-                onPressed: () {},
-              ),
-            ],
+          );
+        }
+
+        return const Scaffold(
+          body: Center(
+            child: Text('Something went wrong'),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildProfileStats(),
-                const SizedBox(height: 16),
-                _buildAvailabilitySection(),
-                const SizedBox(height: 16),
-                _buildConsultationSettings(),
-                const SizedBox(height: 16),
-                _buildProfessionalDetails(),
-                const SizedBox(height: 16),
-                _buildAccountSettings(),
-              ]),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

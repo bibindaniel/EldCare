@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/doctor/presentation/screens/auth/doctor_waiting_approval_screen.dart';
 import 'package:eldcare/doctor/presentation/screens/home/doctor_home_screen.dart';
+import 'package:eldcare/doctor/blocs/profile/doctor_profile_provider.dart';
 
 class UserRedirection extends StatelessWidget {
   final String? userId; // Make userId optional
@@ -93,7 +94,9 @@ class UserRedirection extends StatelessWidget {
             return const DoctorWaitingApprovalScreen();
           }
 
-          return _buildHomeContent(context, role);
+          return DoctorProfileProvider(
+            child: DoctorHomeScreen(doctorId: userId),
+          );
         },
       );
     }
@@ -143,7 +146,16 @@ class _CaretakerHome extends StatelessWidget {
 class _DoctorHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const DoctorHomeScreen();
+    // Get the current user ID from Firebase Auth
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUserId == null) {
+      return const Center(
+        child: Text('No user found'),
+      );
+    }
+
+    return DoctorHomeScreen(doctorId: currentUserId);
   }
 }
 

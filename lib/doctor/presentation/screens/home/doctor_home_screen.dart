@@ -3,9 +3,13 @@ import 'package:eldcare/doctor/presentation/screens/dashboard/doctor_dashboard_v
 import 'package:eldcare/doctor/presentation/screens/appointments/appointments_view.dart';
 import 'package:eldcare/doctor/presentation/screens/patients/patients_view.dart';
 import 'package:eldcare/doctor/presentation/screens/profile/profile_view.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
+import 'package:eldcare/doctor/blocs/profile/doctor_profile_event.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
-  const DoctorHomeScreen({super.key});
+  final String doctorId;
+  const DoctorHomeScreen({super.key, required this.doctorId});
 
   @override
   State<DoctorHomeScreen> createState() => _DoctorHomeScreenState();
@@ -27,6 +31,8 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
       const PatientsView(),
       const ProfileView(),
     ];
+    // Load doctor profile when the screen initializes
+    context.read<DoctorProfileBloc>().add(LoadDoctorProfile(widget.doctorId));
   }
 
   @override
