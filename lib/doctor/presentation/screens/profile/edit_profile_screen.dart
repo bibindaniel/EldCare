@@ -9,6 +9,8 @@ import 'package:eldcare/doctor/blocs/profile/doctor_profile_state.dart';
 import 'package:eldcare/doctor/models/doctor.dart';
 import 'package:eldcare/auth/presentation/widgets/textboxwidget.dart';
 import 'package:eldcare/auth/presentation/widgets/button_widget.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class EditProfileScreen extends StatefulWidget {
   final Doctor doctor;
@@ -31,6 +33,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _hospitalAddressController;
   late final TextEditingController _workContactController;
   late final TextEditingController _workEmailController;
+  File? _profileImageFile;
 
   @override
   void initState() {
@@ -85,6 +88,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Center(
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 60,
+                          backgroundImage: widget.doctor.profileImageUrl != null
+                              ? NetworkImage(widget.doctor.profileImageUrl!)
+                              : null,
+                          child: widget.doctor.profileImageUrl == null
+                              ? const Icon(Icons.person, size: 60)
+                              : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: InkWell(
+                            onTap: _pickProfileImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: kPrimaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   CustomTextFormField(
                     controller: _fullNameController,
                     label: 'Full Name',
@@ -130,25 +168,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 24),
                   CustomButton(
                     text: 'Save Changes',
-                    onPressed: () {
-                      final updates = {
-                        'fullName': _fullNameController.text,
-                        'mobileNumber': _mobileController.text,
-                        'address': _addressController.text,
-                        'specialization': _specializationController.text,
-                        'hospitalName': _hospitalNameController.text,
-                        'hospitalAddress': _hospitalAddressController.text,
-                        'workContact': _workContactController.text,
-                        'workEmail': _workEmailController.text,
-                      };
-
-                      builderContext.read<DoctorProfileBloc>().add(
-                            UpdateDoctorProfile(
-                              doctorId: widget.doctor.userId,
-                              updates: updates,
-                            ),
-                          );
-                    },
+                    onPressed: () => _saveProfileWithContext(builderContext),
                   ),
                 ],
               ),
@@ -170,5 +190,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _workContactController.dispose();
     _workEmailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickProfileImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+
+      if (image != null) {
+        setState(() {
+          _profileImageFile = File(image.path);
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile image selected. Save to update.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error selecting image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _saveProfileWithContext(BuildContext context) {
+    final Map<String, dynamic> updates = {
+      'fullName': _fullNameController.text,
+      'mobileNumber': _mobileController.text,
+      'address': _addressController.text,
+      'specialization': _specializationController.text,
+      'hospitalName': _hospitalNameController.text,
+      'hospitalAddress': _hospitalAddressController.text,
+      'workContact': _workContactController.text,
+      'workEmail': _workEmailController.text,
+    };
+
+    context.read<DoctorProfileBloc>().add(
+          UpdateDoctorProfile(
+            doctorId: widget.doctor.userId,
+            updates: updates,
+            profileImageFile: _profileImageFile,
+          ),
+        );
   }
 }

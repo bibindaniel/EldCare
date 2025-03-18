@@ -47,13 +47,25 @@ class DoctorProfileBloc extends Bloc<DoctorProfileEvent, DoctorProfileState> {
   ) async {
     try {
       emit(DoctorProfileLoading());
+
+      // If there's a profile image to upload, handle it first
+      if (event.profileImageFile != null) {
+        final String? imageUrl = await _doctorRepository.uploadProfileImage(
+            event.doctorId, event.profileImageFile!);
+
+        if (imageUrl != null) {
+          event.updates['profileImageUrl'] = imageUrl;
+        }
+      }
+
       await _doctorRepository.updateDoctorProfile(
         event.doctorId,
         event.updates,
       );
-      // Fetch the updated profile and emit it
+
+      // Fetch the updated doctor and emit success state
       final updatedDoctor =
-          await _doctorRepository.getDoctorStream(event.doctorId).first;
+          await _doctorRepository.getDoctorById(event.doctorId);
       if (updatedDoctor != null) {
         emit(DoctorProfileLoaded(updatedDoctor));
       } else {

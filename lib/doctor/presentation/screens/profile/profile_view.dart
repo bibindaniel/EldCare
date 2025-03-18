@@ -44,7 +44,7 @@ class ProfileView extends StatelessWidget {
                   floating: true,
                   pinned: true,
                   expandedHeight: 160,
-                  collapsedHeight: 100,
+                  collapsedHeight: 140,
                   flexibleSpace: FlexibleSpaceBar(
                     background: Container(
                       decoration: BoxDecoration(
@@ -68,7 +68,7 @@ class ProfileView extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 CircleAvatar(
-                                  radius: 22,
+                                  radius: 45,
                                   backgroundColor: Colors.white,
                                   backgroundImage: doctor.profileImageUrl !=
                                           null
@@ -208,7 +208,7 @@ class ProfileView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Availability', style: AppFonts.headline4),
+                const Text('Availability', style: AppFonts.headline4),
                 Switch(
                   value: true,
                   onChanged: (value) {},
@@ -264,7 +264,7 @@ class ProfileView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Consultation Settings', style: AppFonts.headline4),
+            const Text('Consultation Settings', style: AppFonts.headline4),
             const SizedBox(height: 16),
             _buildSettingItem(
               'Consultation Fee',

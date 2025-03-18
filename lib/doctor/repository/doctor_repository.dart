@@ -77,14 +77,42 @@ class DoctorRepository {
         .map((doc) => doc.exists ? Doctor.fromMap(doc.data()!) : null);
   }
 
+  Future<String?> uploadProfileImage(String doctorId, File imageFile) async {
+    try {
+      // Create a reference to the location where we'll store the file
+      final storageRef =
+          _storage.ref().child('doctor_profiles').child('$doctorId.jpg');
+
+      // Upload the file
+      final uploadTask = storageRef.putFile(
+        imageFile,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      // Wait for the upload to complete
+      final snapshot = await uploadTask;
+
+      // Get the download URL
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading profile image: $e');
+      return null;
+    }
+  }
+
   Future<void> updateDoctorProfile(
     String doctorId,
     Map<String, dynamic> updates,
   ) async {
     try {
-      await _firestore.collection('doctors').doc(doctorId).update(updates);
+      await _firestore.collection('doctors').doc(doctorId).update({
+        ...updates,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
     } catch (e) {
-      throw Exception('Failed to update profile: $e');
+      throw Exception('Failed to update doctor profile: $e');
     }
   }
 }
