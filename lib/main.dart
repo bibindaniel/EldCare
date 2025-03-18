@@ -5,7 +5,6 @@ import 'package:eldcare/admin/repository/users.dart';
 import 'package:eldcare/core/theme/routes/myroutes.dart';
 import 'package:eldcare/delivery/blocs/delivery_order/delivery_order_bloc.dart';
 import 'package:eldcare/delivery/repository/delivery_order_repo.dart';
-import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_bloc.dart';
 import 'package:eldcare/doctor/repositories/doctor_schedule_repository.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';

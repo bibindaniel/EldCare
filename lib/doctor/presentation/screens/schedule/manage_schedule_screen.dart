@@ -78,35 +78,42 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
 
   void _handleSessionTap(
       BuildContext context, int dayOfWeek, DoctorSession session) {
+    // Get the bloc instance before opening the bottom sheet
+    final scheduleBloc = context.read<DoctorScheduleBloc>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: SessionDetailsSheet(
-          dayOfWeek: dayOfWeek,
-          session: session,
-          onUpdate: (updatedSession) {
-            context.read<DoctorScheduleBloc>().add(
-                  UpdateDoctorSession(
-                    dayOfWeek: dayOfWeek,
-                    session: updatedSession,
-                  ),
-                );
-          },
-          onDelete: () {
-            context.read<DoctorScheduleBloc>().add(
-                  DeleteDoctorSession(
-                    dayOfWeek: dayOfWeek,
-                    sessionId: session.id,
-                  ),
-                );
-          },
+      builder: (bottomSheetContext) => BlocProvider.value(
+        // Pass the existing bloc to the bottom sheet
+        value: scheduleBloc,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+          ),
+          child: SessionDetailsSheet(
+            dayOfWeek: dayOfWeek,
+            session: session,
+            onUpdate: (updatedSession) {
+              scheduleBloc.add(
+                UpdateDoctorSession(
+                  dayOfWeek: dayOfWeek,
+                  session: updatedSession,
+                ),
+              );
+            },
+            onDelete: () {
+              scheduleBloc.add(
+                DeleteDoctorSession(
+                  dayOfWeek: dayOfWeek,
+                  sessionId: session.id,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -124,47 +131,52 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
   Future<void> _showCopyScheduleDialog(BuildContext context) async {
     int? fromDay;
     int? toDay;
+    // Get the bloc instance before opening the dialog
+    final scheduleBloc = context.read<DoctorScheduleBloc>();
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Copy Schedule'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: 'From Day'),
-              items: _buildDayDropdownItems(),
-              onChanged: (value) => fromDay = value,
+      builder: (dialogContext) => BlocProvider.value(
+        value: scheduleBloc, // Pass the existing bloc to the dialog
+        child: AlertDialog(
+          title: const Text('Copy Schedule'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<int>(
+                decoration: const InputDecoration(labelText: 'From Day'),
+                items: _buildDayDropdownItems(),
+                onChanged: (value) => fromDay = value,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<int>(
+                decoration: const InputDecoration(labelText: 'To Day'),
+                items: _buildDayDropdownItems(),
+                onChanged: (value) => toDay = value,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: 'To Day'),
-              items: _buildDayDropdownItems(),
-              onChanged: (value) => toDay = value,
+            ElevatedButton(
+              onPressed: () {
+                if (fromDay != null && toDay != null) {
+                  scheduleBloc.add(
+                    CopyScheduleToDay(
+                      fromDayOfWeek: fromDay!,
+                      toDayOfWeek: toDay!,
+                    ),
+                  );
+                }
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Copy'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (fromDay != null && toDay != null) {
-                context.read<DoctorScheduleBloc>().add(
-                      CopyScheduleToDay(
-                        fromDayOfWeek: fromDay!,
-                        toDayOfWeek: toDay!,
-                      ),
-                    );
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Copy'),
-          ),
-        ],
       ),
     );
   }

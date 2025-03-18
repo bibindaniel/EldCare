@@ -1,4 +1,9 @@
+import 'dart:math';
+
+import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_event.dart';
+import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_state.dart';
 import 'package:eldcare/doctor/models/doctor.dart';
+import 'package:eldcare/doctor/models/doctor_schedule.dart';
 import 'package:eldcare/doctor/presentation/screens/schedule/manage_schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -7,6 +12,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_state.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
 import 'package:eldcare/doctor/presentation/screens/profile/edit_profile_screen.dart';
+import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_bloc.dart';
+import 'package:eldcare/doctor/repositories/doctor_schedule_repository.dart';
 
 class ProfileView extends StatelessWidget {
   final String doctorId;
@@ -199,58 +206,188 @@ class ProfileView extends StatelessWidget {
   }
 
   Widget _buildAvailabilitySection(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Availability', style: AppFonts.headline4),
-                Switch(
-                  value: true,
-                  onChanged: (value) {
-                    // TODO: Implement availability toggle
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildTimeSlot('Morning', '9:00 AM - 1:00 PM', true),
-                _buildTimeSlot('Evening', '4:00 PM - 8:00 PM', true),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ManageScheduleScreen(doctorId: doctorId),
+    return BlocProvider(
+      create: (context) => DoctorScheduleBloc(
+        repository: context.read<DoctorScheduleRepository>(),
+        doctorId: doctorId,
+      )..add(LoadWeeklySchedule(doctorId)),
+      child: BlocBuilder<DoctorScheduleBloc, DoctorScheduleState>(
+        builder: (context, state) {
+          return Card(
+            margin: const EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Availability', style: AppFonts.headline4),
+                      if (state is DoctorScheduleLoaded)
+                        Switch(
+                          value: state.schedule.isActive,
+                          onChanged: (value) {
+                            // TODO: Add ToggleAvailability event
+                          },
+                        ),
+                    ],
                   ),
-                );
-              },
-              icon: const Icon(Icons.edit_calendar),
-              label: const Text('Manage Schedule'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 45),
+                  const SizedBox(height: 16),
+                  if (state is DoctorScheduleLoaded) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: _buildTimeSlots(context, state.schedule),
+                    ),
+                  ] else if (state is DoctorScheduleLoading) ...[
+                    const Center(child: CircularProgressIndicator()),
+                  ],
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ManageScheduleScreen(doctorId: doctorId),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit_calendar),
+                    label: const Text('Manage Schedule'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 45),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
+  List<Widget> _buildTimeSlots(BuildContext context, WeeklySchedule schedule) {
+    // Get current day of week (1 = Monday, 7 = Sunday)
+    final now = DateTime.now();
+    final currentDayOfWeek = now.weekday;
+
+    // For debugging
+    print("Current day of week: $currentDayOfWeek");
+
+    // Find the current day's schedule
+    final currentDay = schedule.days.firstWhere(
+      (day) => day.dayOfWeek == currentDayOfWeek,
+      orElse: () => DaySchedule(
+          dayOfWeek: currentDayOfWeek, isWorkingDay: false, sessions: []),
+    );
+
+    // Print debugging info
+    print(
+        "Current day found: ${currentDay.dayOfWeek}, working: ${currentDay.isWorkingDay}");
+    print("Sessions count: ${currentDay.sessions.length}");
+
+    // If not a working day, show message
+    if (!currentDay.isWorkingDay) {
+      return [
+        const Expanded(
+          child: Text('Not working today'),
+        ),
+      ];
+    }
+
+    // If no sessions, show message
+    if (currentDay.sessions.isEmpty) {
+      return [
+        const Expanded(
+          child: Text('No session times set for today'),
+        ),
+      ];
+    }
+
+    // Simply display each session directly
+    final List<Widget> slots = [];
+
+    // Sort sessions by start time
+    final sortedSessions = List<DoctorSession>.from(currentDay.sessions)
+      ..sort((a, b) => a.startTime.hour.compareTo(b.startTime.hour));
+
+    // Display up to 2 sessions
+    for (var i = 0; i < min(sortedSessions.length, 2); i++) {
+      final session = sortedSessions[i];
+      final formattedStartTime = _formatTimeOfDay(session.startTime);
+      final formattedEndTime = _formatTimeOfDay(session.endTime);
+
+      // Determine period name based on time
+      String periodName;
+      if (session.startTime.hour < 12) {
+        periodName = 'Morning';
+      } else if (session.startTime.hour < 17) {
+        periodName = 'Afternoon';
+      } else {
+        periodName = 'Evening';
+      }
+
+      slots.add(
+        Flexible(
+          child: _buildTimeSlot(
+            periodName,
+            '$formattedStartTime - $formattedEndTime',
+            true,
+          ),
+        ),
+      );
+    }
+
+    // If more than 2 sessions, add a "more" indicator
+    if (sortedSessions.length > 2) {
+      slots.add(
+        Flexible(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ManageScheduleScreen(doctorId: doctorId),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border.all(color: kPrimaryColor),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.more_horiz),
+                  Text("More", style: AppFonts.bodyText2),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return slots;
+  }
+
+  // Helper to format TimeOfDay consistently
+  String _formatTimeOfDay(TimeOfDay timeOfDay) {
+    final hour = timeOfDay.hourOfPeriod == 0 ? 12 : timeOfDay.hourOfPeriod;
+    final minute = timeOfDay.minute.toString().padLeft(2, '0');
+    final period = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
   Widget _buildTimeSlot(String title, String time, bool isActive) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(color: kPrimaryColor),
@@ -260,8 +397,11 @@ class ProfileView extends StatelessWidget {
       child: Column(
         children: [
           Text(title, style: AppFonts.bodyText2),
-          Text(time,
-              style: AppFonts.bodyText1.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            time,
+            style: AppFonts.bodyText1.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
