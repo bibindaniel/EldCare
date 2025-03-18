@@ -1,4 +1,5 @@
 import 'package:eldcare/doctor/models/doctor.dart';
+import 'package:eldcare/doctor/presentation/screens/schedule/manage_schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -134,7 +135,7 @@ class ProfileView extends StatelessWidget {
                     delegate: SliverChildListDelegate([
                       _buildProfileStats(),
                       const SizedBox(height: 16),
-                      _buildAvailabilitySection(),
+                      _buildAvailabilitySection(context),
                       const SizedBox(height: 16),
                       _buildConsultationSettings(),
                       const SizedBox(height: 16),
@@ -197,7 +198,7 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildAvailabilitySection() {
+  Widget _buildAvailabilitySection(BuildContext context) {
     return Card(
       margin: const EdgeInsets.all(16),
       child: Padding(
@@ -211,7 +212,9 @@ class ProfileView extends StatelessWidget {
                 const Text('Availability', style: AppFonts.headline4),
                 Switch(
                   value: true,
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    // TODO: Implement availability toggle
+                  },
                 ),
               ],
             ),
@@ -225,7 +228,15 @@ class ProfileView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ManageScheduleScreen(doctorId: doctorId),
+                  ),
+                );
+              },
               icon: const Icon(Icons.edit_calendar),
               label: const Text('Manage Schedule'),
               style: ElevatedButton.styleFrom(

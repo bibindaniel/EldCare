@@ -5,6 +5,8 @@ import 'package:eldcare/admin/repository/users.dart';
 import 'package:eldcare/core/theme/routes/myroutes.dart';
 import 'package:eldcare/delivery/blocs/delivery_order/delivery_order_bloc.dart';
 import 'package:eldcare/delivery/repository/delivery_order_repo.dart';
+import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_bloc.dart';
+import 'package:eldcare/doctor/repositories/doctor_schedule_repository.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
 import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
@@ -35,6 +37,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:workmanager/workmanager.dart';
+
 // import 'package:flutter_driver/driver_extension.dart';
 
 void callbackDispatcher() {
@@ -43,7 +46,8 @@ void callbackDispatcher() {
     await notificationService.init();
 
     final now = DateTime.now();
-    final scheduledTime = now.add(Duration(seconds: 10)); // Adjust as needed
+    final scheduledTime =
+        now.add(const Duration(seconds: 10)); // Adjust as needed
 
     await notificationService.scheduleNotification(
       0,
@@ -141,6 +145,9 @@ class MyApp extends StatelessWidget {
             create: (context) => DeliveryOrderBloc(
               repository: DeliveryOrderRepository(),
             ),
+          ),
+          RepositoryProvider<DoctorScheduleRepository>(
+            create: (context) => DoctorScheduleRepository(),
           ),
         ],
         child: MaterialApp(
