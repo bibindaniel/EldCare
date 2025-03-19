@@ -7,6 +7,7 @@ import 'package:eldcare/elduser/blocs/appointment/appointment_bloc.dart';
 import 'package:eldcare/elduser/blocs/appointment/appointment_event.dart';
 import 'package:eldcare/elduser/blocs/appointment/appointment_state.dart';
 import 'package:eldcare/elduser/presentation/screens/appointments/appointment_details_screen.dart';
+import 'package:eldcare/shared/repositories/appointment_repository.dart';
 import 'package:intl/intl.dart';
 
 class MyAppointmentsScreen extends StatefulWidget {
@@ -29,32 +30,34 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-    // Load user's appointments
-    context.read<AppointmentBloc>().add(FetchUserAppointments(widget.userId));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('My Appointments', style: AppFonts.headline2),
-        backgroundColor: kPrimaryColor,
-        bottom: TabBar(
+    return BlocProvider(
+      create: (context) => AppointmentBloc(
+        appointmentRepository: AppointmentRepository(),
+      )..add(FetchUserAppointments(widget.userId)),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('My Appointments', style: AppFonts.headline2),
+          backgroundColor: kPrimaryColor,
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: Colors.white,
+            tabs: const [
+              Tab(text: 'Upcoming'),
+              Tab(text: 'Past'),
+            ],
+          ),
+        ),
+        body: TabBarView(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Past'),
+          children: [
+            _buildAppointmentsList(isUpcoming: true),
+            _buildAppointmentsList(isUpcoming: false),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildAppointmentsList(isUpcoming: true),
-          _buildAppointmentsList(isUpcoming: false),
-        ],
       ),
     );
   }

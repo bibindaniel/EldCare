@@ -61,6 +61,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
       BookAppointment event, Emitter<AppointmentState> emit) async {
     emit(AppointmentActionInProgress());
     try {
+      await _appointmentRepository.createAppointment(event.appointment);
       emit(const AppointmentActionSuccess('Appointment booked successfully'));
     } catch (e) {
       emit(AppointmentActionFailure('Failed to book appointment: $e'));
@@ -74,6 +75,16 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
       await _appointmentRepository.cancelAppointment(event.appointmentId);
       emit(
           const AppointmentActionSuccess('Appointment cancelled successfully'));
+
+      final currentState = state;
+      if (currentState is UserAppointmentsLoaded) {
+        final userId = currentState.appointments.isNotEmpty
+            ? currentState.appointments.first.userId
+            : null;
+        if (userId != null) {
+          add(FetchUserAppointments(userId));
+        }
+      }
     } catch (e) {
       emit(AppointmentActionFailure('Failed to cancel appointment: $e'));
     }

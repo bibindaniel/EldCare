@@ -6,6 +6,7 @@ import 'package:eldcare/core/theme/routes/myroutes.dart';
 import 'package:eldcare/delivery/blocs/delivery_order/delivery_order_bloc.dart';
 import 'package:eldcare/delivery/repository/delivery_order_repo.dart';
 import 'package:eldcare/doctor/repositories/doctor_schedule_repository.dart';
+import 'package:eldcare/elduser/blocs/appointment/appointment_bloc.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
 import 'package:eldcare/elduser/blocs/shopmedicines/shop_medicines_bloc.dart';
@@ -30,6 +31,7 @@ import 'package:eldcare/pharmacy/repository/medicine_repositry.dart';
 import 'package:eldcare/pharmacy/repository/pharmacist_profile_repository.dart';
 import 'package:eldcare/pharmacy/repository/pharmacistorderrepositry.dart';
 import 'package:eldcare/pharmacy/repository/shop.dart';
+import 'package:eldcare/shared/repositories/appointment_repository.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -147,6 +149,11 @@ class MyApp extends StatelessWidget {
           ),
           RepositoryProvider<DoctorScheduleRepository>(
             create: (context) => DoctorScheduleRepository(),
+          ),
+          BlocProvider<AppointmentBloc>(
+            create: (context) => AppointmentBloc(
+              appointmentRepository: AppointmentRepository(),
+            ),
           ),
         ],
         child: MaterialApp(
