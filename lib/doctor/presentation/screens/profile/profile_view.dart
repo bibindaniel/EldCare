@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:eldcare/auth/presentation/screens/login%20&%20singup/login_screen.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_event.dart';
 import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_event.dart';
 import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_state.dart';
@@ -15,7 +16,7 @@ import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
 import 'package:eldcare/doctor/presentation/screens/profile/edit_profile_screen.dart';
 import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_bloc.dart';
 import 'package:eldcare/doctor/repositories/doctor_schedule_repository.dart';
-import 'package:eldcare/doctor/repositories/doctor_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileView extends StatelessWidget {
   final String doctorId;
@@ -154,7 +155,7 @@ class ProfileView extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildProfessionalDetails(doctor),
                       const SizedBox(height: 16),
-                      _buildAccountSettings(),
+                      _buildAccountSettings(context),
                     ]),
                   ),
                 ),
@@ -664,7 +665,7 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountSettings() {
+  Widget _buildAccountSettings(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -693,7 +694,7 @@ class ProfileView extends StatelessWidget {
             'Logout',
             Icons.logout,
             isDestructive: true,
-            onTap: () {},
+            onTap: () => _handleLogout(context),
           ),
         ],
       ),
@@ -720,5 +721,38 @@ class ProfileView extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     );
+  }
+
+  void _handleLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Logout'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldLogout) {
+      await FirebaseAuth.instance.signOut();
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 }
