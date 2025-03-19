@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:eldcare/doctor/blocs/profile/doctor_profile_event.dart';
 import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_event.dart';
 import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_state.dart';
 import 'package:eldcare/doctor/models/doctor.dart';
@@ -14,6 +15,7 @@ import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
 import 'package:eldcare/doctor/presentation/screens/profile/edit_profile_screen.dart';
 import 'package:eldcare/doctor/blocs/schedule/doctor_schedule_bloc.dart';
 import 'package:eldcare/doctor/repositories/doctor_schedule_repository.dart';
+import 'package:eldcare/doctor/repositories/doctor_repository.dart';
 
 class ProfileView extends StatelessWidget {
   final String doctorId;
@@ -25,6 +27,9 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the bloc directly from the parent widget
+    final doctorProfileBloc = BlocProvider.of<DoctorProfileBloc>(context);
+
     return BlocBuilder<DoctorProfileBloc, DoctorProfileState>(
       builder: (context, state) {
         if (state is DoctorProfileLoading) {
@@ -144,7 +149,8 @@ class ProfileView extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildAvailabilitySection(context),
                       const SizedBox(height: 16),
-                      _buildConsultationSettings(),
+                      _buildConsultationSettings(
+                          context, doctor, doctorProfileBloc),
                       const SizedBox(height: 16),
                       _buildProfessionalDetails(doctor),
                       const SizedBox(height: 16),
@@ -407,7 +413,8 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildConsultationSettings() {
+  Widget _buildConsultationSettings(
+      BuildContext context, Doctor doctor, DoctorProfileBloc bloc) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Padding(
@@ -419,21 +426,171 @@ class ProfileView extends StatelessWidget {
             const SizedBox(height: 16),
             _buildSettingItem(
               'Consultation Fee',
-              '\$100',
+              '₹${doctor.consultationFee ?? 0}',
               Icons.attach_money,
+              onTap: () => _updateConsultationFee(context, doctor, bloc),
             ),
             _buildSettingItem(
               'Duration',
-              '30 minutes',
+              '${doctor.consultationDuration ?? 30} minutes',
               Icons.timer,
+              onTap: () => _updateConsultationDuration(context, doctor, bloc),
             ),
             _buildSettingItem(
               'Emergency Available',
-              'Yes',
+              doctor.emergencyAvailable ?? false ? 'Yes' : 'No',
               Icons.emergency,
+              onTap: () => _toggleEmergencyAvailability(context, doctor, bloc),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSettingItem(String label, String value, IconData icon,
+      {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: kPrimaryColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(label, style: AppFonts.bodyText1),
+            ),
+            Text(
+              value,
+              style: AppFonts.bodyText1.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.edit, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _updateConsultationFee(
+      BuildContext context, Doctor doctor, DoctorProfileBloc bloc) {
+    final feeController = TextEditingController(
+      text: (doctor.consultationFee ?? 0).toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Consultation Fee'),
+        content: TextField(
+          controller: feeController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            prefixText: '₹',
+            labelText: 'Fee Amount',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (feeController.text.isNotEmpty) {
+                final fee = int.tryParse(feeController.text);
+                if (fee != null) {
+                  // Use the bloc passed as parameter
+                  bloc.add(
+                    UpdateDoctorProfile(
+                      doctorId: doctor.userId,
+                      updates: {'consultationFee': fee},
+                    ),
+                  );
+                  Navigator.pop(context);
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateConsultationDuration(
+      BuildContext context, Doctor doctor, DoctorProfileBloc bloc) {
+    final durations = [15, 30, 45, 60];
+    final currentDuration = doctor.consultationDuration ?? 30;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Consultation Duration'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: durations
+              .map(
+                (duration) => RadioListTile<int>(
+                  title: Text('$duration minutes'),
+                  value: duration,
+                  groupValue: currentDuration,
+                  onChanged: (value) {
+                    if (value != null) {
+                      // Use the bloc passed as parameter
+                      bloc.add(
+                        UpdateDoctorProfile(
+                          doctorId: doctor.userId,
+                          updates: {'consultationDuration': value},
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _toggleEmergencyAvailability(
+      BuildContext context, Doctor doctor, DoctorProfileBloc bloc) {
+    final current = doctor.emergencyAvailable ?? false;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${current ? 'Disable' : 'Enable'} Emergency Availability'),
+        content: Text(
+            'Are you sure you want to ${current ? 'disable' : 'enable'} emergency availability?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Use the bloc passed as parameter
+              bloc.add(
+                UpdateDoctorProfile(
+                  doctorId: doctor.userId,
+                  updates: {'emergencyAvailable': !current},
+                ),
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
       ),
     );
   }
@@ -537,27 +694,6 @@ class ProfileView extends StatelessWidget {
             Icons.logout,
             isDestructive: true,
             onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingItem(String label, String value, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: kPrimaryColor),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(label, style: AppFonts.bodyText1),
-          ),
-          Text(value,
-              style: AppFonts.bodyText1.copyWith(fontWeight: FontWeight.bold)),
-          IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: () {},
           ),
         ],
       ),

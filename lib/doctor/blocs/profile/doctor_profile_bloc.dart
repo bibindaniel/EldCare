@@ -1,6 +1,6 @@
 import 'package:eldcare/doctor/models/doctor.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:eldcare/doctor/repository/doctor_repository.dart';
+import 'package:eldcare/doctor/repositories/doctor_repository.dart';
 import 'doctor_profile_event.dart';
 import 'doctor_profile_state.dart';
 

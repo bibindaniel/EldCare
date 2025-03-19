@@ -6,7 +6,7 @@ import 'package:eldcare/doctor/presentation/screens/profile/profile_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_event.dart';
-import 'package:eldcare/doctor/repository/doctor_repository.dart';
+import 'package:eldcare/doctor/repositories/doctor_repository.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
   final String doctorId;

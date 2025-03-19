@@ -1,4 +1,4 @@
-import 'package:eldcare/doctor/repository/doctor_repository.dart';
+import 'package:eldcare/doctor/repositories/doctor_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -33,6 +33,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _hospitalAddressController;
   late final TextEditingController _workContactController;
   late final TextEditingController _workEmailController;
+  late final TextEditingController _consultationFeeController;
+  late int _consultationDuration;
+  late bool _emergencyAvailable;
   File? _profileImageFile;
 
   @override
@@ -50,6 +53,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _workContactController =
         TextEditingController(text: widget.doctor.workContact);
     _workEmailController = TextEditingController(text: widget.doctor.workEmail);
+
+    _consultationFeeController = TextEditingController(
+        text: (widget.doctor.consultationFee ?? 100).toString());
+    _consultationDuration = widget.doctor.consultationDuration ?? 30;
+    _emergencyAvailable = widget.doctor.emergencyAvailable ?? false;
   }
 
   @override
@@ -166,6 +174,60 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 24),
+                  const Text(
+                    'Consultation Settings',
+                    style: AppFonts.headline4,
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextFormField(
+                    controller: _consultationFeeController,
+                    label: 'Consultation Fee (₹)',
+                    keyboardType: TextInputType.number,
+                    // prefixIcon: const Icon(Icons.attach_money),
+                  ),
+                  const SizedBox(height: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Consultation Duration',
+                          style: AppFonts.bodyText1),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [15, 30, 45, 60].map((duration) {
+                          return Expanded(
+                            child: RadioListTile<int>(
+                              title: Text('$duration min'),
+                              value: duration,
+                              groupValue: _consultationDuration,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _consultationDuration = value;
+                                  });
+                                }
+                              },
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text('Emergency Availability',
+                        style: AppFonts.bodyText1),
+                    value: _emergencyAvailable,
+                    onChanged: (value) {
+                      setState(() {
+                        _emergencyAvailable = value;
+                      });
+                    },
+                    secondary:
+                        const Icon(Icons.emergency, color: kPrimaryColor),
+                  ),
+                  const SizedBox(height: 24),
                   CustomButton(
                     text: 'Save Changes',
                     onPressed: () => _saveProfileWithContext(builderContext),
@@ -189,6 +251,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _hospitalAddressController.dispose();
     _workContactController.dispose();
     _workEmailController.dispose();
+    _consultationFeeController.dispose();
     super.dispose();
   }
 
@@ -225,6 +288,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _saveProfileWithContext(BuildContext context) {
+    final int? consultationFee = int.tryParse(_consultationFeeController.text);
+
     final Map<String, dynamic> updates = {
       'fullName': _fullNameController.text,
       'mobileNumber': _mobileController.text,
@@ -234,6 +299,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'hospitalAddress': _hospitalAddressController.text,
       'workContact': _workContactController.text,
       'workEmail': _workEmailController.text,
+      'consultationFee': consultationFee,
+      'consultationDuration': _consultationDuration,
+      'emergencyAvailable': _emergencyAvailable,
     };
 
     context.read<DoctorProfileBloc>().add(
