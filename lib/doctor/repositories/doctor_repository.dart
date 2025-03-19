@@ -115,4 +115,21 @@ class DoctorRepository {
       throw Exception('Failed to update doctor profile: $e');
     }
   }
+
+  Future<List<Doctor>> getAllApprovedDoctors() async {
+    try {
+      final QuerySnapshot snapshot = await _firestore
+          .collection('doctors')
+          .where('isVerified', isEqualTo: true)
+          .where('isApproved', isEqualTo: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => Doctor.fromMap(
+              {...doc.data() as Map<String, dynamic>, 'userId': doc.id}))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch approved doctors: $e');
+    }
+  }
 }

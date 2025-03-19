@@ -21,6 +21,9 @@ import 'package:eldcare/elduser/blocs/navigation/navigation_bloc.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_event.dart';
 import 'package:eldcare/elduser/blocs/navigation/navigation_state.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:eldcare/elduser/blocs/appointment/appointment_bloc.dart';
+import 'package:eldcare/shared/repositories/appointment_repository.dart'
+    as shared;
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -40,6 +43,11 @@ class HomeScreen extends StatelessWidget {
             create: (context) => VerifiedShopListingBloc(
                   repository: VerifiedShopListingRepository(),
                 )),
+        BlocProvider(
+          create: (context) => AppointmentBloc(
+            appointmentRepository: shared.AppointmentRepository(),
+          ),
+        ),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
