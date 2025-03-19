@@ -10,7 +10,6 @@ import 'package:eldcare/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:eldcare/auth/presentation/blocs/auth/auth_state.dart';
 import 'package:eldcare/elduser/presentation/screens/appointments/my_appointments_screen.dart';
 import 'package:eldcare/elduser/presentation/screens/appointments/doctor_selection_screen.dart';
-import 'package:eldcare/shared/repositories/appointment_repository.dart';
 
 class AppointmentScreen extends StatelessWidget {
   const AppointmentScreen({Key? key}) : super(key: key);

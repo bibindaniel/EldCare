@@ -121,7 +121,6 @@ class DoctorRepository {
       final QuerySnapshot snapshot = await _firestore
           .collection('doctors')
           .where('isVerified', isEqualTo: true)
-          .where('isApproved', isEqualTo: true)
           .get();
 
       return snapshot.docs

@@ -1,6 +1,4 @@
-import 'package:eldcare/elduser/blocs/appointment/appointment_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/doctor/models/doctor.dart';

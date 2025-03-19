@@ -58,7 +58,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   void _bookAppointment() {
     if (_formKey.currentState!.validate() && _selectedTime != null) {
       // Calculate end time based on doctor's consultation duration
-      final endTime = _selectedTime!.add(
+      _selectedTime!.add(
         Duration(minutes: widget.doctor.consultationDuration ?? 30),
       );
 

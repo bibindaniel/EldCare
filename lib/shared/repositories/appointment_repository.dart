@@ -101,85 +101,129 @@ class AppointmentRepository {
     }
   }
 
-  // Get available slots for a doctor on a specific day
+  // Get available slots for a specific doctor on a specific day
   Future<List<DateTime>> getAvailableSlots(
       String doctorId, DateTime date) async {
     try {
-      // Get doctor's schedule for the day of the week
+      print("Getting slots for doctor: $doctorId on date: $date");
+
+      // Normalize date to start of day for comparison
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+
+      // Get the doctor's schedule for this day of week (1-7)
       final dayOfWeek = date.weekday; // 1 for Monday, 7 for Sunday
 
+      // Get schedule from the subcollection instead of a field in the doctor document
       final scheduleDoc = await _firestore
-          .collection('doctor_schedules')
-          .where('doctorId', isEqualTo: doctorId)
+          .collection('doctors')
+          .doc(doctorId)
+          .collection('schedules')
+          .doc(dayOfWeek.toString())
           .get();
 
-      if (scheduleDoc.docs.isEmpty) {
+      if (!scheduleDoc.exists) {
+        print("No schedule for day ${dayOfWeek}");
         return [];
       }
 
-      final scheduleData = scheduleDoc.docs.first.data();
-      final daySchedule = scheduleData['days']?[dayOfWeek.toString()];
+      final scheduleData = scheduleDoc.data() as Map<String, dynamic>;
+      if (!scheduleData.containsKey('isWorkingDay') ||
+          scheduleData['isWorkingDay'] == false) {
+        print("Not a working day");
+        return [];
+      }
 
-      if (daySchedule == null || daySchedule['isWorkingDay'] == false) {
-        return []; // Doctor doesn't work on this day
+      if (!scheduleData.containsKey('sessions') ||
+          (scheduleData['sessions'] as List).isEmpty) {
+        print("No sessions for this day");
+        return [];
       }
 
       // Get the doctor's sessions for this day
-      final sessions = daySchedule['sessions'] as List<dynamic>;
+      final sessions = scheduleData['sessions'] as List<dynamic>;
+      print("Found ${sessions.length} sessions");
 
-      // Convert sessions to available time slots (e.g., 30 min intervals)
+      // Convert sessions to available time slots
       List<DateTime> availableSlots = [];
 
       for (var session in sessions) {
-        final startTimeMap = session['startTime'] as Map<String, dynamic>;
-        final endTimeMap = session['endTime'] as Map<String, dynamic>;
+        try {
+          if (session['isActive'] != true) {
+            continue; // Skip inactive sessions
+          }
 
-        final startHour = startTimeMap['hour'] as int;
-        final startMinute = startTimeMap['minute'] as int;
-        final endHour = endTimeMap['hour'] as int;
-        final endMinute = endTimeMap['minute'] as int;
+          final startTimeParts = (session['startTime'] as String).split(':');
+          final endTimeParts = (session['endTime'] as String).split(':');
 
-        DateTime startTime =
-            DateTime(date.year, date.month, date.day, startHour, startMinute);
+          final startHour = int.parse(startTimeParts[0]);
+          final startMinute = int.parse(startTimeParts[1]);
 
-        final endTime =
-            DateTime(date.year, date.month, date.day, endHour, endMinute);
+          final endHour = int.parse(endTimeParts[0]);
+          final endMinute = int.parse(endTimeParts[1]);
 
-        // Create 30-minute slots
-        while (startTime.isBefore(endTime)) {
-          availableSlots.add(startTime);
-          startTime = startTime.add(const Duration(minutes: 30));
+          final sessionStart = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            startHour,
+            startMinute,
+          );
+
+          final sessionEnd = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            endHour,
+            endMinute,
+          );
+
+          print(
+              "Session: ${sessionStart.toIso8601String()} to ${sessionEnd.toIso8601String()}");
+
+          // Create slots at specified duration intervals
+          final slotDuration = Duration(minutes: session['slotDuration'] ?? 30);
+          final bufferTime = Duration(minutes: session['bufferTime'] ?? 5);
+          var currentSlot = sessionStart;
+
+          while (currentSlot.add(slotDuration).isBefore(sessionEnd) ||
+              currentSlot.add(slotDuration).isAtSameMomentAs(sessionEnd)) {
+            availableSlots.add(currentSlot);
+            currentSlot = currentSlot.add(slotDuration + bufferTime);
+          }
+        } catch (e) {
+          print("Error processing session: $e");
         }
       }
 
-      // Filter out slots that are already booked
+      // Get already booked appointments for this doctor and date
       final bookedAppointments = await _appointments
           .where('doctorId', isEqualTo: doctorId)
           .where('appointmentTime',
-              isGreaterThanOrEqualTo:
-                  Timestamp.fromDate(DateTime(date.year, date.month, date.day)))
-          .where('appointmentTime',
-              isLessThan: Timestamp.fromDate(
-                  DateTime(date.year, date.month, date.day + 1)))
-          .where('status', whereIn: [
-        AppointmentStatus.pending.toString().split('.').last,
-        AppointmentStatus.confirmed.toString().split('.').last,
-      ]).get();
+              isGreaterThanOrEqualTo: startOfDay.millisecondsSinceEpoch)
+          .where('appointmentTime', isLessThan: endOfDay.millisecondsSinceEpoch)
+          .where('status', isNotEqualTo: 'cancelled')
+          .get();
 
-      final bookedTimes = bookedAppointments.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return (data['appointmentTime'] as Timestamp).toDate();
+      // Filter out slots that are already booked
+      final bookedSlots = bookedAppointments.docs.map((doc) {
+        final appointmentData = doc.data() as Map<String, dynamic>;
+        final timestamp = appointmentData['appointmentTime'] as int;
+        return DateTime.fromMillisecondsSinceEpoch(timestamp);
       }).toList();
 
-      // Remove booked slots from available slots
-      availableSlots.removeWhere((slot) {
-        return bookedTimes.any((bookedTime) {
-          return bookedTime.isAtSameMomentAs(slot);
-        });
-      });
+      print("Found ${bookedSlots.length} booked slots");
 
-      return availableSlots;
+      final filteredSlots = availableSlots.where((slot) {
+        return !bookedSlots.any((bookedSlot) {
+          return slot.isAtSameMomentAs(bookedSlot);
+        });
+      }).toList();
+
+      print("Returning ${filteredSlots.length} available slots");
+      return filteredSlots;
     } catch (e) {
+      print("Error getting available slots: $e");
       throw Exception('Failed to get available slots: $e');
     }
   }
