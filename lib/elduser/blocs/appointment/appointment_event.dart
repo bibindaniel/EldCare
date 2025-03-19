@@ -69,3 +69,27 @@ class UpdateAppointmentStatus extends AppointmentEvent {
   @override
   List<Object> get props => [appointmentId, status];
 }
+
+class InitiateAppointmentPayment extends AppointmentEvent {
+  final Appointment appointment;
+
+  const InitiateAppointmentPayment(this.appointment);
+
+  @override
+  List<Object> get props => [appointment];
+}
+
+class CompleteAppointmentPayment extends AppointmentEvent {
+  final String appointmentId;
+  final String paymentId;
+  final bool success;
+
+  const CompleteAppointmentPayment({
+    required this.appointmentId,
+    required this.paymentId,
+    required this.success,
+  });
+
+  @override
+  List<Object> get props => [appointmentId, paymentId, success];
+}

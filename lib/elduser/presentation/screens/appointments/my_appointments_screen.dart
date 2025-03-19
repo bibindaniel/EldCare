@@ -74,7 +74,8 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
             if (isUpcoming) {
               return app.appointmentTime.isAfter(now) &&
                   (app.status == AppointmentStatus.pending ||
-                      app.status == AppointmentStatus.confirmed);
+                      app.status == AppointmentStatus.confirmed ||
+                      app.status == AppointmentStatus.scheduled);
             } else {
               return app.appointmentTime.isBefore(now) ||
                   app.status == AppointmentStatus.completed ||
@@ -148,6 +149,12 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
         break;
       case AppointmentStatus.cancelled:
         statusColor = Colors.red;
+        break;
+      case AppointmentStatus.pendingPayment:
+        statusColor = Colors.purple;
+        break;
+      case AppointmentStatus.scheduled:
+        statusColor = Colors.teal;
         break;
     }
 

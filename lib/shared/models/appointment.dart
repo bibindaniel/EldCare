@@ -1,6 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum AppointmentStatus { pending, confirmed, completed, cancelled }
+enum AppointmentStatus {
+  pending,
+  confirmed,
+  scheduled,
+  completed,
+  cancelled,
+  pendingPayment,
+}
 
 class Appointment {
   final String id;
@@ -16,6 +23,20 @@ class Appointment {
   final AppointmentStatus status;
   final DateTime createdAt;
   final String? notes;
+  final String? paymentId;
+  final bool isPaid;
+  final double? consultationFee;
+
+  // Convenience getters for different naming conventions
+  String get patientId => userId;
+  DateTime get startTime => appointmentTime;
+  DateTime get appointmentDate => DateTime(
+        appointmentTime.year,
+        appointmentTime.month,
+        appointmentTime.day,
+      );
+  DateTime get endTime =>
+      appointmentTime.add(Duration(minutes: durationMinutes));
 
   Appointment({
     required this.id,
@@ -31,6 +52,9 @@ class Appointment {
     required this.status,
     required this.createdAt,
     this.notes,
+    this.paymentId,
+    this.isPaid = false,
+    this.consultationFee,
   });
 
   factory Appointment.fromMap(Map<String, dynamic> map, String id) {
@@ -52,6 +76,9 @@ class Appointment {
       ),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       notes: map['notes'],
+      paymentId: map['paymentId'],
+      isPaid: map['isPaid'] ?? false,
+      consultationFee: map['consultationFee'],
     );
   }
 
@@ -69,6 +96,9 @@ class Appointment {
       'status': status.toString().split('.').last,
       'createdAt': Timestamp.fromDate(createdAt),
       'notes': notes,
+      'paymentId': paymentId,
+      'isPaid': isPaid,
+      'consultationFee': consultationFee,
     };
   }
 
@@ -86,6 +116,9 @@ class Appointment {
     AppointmentStatus? status,
     DateTime? createdAt,
     String? notes,
+    String? paymentId,
+    bool? isPaid,
+    double? consultationFee,
   }) {
     return Appointment(
       id: id ?? this.id,
@@ -101,6 +134,9 @@ class Appointment {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       notes: notes ?? this.notes,
+      paymentId: paymentId ?? this.paymentId,
+      isPaid: isPaid ?? this.isPaid,
+      consultationFee: consultationFee ?? this.consultationFee,
     );
   }
 }

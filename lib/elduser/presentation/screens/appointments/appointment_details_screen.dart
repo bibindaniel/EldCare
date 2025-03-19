@@ -34,6 +34,12 @@ class AppointmentDetailsScreen extends StatelessWidget {
       case AppointmentStatus.cancelled:
         statusColor = Colors.red;
         break;
+      case AppointmentStatus.pendingPayment:
+        statusColor = Colors.purple;
+        break;
+      case AppointmentStatus.scheduled:
+        statusColor = Colors.teal;
+        break;
     }
 
     return Scaffold(
@@ -219,6 +225,10 @@ class AppointmentDetailsScreen extends StatelessWidget {
         return Icons.task_alt;
       case AppointmentStatus.cancelled:
         return Icons.cancel;
+      case AppointmentStatus.pendingPayment:
+        return Icons.pending_actions;
+      case AppointmentStatus.scheduled:
+        return Icons.schedule;
     }
   }
 
@@ -232,6 +242,10 @@ class AppointmentDetailsScreen extends StatelessWidget {
         return 'This appointment has been completed';
       case AppointmentStatus.cancelled:
         return 'This appointment was cancelled';
+      case AppointmentStatus.pendingPayment:
+        return 'Waiting for payment confirmation';
+      case AppointmentStatus.scheduled:
+        return 'Appointment scheduled';
     }
   }
 

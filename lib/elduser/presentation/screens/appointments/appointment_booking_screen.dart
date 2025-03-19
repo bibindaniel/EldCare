@@ -1,3 +1,4 @@
+import 'package:eldcare/elduser/presentation/screens/appointments/book_appointment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -58,7 +59,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   void _bookAppointment() {
     if (_formKey.currentState!.validate() && _selectedTime != null) {
       // Calculate end time based on doctor's consultation duration
-      _selectedTime!.add(
+      final endTime = _selectedTime!.add(
         Duration(minutes: widget.doctor.consultationDuration ?? 30),
       );
 
@@ -76,10 +77,18 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
         reason: _reasonController.text,
         status: AppointmentStatus.pending,
         createdAt: DateTime.now(),
+        consultationFee: widget.doctor.consultationFee?.toDouble(),
       );
 
-      // Dispatch event to book appointment
-      context.read<AppointmentBloc>().add(BookAppointment(appointment));
+      // Navigate to payment screen with consultation fee
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => BookAppointmentScreen(
+            appointmentToBook: _convertToSharedAppointment(appointment),
+            consultationFee: widget.doctor.consultationFee?.toDouble(),
+          ),
+        ),
+      );
     } else if (_selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -88,6 +97,29 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
         ),
       );
     }
+  }
+
+  // Fix the conversion method to include consultationFee
+  Appointment _convertToSharedAppointment(Appointment appointment) {
+    return Appointment(
+      id: appointment.id,
+      userId: appointment.userId,
+      userName: appointment.userName,
+      userPhotoUrl: appointment.userPhotoUrl,
+      doctorId: appointment.doctorId,
+      doctorName: appointment.doctorName,
+      doctorPhotoUrl: appointment.doctorPhotoUrl,
+      appointmentTime: appointment.appointmentTime,
+      durationMinutes: appointment.durationMinutes,
+      reason: appointment.reason,
+      status: appointment.status,
+      createdAt: appointment.createdAt,
+      notes: appointment.notes,
+      consultationFee: appointment.consultationFee,
+      // Add these to ensure payment tracking
+      isPaid: false,
+      paymentId: '',
+    );
   }
 
   @override

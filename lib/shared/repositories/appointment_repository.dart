@@ -19,19 +19,33 @@ class AppointmentRepository {
   }
 
   // Get appointments for a specific user
-  Stream<List<Appointment>> getUserAppointments(String userId) {
-    return _appointments
-        .where('userId', isEqualTo: userId)
-        .orderBy('appointmentTime', descending: false)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Appointment.fromMap(
-                doc.data() as Map<String, dynamic>,
-                doc.id,
-              ))
+  Future<List<Appointment>> getUserAppointments(String userId) async {
+    try {
+      print("Fetching appointments for user: $userId");
+
+      final querySnapshot = await _appointments
+          .where('userId', isEqualTo: userId)
+          // Make sure we're not filtering out any statuses accidentally
+          // .where('status', isNotEqualTo: 'cancelled')  // Remove this line if it exists
+          .orderBy('appointmentTime', descending: true)
+          .get();
+
+      print("Found ${querySnapshot.docs.length} appointments for user $userId");
+
+      // Debug - print all appointments and their statuses
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        print("Appointment: ${doc.id}, Status: ${data['status']}");
+      }
+
+      return querySnapshot.docs
+          .map((doc) =>
+              Appointment.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
-    });
+    } catch (e) {
+      print("Error fetching user appointments: $e");
+      return [];
+    }
   }
 
   // Get appointments for a specific doctor
@@ -225,6 +239,108 @@ class AppointmentRepository {
     } catch (e) {
       print("Error getting available slots: $e");
       throw Exception('Failed to get available slots: $e');
+    }
+  }
+
+  Future<String> createPendingAppointment(Appointment appointment) async {
+    try {
+      final appointmentRef = _firestore.collection('appointments').doc();
+      final pendingAppointment = appointment.copyWith(
+        id: appointmentRef.id,
+        status: AppointmentStatus.pendingPayment,
+        createdAt: DateTime.now(),
+      );
+
+      await appointmentRef.set(pendingAppointment.toMap());
+      return appointmentRef.id;
+    } catch (e) {
+      throw Exception('Failed to create pending appointment: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAppointmentPaymentDetails(
+      String appointmentId) async {
+    try {
+      final appointmentDoc =
+          await _firestore.collection('appointments').doc(appointmentId).get();
+      if (!appointmentDoc.exists) {
+        throw Exception('Appointment not found');
+      }
+
+      final appointmentData = appointmentDoc.data()!;
+
+      // Get doctor details for payment description
+      final doctorDoc = await _firestore
+          .collection('doctors')
+          .doc(appointmentData['doctorId'])
+          .get();
+      final doctorName =
+          doctorDoc.exists ? doctorDoc.data()!['name'] : 'Doctor';
+
+      // You can get these values from your system configuration
+      final consultationFee = 500.0; // Example value
+
+      return {
+        'amount': consultationFee * 100, // Razorpay expects amount in paise
+        'currency': 'INR',
+        'receipt': appointmentId,
+        'description': 'Consultation with Dr. $doctorName',
+        'appointmentId': appointmentId,
+      };
+    } catch (e) {
+      throw Exception('Failed to get payment details: $e');
+    }
+  }
+
+  Future<void> confirmAppointmentPayment(
+      String appointmentId, String paymentId) async {
+    try {
+      print(
+          "Confirming payment for appointment: $appointmentId with payment ID: $paymentId");
+
+      // First check if appointment exists
+      final appointmentDoc =
+          await _firestore.collection('appointments').doc(appointmentId).get();
+      if (!appointmentDoc.exists) {
+        print("ERROR: Appointment $appointmentId not found in database");
+        throw Exception('Appointment not found');
+      }
+
+      // Update with scheduled status and payment info
+      await _firestore.collection('appointments').doc(appointmentId).update({
+        'status':
+            'scheduled', // Use string directly - enum serialization can be tricky
+        'paymentId': paymentId,
+        'isPaid': true,
+        'updatedAt': FieldValue.serverTimestamp(), // Add timestamp
+      });
+
+      print(
+          "Successfully updated appointment $appointmentId to scheduled status");
+
+      // Double-check update
+      final updatedDoc =
+          await _firestore.collection('appointments').doc(appointmentId).get();
+      print("Updated appointment data: ${updatedDoc.data()}");
+    } catch (e) {
+      print("ERROR confirming payment: $e");
+      throw Exception('Failed to confirm appointment payment: $e');
+    }
+  }
+
+  Future<Appointment?> getAppointmentById(String appointmentId) async {
+    try {
+      final appointmentDoc =
+          await _firestore.collection('appointments').doc(appointmentId).get();
+
+      if (!appointmentDoc.exists) {
+        return null;
+      }
+
+      return Appointment.fromMap(appointmentDoc.data()!, appointmentDoc.id);
+    } catch (e) {
+      print("Error getting appointment by ID: $e");
+      return null;
     }
   }
 }

@@ -69,3 +69,18 @@ class AppointmentActionFailure extends AppointmentState {
   @override
   List<Object> get props => [error];
 }
+
+class AppointmentPaymentInitiated extends AppointmentState {
+  final Map<String, dynamic> paymentDetails;
+  final String pendingAppointmentId;
+
+  const AppointmentPaymentInitiated({
+    required this.paymentDetails,
+    required this.pendingAppointmentId,
+  });
+
+  @override
+  List<Object> get props => [paymentDetails, pendingAppointmentId];
+}
+
+class AppointmentPaymentProcessing extends AppointmentState {}
