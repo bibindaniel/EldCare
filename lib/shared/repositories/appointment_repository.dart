@@ -48,20 +48,30 @@ class AppointmentRepository {
     }
   }
 
-  // Get appointments for a specific doctor
-  Stream<List<Appointment>> getDoctorAppointments(String doctorId) {
-    return _appointments
-        .where('doctorId', isEqualTo: doctorId)
-        .orderBy('appointmentTime', descending: false)
-        .snapshots()
-        .map((snapshot) {
+  // Get all appointments for a doctor
+  Future<List<Appointment>> getDoctorAppointments(
+    String doctorId,
+    DateTime date,
+  ) async {
+    try {
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+
+      final snapshot = await _firestore
+          .collection('appointments')
+          .where('doctorId', isEqualTo: doctorId)
+          .where('appointmentTime',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('appointmentTime', isLessThan: Timestamp.fromDate(endOfDay))
+          .get();
+
       return snapshot.docs
-          .map((doc) => Appointment.fromMap(
-                doc.data() as Map<String, dynamic>,
-                doc.id,
-              ))
+          .map((doc) => Appointment.fromMap(doc.data(), doc.id))
           .toList();
-    });
+    } catch (e) {
+      print('Error getting doctor appointments: $e');
+      throw Exception('Failed to load appointments');
+    }
   }
 
   // Get a specific appointment
@@ -356,6 +366,46 @@ class AppointmentRepository {
       });
     } catch (e) {
       throw Exception('Failed to reschedule appointment: $e');
+    }
+  }
+
+  // Get doctor appointments within a time range
+  Future<List<Appointment>> getDoctorAppointmentsByTimeRange(
+    String doctorId,
+    DateTime startTime,
+    DateTime endTime,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection('appointments')
+          .where('doctorId', isEqualTo: doctorId)
+          .where('appointmentTime', isGreaterThanOrEqualTo: startTime)
+          .where('appointmentTime', isLessThan: endTime)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => Appointment.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      print('Error getting doctor appointments by time range: $e');
+      throw Exception('Failed to load appointments');
+    }
+  }
+
+  // Update appointment with consultation details and status
+  Future<void> updateAppointmentWithConsultation(
+    String appointmentId,
+    Map<String, dynamic> consultationDetails,
+    AppointmentStatus status,
+  ) async {
+    try {
+      await _firestore.collection('appointments').doc(appointmentId).update({
+        'status': status.toString().split('.').last,
+        'consultationDetails': consultationDetails,
+      });
+    } catch (e) {
+      print('Error updating appointment with consultation: $e');
+      throw Exception('Failed to update appointment');
     }
   }
 }

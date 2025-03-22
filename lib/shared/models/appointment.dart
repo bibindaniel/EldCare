@@ -7,6 +7,7 @@ enum AppointmentStatus {
   completed,
   cancelled,
   pendingPayment,
+  inProgress,
 }
 
 class Appointment {

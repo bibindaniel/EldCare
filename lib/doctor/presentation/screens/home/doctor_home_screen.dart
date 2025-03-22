@@ -25,7 +25,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     super.initState();
     _screens = [
       const DoctorDashboardView(),
-      const AppointmentsView(),
+      AppointmentsView(doctorId: widget.doctorId),
       const PatientsView(),
       ProfileView(doctorId: widget.doctorId),
     ];

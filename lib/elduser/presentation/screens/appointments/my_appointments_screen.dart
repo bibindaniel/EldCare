@@ -157,6 +157,9 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
       case AppointmentStatus.scheduled:
         statusColor = Colors.teal;
         break;
+      case AppointmentStatus.inProgress:
+        statusColor = Colors.deepPurple;
+        break;
     }
 
     return Card(

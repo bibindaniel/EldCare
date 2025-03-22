@@ -40,6 +40,9 @@ class AppointmentDetailsScreen extends StatelessWidget {
       case AppointmentStatus.scheduled:
         statusColor = Colors.teal;
         break;
+      case AppointmentStatus.inProgress:
+        statusColor = Colors.deepPurple;
+        break;
     }
 
     return Scaffold(
@@ -229,6 +232,8 @@ class AppointmentDetailsScreen extends StatelessWidget {
         return Icons.pending_actions;
       case AppointmentStatus.scheduled:
         return Icons.schedule;
+      case AppointmentStatus.inProgress:
+        return Icons.videocam;
     }
   }
 
@@ -246,6 +251,8 @@ class AppointmentDetailsScreen extends StatelessWidget {
         return 'Waiting for payment confirmation';
       case AppointmentStatus.scheduled:
         return 'Appointment scheduled';
+      case AppointmentStatus.inProgress:
+        return 'Consultation in progress';
     }
   }
 

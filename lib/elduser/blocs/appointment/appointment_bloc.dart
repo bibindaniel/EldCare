@@ -36,11 +36,12 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
       FetchDoctorAppointments event, Emitter<AppointmentState> emit) async {
     emit(AppointmentsLoading());
     try {
-      await emit.forEach(
-        _appointmentRepository.getDoctorAppointments(event.doctorId),
-        onData: (appointments) => DoctorAppointmentsLoaded(appointments),
-        onError: (error, _) => AppointmentActionFailure(error.toString()),
+      final now = DateTime.now();
+      final appointments = await _appointmentRepository.getDoctorAppointments(
+        event.doctorId,
+        now,
       );
+      emit(DoctorAppointmentsLoaded(appointments));
     } catch (e) {
       emit(AppointmentActionFailure('Failed to load appointments: $e'));
     }
