@@ -343,4 +343,19 @@ class AppointmentRepository {
       return null;
     }
   }
+
+  // Reschedule appointment
+  Future<void> rescheduleAppointment(
+      String appointmentId, DateTime newTime, int durationMinutes) async {
+    try {
+      await _appointments.doc(appointmentId).update({
+        'appointmentTime': Timestamp.fromDate(newTime),
+        'durationMinutes': durationMinutes,
+        'status': AppointmentStatus.scheduled.toString().split('.').last,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Failed to reschedule appointment: $e');
+    }
+  }
 }

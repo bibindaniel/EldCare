@@ -1,3 +1,4 @@
+import 'package:eldcare/elduser/presentation/screens/appointments/reschedule_appointment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -14,9 +15,9 @@ class MyAppointmentsScreen extends StatefulWidget {
   final String userId;
 
   const MyAppointmentsScreen({
-    Key? key,
+    super.key,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   State<MyAppointmentsScreen> createState() => _MyAppointmentsScreenState();
@@ -247,16 +248,18 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                   appointment.status != AppointmentStatus.completed &&
                   appointment.appointmentTime.isAfter(DateTime.now()))
                 Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.only(top: 8),
                   child: SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.edit_calendar),
+                      label: const Text('Reschedule'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: kPrimaryColor,
+                        side: const BorderSide(color: kPrimaryColor),
                       ),
-                      onPressed: () => _confirmCancelAppointment(appointment),
-                      child: const Text('Cancel Appointment'),
+                      onPressed: () =>
+                          _navigateToReschedule(context, appointment),
                     ),
                   ),
                 ),
@@ -267,29 +270,14 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
     );
   }
 
-  void _confirmCancelAppointment(Appointment appointment) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Appointment'),
-        content:
-            const Text('Are you sure you want to cancel this appointment?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AppointmentBloc>().add(
-                    CancelAppointment(appointment.id),
-                  );
-            },
-            child: const Text('Yes, Cancel'),
-          ),
-        ],
+  void _navigateToReschedule(
+      BuildContext context, Appointment appointment) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RescheduleAppointmentScreen(
+          appointment: appointment,
+        ),
       ),
     );
   }

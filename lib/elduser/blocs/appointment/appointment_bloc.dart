@@ -17,6 +17,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
     on<UpdateAppointmentStatus>(_onUpdateAppointmentStatus);
     on<InitiateAppointmentPayment>(_onInitiateAppointmentPayment);
     on<CompleteAppointmentPayment>(_onCompleteAppointmentPayment);
+    on<RescheduleAppointment>(_onRescheduleAppointment);
   }
 
   void _onFetchUserAppointments(
@@ -154,6 +155,30 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
     } catch (e) {
       print("ERROR in payment completion: $e");
       emit(AppointmentActionFailure('Payment processing error: $e'));
+    }
+  }
+
+  Future<void> _onRescheduleAppointment(
+      RescheduleAppointment event, Emitter<AppointmentState> emit) async {
+    emit(AppointmentActionInProgress());
+    try {
+      await _appointmentRepository.rescheduleAppointment(
+        event.appointmentId,
+        event.newTime,
+        event.durationMinutes,
+      );
+
+      emit(const AppointmentActionSuccess(
+          'Appointment rescheduled successfully'));
+
+      // Refresh the appointments list
+      final appointment =
+          await _appointmentRepository.getAppointmentById(event.appointmentId);
+      if (appointment != null) {
+        add(FetchUserAppointments(appointment.userId));
+      }
+    } catch (e) {
+      emit(AppointmentActionFailure('Failed to reschedule appointment: $e'));
     }
   }
 }

@@ -123,4 +123,42 @@ class AppFonts {
     fontWeight: FontWeight.bold,
     color: kWhiteColor,
   );
+
+  // Text styles for headings
+  static const TextStyle kHeading1Style = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: kTextColor,
+  );
+
+  static const TextStyle kHeading2Style = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: kTextColor,
+  );
+
+  static const TextStyle kHeading3Style = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: kTextColor,
+  );
+
+  // Text style for body text
+  static const TextStyle kBodyTextStyle = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    color: kTextColor,
+  );
+
+  // Text style for small text
+  static const TextStyle kSmallTextStyle = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: kSecondaryTextColor,
+  );
 }

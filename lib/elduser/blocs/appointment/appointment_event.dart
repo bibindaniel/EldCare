@@ -93,3 +93,18 @@ class CompleteAppointmentPayment extends AppointmentEvent {
   @override
   List<Object> get props => [appointmentId, paymentId, success];
 }
+
+class RescheduleAppointment extends AppointmentEvent {
+  final String appointmentId;
+  final DateTime newTime;
+  final int durationMinutes;
+
+  const RescheduleAppointment({
+    required this.appointmentId,
+    required this.newTime,
+    required this.durationMinutes,
+  });
+
+  @override
+  List<Object> get props => [appointmentId, newTime, durationMinutes];
+}
