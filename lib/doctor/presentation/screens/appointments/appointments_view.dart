@@ -357,13 +357,16 @@ class _AppointmentsViewState extends State<AppointmentsView> {
   }
 
   void _showAppointmentDetails(BuildContext context, Appointment appointment) {
+    // Get the bloc before creating the bottom sheet
+    final doctorAppointmentBloc = context.read<DoctorAppointmentBloc>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return Container(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -400,7 +403,7 @@ class _AppointmentsViewState extends State<AppointmentsView> {
                   if (appointment.status == AppointmentStatus.pending)
                     ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pop(bottomSheetContext);
                         _confirmStatusChange(
                           context,
                           appointment,
@@ -418,7 +421,7 @@ class _AppointmentsViewState extends State<AppointmentsView> {
                       appointment.status != AppointmentStatus.completed)
                     ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pop(bottomSheetContext);
                         _confirmStatusChange(
                           context,
                           appointment,
@@ -436,10 +439,11 @@ class _AppointmentsViewState extends State<AppointmentsView> {
                       appointment.status == AppointmentStatus.scheduled)
                     ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pop(context);
-                        context.read<DoctorAppointmentBloc>().add(
-                              StartConsultation(appointment.id),
-                            );
+                        Navigator.pop(bottomSheetContext);
+                        // Use the bloc instance we captured earlier
+                        doctorAppointmentBloc.add(
+                          StartConsultation(appointment.id),
+                        );
 
                         Navigator.push(
                           context,
@@ -490,27 +494,31 @@ class _AppointmentsViewState extends State<AppointmentsView> {
     AppointmentStatus newStatus,
     String message,
   ) {
+    // Get the bloc before creating the dialog
+    final doctorAppointmentBloc = context.read<DoctorAppointmentBloc>();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(message),
         content: Text(
             'This will change the appointment status to ${_getStatusText(newStatus)}.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.read<DoctorAppointmentBloc>().add(
-                    UpdateAppointmentStatus(
-                      doctorId: widget.doctorId,
-                      appointmentId: appointment.id,
-                      status: newStatus,
-                    ),
-                  );
+              Navigator.pop(dialogContext);
+              // Use the bloc instance we captured earlier
+              doctorAppointmentBloc.add(
+                UpdateAppointmentStatus(
+                  doctorId: widget.doctorId,
+                  appointmentId: appointment.id,
+                  status: newStatus,
+                ),
+              );
             },
             child: const Text('Confirm'),
             style: ElevatedButton.styleFrom(
