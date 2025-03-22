@@ -1,3 +1,4 @@
+import 'package:eldcare/elduser/presentation/screens/appointments/patient_consultation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -185,6 +186,31 @@ class AppointmentDetailsScreen extends StatelessWidget {
                     onPressed: () => _showCancelConfirmation(context),
                   ),
                 ),
+            ],
+
+            if (appointment.status == AppointmentStatus.inProgress) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PatientConsultationScreen(
+                          appointment: appointment,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.videocam),
+                  label: const Text('Join Consultation'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                ),
+              ),
             ],
           ],
         ),

@@ -44,7 +44,7 @@ android {
         targetSdk = 33 // Explicitly set targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
-        minSdkVersion 26    
+        minSdkVersion 23 // This must be at least 23 for Firebase Auth
         // Ensure multiDex is enabled if needed
         multiDexEnabled true
                 // applicationId = "com.example.eldcare"
