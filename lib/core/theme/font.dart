@@ -161,4 +161,55 @@ class AppFonts {
     fontWeight: FontWeight.normal,
     color: kSecondaryTextColor,
   );
+
+  // Subtitle styles
+  static const TextStyle subtitle1 = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: kTextColor,
+  );
+
+  static const TextStyle subtitle2 = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: kTextColor,
+  );
+
+  // Body text styles (aliases to match Material naming)
+  static const TextStyle body1 = bodyText1;
+  static const TextStyle body2 = bodyText2;
+
+  // Blockchain-specific styles
+  static const TextStyle blockchainLabel = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: kSecondaryTextColor,
+    letterSpacing: 0.5,
+  );
+
+  static const TextStyle consultationTitle = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: kPrimaryColor,
+  );
+
+  static const TextStyle patientCard = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 15,
+    fontWeight: FontWeight.normal,
+    color: kTextColor,
+    height: 1.4,
+  );
+
+  // Light variants for the new styles
+  static TextStyle subtitle1Light = subtitle1.copyWith(color: kWhiteColor);
+  static TextStyle subtitle2Light = subtitle2.copyWith(color: kWhiteColor);
+
+  // Colored variants for the new styles
+  static TextStyle subtitle1Colored = subtitle1.copyWith(color: kPrimaryColor);
+  static TextStyle subtitle2Colored = subtitle2.copyWith(color: kPrimaryColor);
 }

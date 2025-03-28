@@ -1,6 +1,7 @@
 import 'package:eldcare/elduser/blocs/VerifiedShopListing/verified_shop_listing_bloc.dart';
 import 'package:eldcare/elduser/blocs/medicine/medicine_bloc.dart';
 import 'package:eldcare/elduser/presentation/appoinment/appoinment_screen.dart';
+import 'package:eldcare/elduser/presentation/blockchain/blockchain_records_screen.dart';
 import 'package:eldcare/elduser/presentation/homescreen/homecontent.dart';
 import 'package:eldcare/elduser/presentation/homescreen/ttstest.dart';
 import 'package:eldcare/elduser/presentation/medcine_schedule/medicine_schedule.dart';
@@ -327,6 +328,26 @@ class HomeScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const TTSTestPage()),
               );
             },
+          ),
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.security, color: kAccentColor),
+              title:
+                  Text('Blockchain Medical Records', style: AppFonts.headline3),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is Authenticated) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          BlockchainRecordsScreen(userId: authState.user.uid),
+                    ),
+                  );
+                }
+              },
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.logout),
