@@ -1,4 +1,5 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:eldcare/core/theme/colors.dart';
@@ -6,14 +7,15 @@ import 'package:eldcare/core/theme/font.dart';
 import 'package:eldcare/shared/models/appointment.dart';
 import 'package:eldcare/shared/repositories/appointment_repository.dart';
 import 'package:intl/intl.dart';
+import 'package:eldcare/shared/repositories/medical_record_repository.dart';
 
 class ConsultationScreen extends StatefulWidget {
   final Appointment appointment;
 
   const ConsultationScreen({
-    Key? key,
+    super.key,
     required this.appointment,
-  }) : super(key: key);
+  });
 
   @override
   _ConsultationScreenState createState() => _ConsultationScreenState();
@@ -404,7 +406,12 @@ class _ConsultationScreenState extends State<ConsultationScreen>
 
   Future<void> _completeConsultation() async {
     try {
-      // Create consultation details
+      print(
+          "Starting consultation save for appointment ID: ${widget.appointment.id}");
+      print("Patient ID: ${widget.appointment.patientId}");
+      print("Saving prescription: ${_prescriptionController.text.trim()}");
+      print("Saving notes: ${_notesController.text.trim()}");
+
       final consultationDetails = {
         'notes': _notesController.text.trim(),
         'prescription': _prescriptionController.text.trim(),
@@ -418,6 +425,16 @@ class _ConsultationScreenState extends State<ConsultationScreen>
         AppointmentStatus.completed,
       );
 
+      // Also save to the direct Firebase record as backup
+      final recordRepo = MedicalRecordRepository();
+      await recordRepo.createMedicalRecord(
+        patientId: widget.appointment.patientId,
+        diagnosis: "", // You might want to add a diagnosis field to your form
+        medications: _prescriptionController.text.trim().split('\n'),
+        notes: _notesController.text.trim(),
+        appointmentId: widget.appointment.id,
+      );
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -428,7 +445,16 @@ class _ConsultationScreenState extends State<ConsultationScreen>
         );
         Navigator.pop(context);
       }
+
+      print(
+          "Using patient ID for medical record: ${widget.appointment.patientId}");
+      final patientDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.appointment.patientId)
+          .get();
+      print("Patient exists: ${patientDoc.exists}");
     } catch (e) {
+      print("Error saving consultation: ${e.toString()}");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

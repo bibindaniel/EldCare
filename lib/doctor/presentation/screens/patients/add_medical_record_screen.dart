@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eldcare/shared/blockchain/blockchain_service.dart';
+import 'package:eldcare/shared/repositories/medical_record_repository.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
 
@@ -46,26 +46,27 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
     });
 
     try {
-      final blockchainService = BlockchainService(FirebaseFirestore.instance);
+      final recordRepo = MedicalRecordRepository();
 
-      final medications = _medicationsController.text
-          .split('\n')
-          .where((med) => med.trim().isNotEmpty)
-          .toList();
-
-      await blockchainService.createConsultationRecord(
-        'manual_entry_${DateTime.now().millisecondsSinceEpoch}',
-        widget.doctorId,
-        widget.patientId,
-        _diagnosisController.text,
-        medications,
-        _notesController.text,
+      await recordRepo.createMedicalRecord(
+        patientId: widget.patientId,
+        diagnosis: _diagnosisController.text.trim(),
+        medications: _medicationsController.text
+            .split('\n')
+            .where((med) => med.trim().isNotEmpty)
+            .toList(),
+        notes: _notesController.text.trim(),
+        appointmentId: 'manual_entry_${DateTime.now().millisecondsSinceEpoch}',
       );
+
+      setState(() {
+        _isLoading = false;
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Medical record added successfully to blockchain'),
+            content: Text('Medical record added successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -73,16 +74,16 @@ class _AddMedicalRecordScreenState extends State<AddMedicalRecordScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }

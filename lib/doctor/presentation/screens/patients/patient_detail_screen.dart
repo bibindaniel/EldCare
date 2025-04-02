@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eldcare/shared/blockchain/blockchain_service.dart';
+import 'package:eldcare/shared/repositories/medical_record_repository.dart';
 import 'package:eldcare/shared/blockchain/medical_record_model.dart';
 import 'package:eldcare/core/theme/colors.dart';
 import 'package:eldcare/core/theme/font.dart';
@@ -23,7 +23,6 @@ class PatientDetailScreen extends StatefulWidget {
 }
 
 class _PatientDetailScreenState extends State<PatientDetailScreen> {
-  late BlockchainService _blockchainService;
   bool _isLoading = true;
   List<MedicalRecord> _records = [];
   String? _error;
@@ -31,7 +30,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _blockchainService = BlockchainService(FirebaseFirestore.instance);
     _loadRecords();
   }
 
@@ -42,13 +40,42 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         _error = null;
       });
 
-      final records = await _blockchainService.getDoctorPatientRecords(
-        widget.doctorId,
-        widget.patientId,
-      );
+      // Fetch medical records directly from Firestore
+      final recordRepo = MedicalRecordRepository();
+      final recordsSnapshot =
+          await recordRepo.getPatientRecords(widget.patientId);
+
+      print("Doctor ID in detail screen: ${widget.doctorId}");
+      print(
+          "Fetched ${recordsSnapshot.length} records for patient ${widget.patientId}");
+
+      // Convert to your MedicalRecord model
+      final records = recordsSnapshot.map((record) {
+        print("Record: ${record['medications']}");
+        try {
+          return MedicalRecord(
+            patientId: record['patientId'] ?? '',
+            doctorId: record['doctorId'] ?? '',
+            createdAt:
+                (record['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+            diagnosis: record['diagnosis'] ?? '',
+            medications: List<String>.from(record['medications'] ?? []),
+            accessGrantedTo: [widget.patientId, widget.doctorId],
+            consentLog: {widget.doctorId: DateTime.now().toIso8601String()},
+            notes: record['notes'] ?? '',
+            appointmentId: record['appointmentId'] ?? '',
+          );
+        } catch (e) {
+          print("Error converting record: $e");
+          return null;
+        }
+      }).toList();
+
+      // Filter out null records, then sort by date (newest first)
+      _records = records.where((r) => r != null).cast<MedicalRecord>().toList();
+      _records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       setState(() {
-        _records = records;
         _isLoading = false;
       });
     } catch (e) {
@@ -136,7 +163,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                                 if (record.notes != null &&
                                     record.notes!.isNotEmpty) ...[
                                   const SizedBox(height: 12),
-                                  Text(
+                                  const Text(
                                     'Notes:',
                                     style: AppFonts.cardSubtitle,
                                   ),

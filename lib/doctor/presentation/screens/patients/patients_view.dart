@@ -94,7 +94,7 @@ class _PatientsViewState extends State<PatientsView> {
             final data = userDoc.data() ?? {};
             patients.add({
               'id': patientId,
-              'name': data['displayName'] ?? 'Unknown',
+              'name': data['name'] ?? 'Unknown',
               'age': data['age'] ?? 'N/A',
               'gender': data['gender'] ?? 'N/A',
               'phone': data['phone'] ?? 'N/A',
@@ -124,18 +124,29 @@ class _PatientsViewState extends State<PatientsView> {
 
   Future<String> _getLastVisitDate(String patientId) async {
     try {
-      // Query appointments collection for the last appointment with this patient
+      // Get current doctor ID
+      final currentDoctorId = UserHelper.getCurrentUserId();
+
+      // Query appointments for either the current doctor ID or demo doctor ID
       final appointments = await _firestore
           .collection('appointments')
           .where('patientId', isEqualTo: patientId)
-          .where('doctorId', isEqualTo: _doctorId)
+          .where('doctorId',
+              whereIn: [currentDoctorId, 'demo-doctor-id']) // Check both IDs
           .where('status', isEqualTo: 'completed')
           .orderBy('appointmentDate', descending: true)
           .limit(1)
           .get();
 
+      print(
+          "Found ${appointments.docs.length} appointments for patient $patientId");
+
       if (appointments.docs.isNotEmpty) {
         final lastAppointment = appointments.docs.first.data();
+
+        // Print appointment details for debugging
+        print("Last appointment: ${lastAppointment['appointmentDate']}");
+
         final appointmentDate =
             (lastAppointment['appointmentDate'] as Timestamp).toDate();
 
@@ -149,6 +160,27 @@ class _PatientsViewState extends State<PatientsView> {
           return 'Yesterday';
         } else {
           return '$difference days ago';
+        }
+      }
+
+      // If we still don't find appointments, check medical records instead
+      final recordRepo = MedicalRecordRepository();
+      final records = await recordRepo.getPatientRecords(patientId);
+
+      if (records.isNotEmpty) {
+        final lastRecord = records.first;
+        final createdAt = (lastRecord['createdAt'] as Timestamp?)?.toDate();
+
+        if (createdAt != null) {
+          final difference = DateTime.now().difference(createdAt).inDays;
+
+          if (difference == 0) {
+            return 'Today';
+          } else if (difference == 1) {
+            return 'Yesterday';
+          } else {
+            return '$difference days ago';
+          }
         }
       }
 
@@ -232,7 +264,7 @@ class _PatientsViewState extends State<PatientsView> {
             floating: true,
             pinned: true,
             collapsedHeight: 60,
-            title: Text('My Patients', style: AppFonts.headline2),
+            title: const Text('My Patients', style: AppFonts.headline2),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(60),
               child: Padding(
@@ -351,7 +383,7 @@ class _PatientsViewState extends State<PatientsView> {
 
     // Since we don't have a "dateAdded" in our model, we'll use this as a placeholder
     // In a real app, you would store this information in Firestore
-    final newPatients = 8; // Placeholder
+    const newPatients = 8; // Placeholder
 
     // Count active patients
     final activePatients =
