@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_bloc.dart';
 import 'package:eldcare/doctor/blocs/profile/doctor_profile_event.dart';
 import 'package:eldcare/doctor/repositories/doctor_repository.dart';
+import 'package:eldcare/doctor/blocs/dashboard/dashboard_bloc.dart';
+import 'package:eldcare/doctor/repositories/dashboard_repository.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
   final String doctorId;
@@ -24,7 +26,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   void initState() {
     super.initState();
     _screens = [
-      const DoctorDashboardView(),
+      DoctorDashboardView(doctorId: widget.doctorId),
       AppointmentsView(doctorId: widget.doctorId),
       const PatientsView(),
       ProfileView(doctorId: widget.doctorId),
@@ -35,6 +37,11 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider(
+          create: (context) => DashboardBloc(
+            repository: DashboardRepository(),
+          ),
+        ),
         BlocProvider<DoctorProfileBloc>(
           create: (context) {
             final bloc = DoctorProfileBloc(
